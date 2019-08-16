@@ -1,0 +1,61 @@
+name: HardcoreTweaks
+main: Hardcore.HCTweaks
+author: EvModder/EvDoc/Evil_Witchdoctor
+version: 1.0 #1.0=split from Eventials
+softdepend: [Essentials]
+api-version: 1.13
+
+commands:
+   autoquit:
+      description: Set up AutoQuit when your health falls below a threshold
+      usage: /autoquit #
+      aliases: [autodisconnect,autoleave]
+      permission: hardcore.autoquit
+      permission-message: You do not have permission to do this.
+
+   color:
+      description: Change the color of your name in chat
+      usage: /color c
+      aliases: [cl,format,colour,namecolor,namecolour,cnick]
+      permission: hardcore.color
+      permission-message: You do not have permission to do this.
+
+   deathlog:
+      description: View the last 9 deaths
+      usage: /deathlog
+      aliases: [deaths,deathslog,deathlogs]
+      permission: hardcore.deathlog
+      permission-message: You do not have permission to do this.
+
+   showscores:
+      description: View the current contest scoreboard
+      usage: /levels
+      aliases: [levels,level,lvls,lvl,sb,scores,xptop,topscore,topscores,xplevels]
+      permission: hardcore.showscores
+      permission-message: You do not have permission to do this.
+
+
+permissions:
+   hardcore.autoquit:
+      description: Permission to use /autoquit
+      default: true
+
+   hardcore.color:
+      description: Permission to use /color
+      default: true
+
+   hardcore.seen:
+      description: Permission to use /seen
+      default: true
+
+   hardcore.deathlog:
+      description: Permission to use /deathlog
+      default: true
+
+   hardcore.showscores:
+      description: Permission to use /deathlog
+      default: true
+
+   hardcore.teleport.override:
+      description: Prevents plugin from canceling teleports
+      default: op

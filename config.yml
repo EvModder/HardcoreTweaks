@@ -1,0 +1,32 @@
+# Name of primary hardcore (over)world
+world-name: 'Reliquist'
+
+# Number of spawn locations to pre-compute (to reduce lag on a player's first join)
+prepared-spawn-locations: 5
+
+# Delay (in hours) until player can respawn.
+# Set to -1 to disable respawning altogether
+respawn-wait: 40
+
+spawn-welcome-message: '&b>> &6&lWelcome, &a%name%&6&l, to &4&lH&ca&4&lrd&cc&4&lore&6&l!'
+respawn-welcome-message: '&b>> &6&lWelcome back, &a%name%&6&l has been reborn!'
+
+# Enable spectating
+enable-spectating: true
+
+# Possible modes are:
+# * blacklist: everyone can spectate you unless you blacklist them
+# * whitelist: nobody can spectate you unless you whitelist them
+spectator-mode: blacklist
+
+enable-teleports: true
+teleports-per-life: 100
+can-teleport-person-twice: false
+can-teleport-person-twice-indirectly: false
+
+advancements-included:
+  - story
+  - adventure
+  - nether
+  - end
+  - husbandry
