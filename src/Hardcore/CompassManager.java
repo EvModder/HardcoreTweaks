@@ -79,7 +79,7 @@ public class CompassManager implements Listener{
 			}
 			if(closestUUID != null){
 				evt.getPlayer().setCompassTarget(bedLocs.get(closestUUID));
-				OfflinePlayer targetPlayer = pl.getServer().getPlayer(closestUUID);
+				OfflinePlayer targetPlayer = pl.getServer().getOfflinePlayer(closestUUID);
 				String target = targetPlayer == null ? "Unknown" : targetPlayer.getName();
 				evt.getPlayer().sendMessage(ChatColor.RED+"Compass is pointing towards "+
 						ChatColor.GOLD+target+ChatColor.RED+"'s bed");

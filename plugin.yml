@@ -34,6 +34,13 @@ commands:
       permission: hardcore.showscores
       permission-message: You do not have permission to do this.
 
+   spectate:
+      description: Configure spectator settings
+      usage: /sp [mode] <blacklist/whitelist> [name]
+      aliases: [spec,sp,spectators]
+      permission: hardcore.spectateconfig
+      permission-message: You do not have permission to do this.
+
 
 permissions:
    hardcore.autoquit:
@@ -54,6 +61,10 @@ permissions:
 
    hardcore.showscores:
       description: Permission to use /deathlog
+      default: true
+
+   hardcore.spectateconfig:
+      description: Permission to use /spectate
       default: true
 
    hardcore.teleport.override:

@@ -76,6 +76,8 @@ public class CommandSeen_TEMP implements Listener {
 									player.sendMessage(SpectatorManager.formatTimeUntilRespawn(
 											secondsLeft, ChatColor.RED, ChatColor.GOLD));
 								}
+								player.sendMessage(ChatColor.GOLD+" - Spectators: "+ChatColor.WHITE
+										+SpectatorManager.getSpectateMode(target.getPlayer()));
 							}
 						}
 					}}.runTaskLater(pl, 2);

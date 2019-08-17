@@ -17,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 public class TeleportManager implements Listener{
 	final HCTweaks pl;
@@ -119,12 +120,17 @@ public class TeleportManager implements Listener{
 					player.sendMessage("Note: you can also use vanilla spectator menu (press 1)");
 				}
 				else{
-					player.teleport(target);
+					player.teleport(target, TeleportCause.COMMAND);
 					player.setSpectatorTarget(target);
 				}
 			}
 		}
 		else if(tpaAliases.contains(command)){
+			if(SpectatorManager.isSpectator(player)){
+				player.sendMessage(ChatColor.RED+"Only the living may use this command");
+				evt.setCancelled(true);
+				return;
+			}
 			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
 			if(space < 0 || target == null){
 				player.sendMessage(ChatColor.RED + "Please specify who to tpa to " + ChatColor.UNDERLINE + "exactly");
@@ -144,6 +150,11 @@ public class TeleportManager implements Listener{
 			}
 		}
 		else if(tpahereAliases.contains(command)){
+			if(SpectatorManager.isSpectator(player)){
+				player.sendMessage(ChatColor.RED+"Only the living may use this command");
+				evt.setCancelled(true);
+				return;
+			}
 			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
 			if(space < 0 || target == null){
 				player.sendMessage(ChatColor.RED + "Please specify who to tpahere " + ChatColor.UNDERLINE + "exactly");
@@ -163,6 +174,11 @@ public class TeleportManager implements Listener{
 			}
 		}
 		else if(tpacceptAliases.contains(command)){
+			if(SpectatorManager.isSpectator(player)){
+				player.sendMessage(ChatColor.RED+"Only the living may use this command");
+				evt.setCancelled(true);
+				return;
+			}
 			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
 			if(space < 0 || target == null){
 				player.sendMessage(ChatColor.RED + "Please specify the player whose request you are accepting");
@@ -182,10 +198,10 @@ public class TeleportManager implements Listener{
 			default: return;
 		}
 		Player teleporter = evt.getPlayer();
-		Player receiver = SpectatorManager.getNearbyGm0(evt.getTo());
+		Player receiver = SpectatorManager.getNearbyGm0WithPerms(evt.getTo(), teleporter);
 		if(receiver == null){
 			if(teleporter.hasPermission("hardcore.teleport.override")) return;
-			teleporter.sendMessage(ChatColor.RED+"Could not locate destination player");
+			teleporter.sendMessage(ChatColor.RED+"Unable to locate destination player");
 			evt.setCancelled(true);
 		}
 		else if(pendingTpas.containsKey(teleporter.getUniqueId())
@@ -211,8 +227,11 @@ public class TeleportManager implements Listener{
 //			teleporter.removeScoreboardTag("has_tpaccept");
 		}
 		else{
-			if(teleporter.getGameMode() != GameMode.SURVIVAL
-					|| teleporter.hasPermission("hardcore.teleport.override")) return;
+			if(teleporter.hasPermission("hardcore.teleport.override")) return;
+			if(teleporter.getGameMode() != GameMode.SURVIVAL){
+				if(teleporter.getGameMode() == GameMode.SPECTATOR) teleporter.setSpectatorTarget(receiver);
+				return;
+			}
 			teleporter.sendMessage(ChatColor.RED+"Error: Could not find a pending tpa with "+receiver.getName());
 			//evt.setCancelled(true);
 			return;

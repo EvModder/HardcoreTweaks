@@ -23,6 +23,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -248,6 +249,7 @@ public class NewPlayerManager implements Listener{
 		if(player.getScoreboardTags().contains("unconfirmed")){
 			player.sendMessage(ChatColor.GREEN+">> "
 					+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
+			createSpawnBox(player.getLocation());
 		}
 
 		// Update tags
@@ -263,6 +265,13 @@ public class NewPlayerManager implements Listener{
 //			pl.setPermission(player, "essentials.tpa", player.getScoreboardTags().contains("has_tpa"));
 //			pl.setPermission(player, "essentials.tpahere", player.getScoreboardTags().contains("has_tpahere"));
 //			pl.setPermission(player, "essentials.tpaccept", player.getScoreboardTags().contains("has_tpaccept"));
+		}
+	}
+
+	@EventHandler
+	public void onPlayerQuit(PlayerQuitEvent evt){
+		if(evt.getPlayer().getScoreboardTags().contains("unconfirmed")){
+			removeNearbyBedrock(evt.getPlayer().getLocation());
 		}
 	}
 

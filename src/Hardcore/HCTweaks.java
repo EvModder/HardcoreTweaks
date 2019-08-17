@@ -36,6 +36,7 @@ public class HCTweaks extends EvPlugin{
 		new CommandColor(this);
 		new CommandDeathlog(this);
 		new CommandShowScores(this);
+		new CommandSpectate(this);
 		getServer().getPluginManager().registerEvents(new CompassManager(this), this);
 		getServer().getPluginManager().registerEvents(new NewPlayerManager(this), this);
 		getServer().getPluginManager().registerEvents(new ScoreboardManager(this), this);
@@ -58,8 +59,9 @@ public class HCTweaks extends EvPlugin{
 		HCTweaks.getPlugin().getLogger().info("Deleting playerdata for: "+uuid);
 		if(new File("./plugins/EvFolder/DELETED").exists()) new File("./plugins/EvFolder/DELETED").mkdir();
 
-		return copyPlayerdata(uuid, "./plugins/EvFolder/DELETED")
-			&& new File("./" + WORLD_NAME + "/playerdata/" + uuid + ".dat").delete()
+		copyPlayerdata(uuid, "./plugins/EvFolder/DELETED");
+		return 
+			new File("./" + WORLD_NAME + "/playerdata/" + uuid + ".dat").delete()
 			&& new File("./" + WORLD_NAME + "/stats/" + uuid + ".json").delete()
 			&& new File("./" + WORLD_NAME + "/advancements/" + uuid + ".json").delete();
 	}

@@ -1,6 +1,5 @@
 package Hardcore;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.UUID;
@@ -9,6 +8,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,15 +18,19 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import net.evmodder.EvLib.extras.ActionBarUtils;
 
 public class SpectatorManager implements Listener{
-	static HCTweaks pl;
-	static HashSet<UUID> spectators;
+	final HCTweaks pl;
+	public enum WatchMode {BLACKLIST, WHITELIST};
+	static WatchMode DEFAULT_MODE;
 	final int MAX_DIST_SQ = 32*32;
 	final long SECONDS_UNTIL_RESPAWN;
-	final float FLY_SPEED = 0.1f;
+	final float FLY_SPEED = 0.01f;
+	static HashSet<UUID> spectators;
 
 	public SpectatorManager(HCTweaks plugin){
 		pl = plugin;
@@ -34,6 +38,8 @@ public class SpectatorManager implements Listener{
 		if(pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators") == null){
 			pl.getServer().getScoreboardManager().getMainScoreboard().registerNewTeam("Spectators");
 		}
+		DEFAULT_MODE = pl.getConfig().getString("spectator-mode", "blacklist").equals("blacklist") ?
+				WatchMode.BLACKLIST : WatchMode.WHITELIST;
 		spectators = new HashSet<UUID>();
 		loopActive = false;
 		runSpecatorLoop();
@@ -52,69 +58,54 @@ public class SpectatorManager implements Listener{
 				(spectators != null && spectators.contains(player.getUniqueId()));
 	}
 
-	static Location getClosest(Location loc, HashSet<Location> points){
-		Location closest = null;
-		double cDist = Double.MAX_VALUE;
-		for(Location point : points){
-			if(!point.getWorld().getUID().equals(loc.getWorld().getUID())) continue;
-			double pDist = loc.distanceSquared(point);
-			if(pDist < cDist){
-				closest = point;
-				cDist = pDist;
-			}
+	public static boolean canSpectate(UUID spectator, Player target){
+		String bl_tag = "spectator_blacklist_"+spectator;
+		String wl_tag = "spectator_whitelist_"+spectator;
+		return !target.getScoreboardTags().contains(bl_tag) &&
+				(getSpectateMode(target) != WatchMode.WHITELIST
+				|| target.getScoreboardTags().contains(wl_tag));
+	}
+	public static WatchMode getSpectateMode(Player player){
+		return player.getScoreboardTags().contains("whitelist_mode") ? WatchMode.WHITELIST
+				: player.getScoreboardTags().contains("blacklist_mode") ? WatchMode.BLACKLIST
+				: DEFAULT_MODE;
+	}
+	public static void setSpectateMode(Player player, WatchMode mode){
+		if(mode == WatchMode.WHITELIST){
+			player.addScoreboardTag("whitelist_mode");
+			player.removeScoreboardTag("blacklist_mode");
 		}
-		return closest != null ? closest : (points.isEmpty() ? null : points.iterator().next());
+		else if(mode == WatchMode.BLACKLIST){
+			player.addScoreboardTag("blacklist_mode");
+			player.removeScoreboardTag("whitelist_mode");
+		}
+		else org.bukkit.Bukkit.getLogger().severe("Unknown spectate mode: "+mode);
 	}
 
-	static Player getClosestGm0(Location loc){
+	static Player getClosestGm0WithPerms(Location loc, Player spec){
 		double closestDistGm0 = Double.MAX_VALUE;
 		Player closestPlayer = null;
 		for(Player p : loc.getWorld().getPlayers()){
 			double dist;
-			if(p.getGameMode() == GameMode.SURVIVAL &&
+			if(p.getGameMode() == GameMode.SURVIVAL && (spec == null || canSpectate(spec.getUniqueId(), p)) &&
 					(dist=p.getLocation().distanceSquared(loc)) < closestDistGm0){
 				closestDistGm0 = dist;
 				closestPlayer = p;
 			}
 		}
 		if(closestPlayer == null){
-			for(Player p : org.bukkit.Bukkit.getOnlinePlayers()){
+			for(Player p : org.bukkit.Bukkit.getServer().getOnlinePlayers()){
 				if(p.getGameMode() == GameMode.SURVIVAL) return p;
 			}
 		}
 		return closestPlayer;
 	}
-	static boolean canSpectator(Player spectator, Player target){
-		String bl_tag = "spectator_blacklist_"+spectator.getUniqueId();
-		String wl_tag = "spectator_whitelist_"+spectator.getUniqueId();
-		return target.getScoreboardTags().contains("blacklist_mode") ?
-				!target.getScoreboardTags().contains(bl_tag) :
-				target.getScoreboardTags().contains(wl_tag);
-	}
-	static Player getClosestGm0WithPerms(Player toPlayer){
-		double closestDistGm0 = Double.MAX_VALUE;
-		Player closestPlayer = null;
-		for(Player p : toPlayer.getWorld().getPlayers()){
-			double dist;
-			if(p.getGameMode() == GameMode.SURVIVAL && canSpectator(toPlayer, p) &&
-					(dist=p.getLocation().distanceSquared(toPlayer.getLocation())) < closestDistGm0){
-				closestDistGm0 = dist;
-				closestPlayer = p;
-			}
-		}
-		if(closestPlayer == null){
-			for(Player p : toPlayer.getServer().getOnlinePlayers()){
-				if(p.getGameMode() == GameMode.SURVIVAL) return p;
-			}
-		}
-		return closestPlayer;
-	}
-	static Player getNearbyGm0(Location loc){
+	static Player getNearbyGm0WithPerms(Location loc, Player spec){
 		double closestDistGm0 = 10000D;
 		Player closestPlayer = null;
 		for(Player p : loc.getWorld().getPlayers()){
 			double dist;
-			if(p.getGameMode() == GameMode.SURVIVAL &&
+			if(p.getGameMode() == GameMode.SURVIVAL && (spec == null || canSpectate(spec.getUniqueId(), p)) &&
 					(dist=p.getLocation().distanceSquared(loc)) < closestDistGm0){
 				closestDistGm0 = dist;
 				closestPlayer = p;
@@ -123,7 +114,8 @@ public class SpectatorManager implements Listener{
 		return closestPlayer;
 	}
 
-	public static String formatTimeUntilRespawn(long secondsLeft, ChatColor numC, ChatColor textC){
+	public static String formatTimeUntilRespawn(long SECONDS_LEFT, ChatColor numC, ChatColor textC){
+		long secondsLeft = SECONDS_LEFT;
 		long minutesLeft = secondsLeft / 60, hoursLeft = minutesLeft / 60, daysLeft = hoursLeft / 24;
 		secondsLeft %= 60; minutesLeft %= 60; hoursLeft %= 24;
 		//Too spammy
@@ -144,7 +136,7 @@ public class SpectatorManager implements Listener{
 				.append(textC).append('h').append(numC);
 		if(minutesLeft > 0) builder.append(minutesLeft < 10 ? "0"+minutesLeft : minutesLeft)
 				.append(textC).append('m').append(numC);
-		if(secondsLeft > 0) builder.append(secondsLeft < 10 ? "0"+secondsLeft : secondsLeft)
+		if(SECONDS_LEFT > 0) builder.append(secondsLeft < 10 ? "0"+secondsLeft : secondsLeft)
 				.append(textC).append('s');
 		else builder.append("now");
 		return builder.toString();
@@ -154,31 +146,15 @@ public class SpectatorManager implements Listener{
 	void runSpecatorLoop(){
 		if(loopActive) return;
 		loopActive = true;
-		new BukkitRunnable(){@SuppressWarnings("unchecked") @Override public void run(){
+		new BukkitRunnable(){@Override public void run(){
 			//TODO: if(!"enable-spectating") for spectator p.kickPlayer()
-			HashSet<Location> nonSpecLocs = new HashSet<Location>();
-			for(Player p : pl.getServer().getOnlinePlayers()){
-				if(isSpectator(p)) addSpectator(p);
-				else if(p.getGameMode() == GameMode.SURVIVAL) nonSpecLocs.add(p.getLocation());
-			}
-			if(nonSpecLocs.isEmpty()){
-				for(UUID uuid : (Collection<UUID>)spectators.clone()){
-					OfflinePlayer p = pl.getServer().getPlayer(uuid);
-					if(p != null && p.isOnline()){
-						p.getPlayer().kickPlayer(ChatColor.RED+"There is nobody online to spectate right now");
-						p.getPlayer().setFlySpeed(0.2f);
-						p.getPlayer().getScoreboard().getTeam("Spectators").removeEntry(p.getName());
-					}
-				}
-				spectators.clear();
-			}
-			else{
-				Iterator<UUID> it = spectators.iterator();
-				while(it.hasNext()){
-					UUID uuid = it.next();
-					OfflinePlayer p = pl.getServer().getPlayer(uuid);
-					if(p == null || !p.isOnline() || !isSpectator(p.getPlayer())) it.remove();
-				}
+			for(Player p : pl.getServer().getOnlinePlayers()) if(isSpectator(p)) addSpectator(p);
+			//p.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
+			Iterator<UUID> it = spectators.iterator();
+			while(it.hasNext()){
+				UUID uuid = it.next();
+				OfflinePlayer p = pl.getServer().getPlayer(uuid);
+				if(p == null || !p.isOnline() || !isSpectator(p.getPlayer())) it.remove();
 			}
 			if(spectators.isEmpty()){
 				pl.getLogger().info("No spectators remaining, setting loopAtive=false");
@@ -186,34 +162,37 @@ public class SpectatorManager implements Listener{
 				cancel();
 				loopActive = false;
 			}
-			else{
-				for(UUID uuid : spectators){
-					Player specP = pl.getServer().getPlayer(uuid).getPlayer();
-					Location aliveP = getClosest(specP.getLocation(), nonSpecLocs);
-					if(!specP.getWorld().getUID().equals(aliveP.getWorld().getUID())
-							|| specP.getLocation().distanceSquared(aliveP) > MAX_DIST_SQ){
-						specP.teleport(aliveP);
+			for(UUID uuid : spectators){
+				Player specP = pl.getServer().getPlayer(uuid).getPlayer();
+				specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+
+				int secondsSinceDeath = specP.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
+				long secondsLeft = SECONDS_UNTIL_RESPAWN - secondsSinceDeath;
+				if(secondsLeft <= 0){
+					new BukkitRunnable(){@Override public void run(){
+						specP.kickPlayer(ChatColor.GREEN+"You may now respawn!");
+					}}.runTaskLater(pl, 1);
+					secondsLeft = 0;
+					new BukkitRunnable(){
+						int attempts = 0;
+						@Override public void run(){
+							//Make sure they're offline
+							Player p = pl.getServer().getPlayer(uuid);
+							if((p == null && pl.deletePlayerdata(uuid)) || ++attempts == 10) cancel();
+						}
+					}.runTaskTimer(pl, 5, 20);
+				}
+				else ActionBarUtils.sendToPlayer(
+						formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY), specP);
+
+				if(specP.isDead()) continue;
+				Entity target = specP.getSpectatorTarget();
+				if(target == null || !(target instanceof Player)){
+					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
+					if(newTarget == null){
+						specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
 					}
-					int secondsSinceDeath = specP.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
-					long secondsLeft = SECONDS_UNTIL_RESPAWN - secondsSinceDeath;
-					if(secondsLeft <= 0){
-						new BukkitRunnable(){@Override public void run(){
-							
-							specP.kickPlayer(ChatColor.GREEN+"You may now respawn!");
-						}}.runTaskLater(pl, 1);
-						secondsLeft = 0;
-						new BukkitRunnable(){
-							int attempts = 0;
-							@Override public void run(){
-								//Make sure they're offline
-								Player p = pl.getServer().getPlayer(uuid);
-								if((p == null && pl.deletePlayerdata(uuid)) || ++attempts == 10) cancel();
-							}
-						}.runTaskTimer(pl, 5, 20);
-						continue;
-					}
-					ActionBarUtils.sendToPlayer(
-							formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY), specP);
+					else specP.setSpectatorTarget(newTarget);
 				}
 			}
 		}}.runTaskTimer(pl, 20, 20);
@@ -247,10 +226,10 @@ public class SpectatorManager implements Listener{
 				&& evt.getPlayer().getScoreboardTags().contains("dead")){
 			evt.getPlayer().getScoreboard().resetScores(evt.getPlayer().getName());
 			int ticksSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH);
-			int hrsSinceDeath = ticksSinceDeath/(20*60*60);
+			long secondsSinceDeath = ticksSinceDeath/20;
 			pl.getLogger().info("Ticks since death: "+ticksSinceDeath);
-			pl.getLogger().info("Hours since death: "+(((double)ticksSinceDeath)/(20*60*60)));
-			if(hrsSinceDeath >= 24){
+			pl.getLogger().info("Hours since death: "+(secondsSinceDeath/(60*60)));
+			if(secondsSinceDeath >= SECONDS_UNTIL_RESPAWN){
 				//Reset playerdata & stats so next time they log in they will respawn :)
 				final UUID uuid = evt.getPlayer().getUniqueId();
 				new BukkitRunnable(){@Override public void run(){
@@ -258,6 +237,11 @@ public class SpectatorManager implements Listener{
 					Player p = pl.getServer().getPlayer(uuid);
 					if(p == null) pl.deletePlayerdata(uuid);
 				}}.runTaskLater(pl, 5);
+				new BukkitRunnable(){@Override public void run(){
+					//Make sure they're offline
+					Player p = pl.getServer().getPlayer(uuid);
+					if(p == null) pl.deletePlayerdata(uuid);
+				}}.runTaskLater(pl, 20);
 			}
 		}
 	}
