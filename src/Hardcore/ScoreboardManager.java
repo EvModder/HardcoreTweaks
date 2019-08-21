@@ -17,6 +17,7 @@ import net.evmodder.EvLib.EvUtils;
 
 public class ScoreboardManager implements Listener{
 	final HashSet<String> included;
+	final int ADV_WL_TRIGGER, LVL_WL_TRIGGER;
 	//final Scoreboard emptyBoard;
 	final HCTweaks pl;
 
@@ -24,6 +25,8 @@ public class ScoreboardManager implements Listener{
 		pl = plugin;
 		included = new HashSet<String>();
 		included.addAll(pl.getConfig().getStringList("advancements-included"));
+		ADV_WL_TRIGGER = pl.getConfig().getInt("set-whitelist-mode-when-has-x-advancements", 15);
+		LVL_WL_TRIGGER = pl.getConfig().getInt("set-whitelist-mode-when-has-x-levels", 50);
 		//emptyBoard = pl.getServer().getScoreboardManager().getNewScoreboard();
 	}
 
@@ -61,6 +64,10 @@ public class ScoreboardManager implements Listener{
 		if(!isMainAdvancement(evt.getAdvancement()) || SpectatorManager.isSpectatorFavorYes(evt.getPlayer())) return;
 		int advancements = EvUtils.getVanillaAdvancements(evt.getPlayer(), included).size();
 		pl.getLogger().info(evt.getPlayer()+" now has "+advancements+" advancements");
+		if(advancements == ADV_WL_TRIGGER &&
+				!evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
+			evt.getPlayer().addScoreboardTag("whitelist_mode");
+		}
 		addObjectiveAndTeam(evt.getPlayer(), advancements);
 	}
 
@@ -87,6 +94,10 @@ public class ScoreboardManager implements Listener{
 	public void onLevelUp(PlayerLevelChangeEvent evt){
 		pl.getServer().getScoreboardManager().getMainScoreboard()
 			.getObjective("levels").setDisplaySlot(DisplaySlot.SIDEBAR);
+		if(evt.getNewLevel() == LVL_WL_TRIGGER &&
+				!evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
+			evt.getPlayer().addScoreboardTag("whitelist_mode");
+		}
 		if(!XP_ACTIVE) new BukkitRunnable(){@Override public void run(){
 			pl.getServer().getScoreboardManager().getMainScoreboard().clearSlot(DisplaySlot.SIDEBAR);
 			XP_ACTIVE = false;
