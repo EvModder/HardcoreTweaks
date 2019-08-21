@@ -15,10 +15,10 @@ import Hardcore.HCTweaks;
 import Hardcore.SpectatorManager;
 import Hardcore.TeleportManager;
 
-public class CommandSeen_TEMP implements Listener {
+public class TEMP_CmdSeen_CmdPing implements Listener {
 	final HCTweaks pl;
 
-	public CommandSeen_TEMP(HCTweaks plugin){
+	public TEMP_CmdSeen_CmdPing(HCTweaks plugin){
 		pl = plugin;
 	}
 
@@ -86,8 +86,11 @@ public class CommandSeen_TEMP implements Listener {
 				if(!player.hasPermission("essentials.seen")) evt.setCancelled(true);
 			}
 		}
-		else if(command.equals("ping") && space == -1){
-			player.sendMessage(ChatColor.GOLD+"Ping: "+ChatColor.GREEN+CommandAutoQuit.getPing(player));
+		else if(command.equals("ping")){
+			Player target = space == -1 ? player : pl.getServer().getPlayer(message.substring(space + 1));
+			if(target != null){
+				player.sendMessage(ChatColor.GOLD+"Ping: "+ChatColor.GREEN+CommandAutoQuit.getPing(target));
+			}
 		}
 	}
 }
