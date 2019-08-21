@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import Hardcore.SpectatorManager.WatchMode;
 
 public class TeleportManager implements Listener{
 	final HCTweaks pl;
@@ -93,6 +94,12 @@ public class TeleportManager implements Listener{
 		}
 		p1.addScoreboardTag("tp_"+p2.getUniqueId());
 		p2.addScoreboardTag("tp_"+p1.getUniqueId());
+		WatchMode p1Mode = SpectatorManager.getSpectateMode(p1);
+		WatchMode p2Mode = SpectatorManager.getSpectateMode(p2);
+		if(p1Mode != SpectatorManager.DEFAULT_MODE && SpectatorManager.isDefaultSpectateMode(p2))
+			SpectatorManager.setSpectateMode(p2, p1Mode);
+		if(p2Mode != SpectatorManager.DEFAULT_MODE && SpectatorManager.isDefaultSpectateMode(p1))
+			SpectatorManager.setSpectateMode(p1, p2Mode);
 	}
 	static boolean check_tp_tags(Player p1, Player p2){
 		return p1.getScoreboardTags().contains("tp_"+p2.getUniqueId()) ||
@@ -133,16 +140,20 @@ public class TeleportManager implements Listener{
 			}
 			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
 			if(space < 0 || target == null){
-				player.sendMessage(ChatColor.RED + "Please specify who to tpa to " + ChatColor.UNDERLINE + "exactly");
+				player.sendMessage(ChatColor.RED + "Please specify who to tpa to "
+						+ ChatColor.UNDERLINE + "exactly");
 				evt.setCancelled(true);
 			}
 			else if(target.getUniqueId().equals(player.getUniqueId())){
 				player.sendMessage(ChatColor.RED + "No need to teleport to yourself =P");
+				evt.setCancelled(true);
+				return;
 			}
 			else if(check_tp_tags(player, target)){
 				player.sendMessage(ChatColor.RED +
 						"You have already used a tp that is connected to " + target.getName());
 				evt.setCancelled(true);
+				return;
 			}
 			else{
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "Sent a tpa to " + target.getName());
@@ -159,14 +170,18 @@ public class TeleportManager implements Listener{
 			if(space < 0 || target == null){
 				player.sendMessage(ChatColor.RED + "Please specify who to tpahere " + ChatColor.UNDERLINE + "exactly");
 				evt.setCancelled(true);
+				return;
 			}
 			else if(target.getUniqueId().equals(player.getUniqueId())){
 				player.sendMessage(ChatColor.RED + "No need to teleport yourself =P");
+				evt.setCancelled(true);
+				return;
 			}
 			else if(check_tp_tags(player, target)){
 				player.sendMessage(ChatColor.RED +
 						"You have already used a tp that is connected to " + target.getName());
 				evt.setCancelled(true);
+				return;
 			}
 			else{
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "Sent a tpahere to " + target.getName());
@@ -182,7 +197,9 @@ public class TeleportManager implements Listener{
 			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
 			if(space < 0 || target == null){
 				player.sendMessage(ChatColor.RED + "Please specify the player whose request you are accepting");
+				player.sendMessage(ChatColor.GRAY+"/tpaccept <name>");
 				evt.setCancelled(true);
+				return;
 			}
 			else if(pendingTpaheres.containsKey(target.getUniqueId())){
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "Accepted " + target.getName() + "'s tp request");
@@ -193,16 +210,19 @@ public class TeleportManager implements Listener{
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onTeleport(PlayerTeleportEvent evt){
 		if(evt.isCancelled()) return;
+		pl.getLogger().info(evt.getPlayer().getName()+" teleport cause: "+evt.getCause());
 		switch(evt.getCause()){
-			case COMMAND: case SPECTATE: break;
-			default: return;
+			//Unknown: nether portal = two teleport events:
+			//one for dimension shift, and one for y axis. Second event is "UNKNOWN"
+			case COMMAND: case SPECTATE: case PLUGIN: break;
+			default:
+				if(evt.getPlayer().getGameMode() == GameMode.SURVIVAL) return;
 		}
 		Player teleporter = evt.getPlayer();
 		Player receiver = SpectatorManager.getNearbyGm0WithPerms(evt.getTo(), teleporter);
 		if(receiver == null){
 			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			teleporter.sendMessage(ChatColor.RED+"Unable to locate destination player");
-			evt.setCancelled(true);
 		}
 		else if(pendingTpas.containsKey(teleporter.getUniqueId())
 				&& pendingTpas.get(teleporter.getUniqueId()).equals(receiver.getUniqueId())){
