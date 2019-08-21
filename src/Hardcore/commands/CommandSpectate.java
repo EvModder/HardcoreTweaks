@@ -29,6 +29,9 @@ public class CommandSpectate extends EvCommand{
 			ArrayList<String> tabCompletes = new ArrayList<String>();
 			if("blacklist".startsWith(args[0])) tabCompletes.add("blacklist");
 			if("whitelist".startsWith(args[0])) tabCompletes.add("whitelist");
+			if("off".startsWith(args[0])) tabCompletes.add("whitelist");
+			if("block-all".startsWith(args[0])) tabCompletes.add("whitelist");
+			if("disable".startsWith(args[0])) tabCompletes.add("whitelist");
 			if("mode".startsWith(args[0])) tabCompletes.add("mode");
 			return tabCompletes;
 		}
@@ -82,9 +85,11 @@ public class CommandSpectate extends EvCommand{
 		player.sendMessage(ChatColor.GRAY+"Current mode: "
 					+ChatColor.RED+SpectatorManager.getSpectateMode(player));
 		player.sendMessage(ChatColor.WHITE+"WHITELIST"
-					+ChatColor.GOLD+" - List the only people who CAN spectate you");
+					+ChatColor.GOLD+" - List the only people who CAN spectate you\n"
+							+ChatColor.GRAY+"(Blocks everyone by default)");
 		player.sendMessage(ChatColor.WHITE+"BLACKLIST"
-				+ChatColor.GOLD+" - List the only people who CANNOT spectate you");
+					+ChatColor.GOLD+" - List the only people who CANNOT spectate you\n"
+							+ChatColor.GRAY+"(Blocks nobody by default");
 	}
 
 	@Override
@@ -99,9 +104,10 @@ public class CommandSpectate extends EvCommand{
 			return true;
 		}
 		if(args.length == 0) return false;
-		args[0] = args[0].toLowerCase();
+		args[0] = args[0].toLowerCase().replaceAll("-", "");
 		if(args.length == 1){
-			if(args[0].equals("whitelist") || args[0].equals("wl")){
+			if(args[0].equals("whitelist") || args[0].equals("wl")
+					|| args[0].equals("blockall") || args[0].equals("disable") || args[0].equals("off")){
 				if(SpectatorManager.getSpectateMode(player) == WatchMode.WHITELIST) displayWhitelist(player);
 				else{
 					SpectatorManager.setSpectateMode(player, WatchMode.WHITELIST);
@@ -120,8 +126,9 @@ public class CommandSpectate extends EvCommand{
 				Player target = pl.getServer().getPlayer(args[0]);
 				if(target != null){
 					sender.sendMessage("Command interpreted as /tp "+target.getName());
-					player.teleport(target, TeleportCause.COMMAND);
-					player.setSpectatorTarget(target);
+					if(player.teleport(target, TeleportCause.COMMAND)){
+						player.setSpectatorTarget(target);
+					}
 				}
 				else sender.sendMessage("Unknown argument \""+args[0]+"\"");
 			}
@@ -156,7 +163,7 @@ public class CommandSpectate extends EvCommand{
 					}
 				}
 			}
-			else if(args[0].equals("blacklist") || args[0].equals("bl") || args[0].equals("blocked")){
+			else if(args[0].equals("blacklist") || args[0].equals("bl") || args[0].contains("block")){
 				@SuppressWarnings("deprecation")
 				OfflinePlayer spectator = pl.getServer().getOfflinePlayer(args[1]);
 				if(spectator == null) sender.sendMessage("Could not find player \""+args[1]+"\"");

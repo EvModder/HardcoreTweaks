@@ -61,9 +61,12 @@ public class SpectatorManager implements Listener{
 	public static boolean canSpectate(UUID spectator, Player target){
 		String bl_tag = "spectator_blacklist_"+spectator;
 		String wl_tag = "spectator_whitelist_"+spectator;
-		return !target.getScoreboardTags().contains(bl_tag) &&
+		boolean ans= !target.getScoreboardTags().contains(bl_tag) &&
 				(getSpectateMode(target) != WatchMode.WHITELIST
 				|| target.getScoreboardTags().contains(wl_tag));
+		org.bukkit.Bukkit.getLogger().info(org.bukkit.Bukkit.getOfflinePlayer(spectator).getName()
+				+ " able to spectate "+target.getName()+": "+ans);
+		return ans;
 	}
 	public static WatchMode getSpectateMode(Player player){
 		return player.getScoreboardTags().contains("whitelist_mode") ? WatchMode.WHITELIST
@@ -80,6 +83,10 @@ public class SpectatorManager implements Listener{
 			player.removeScoreboardTag("whitelist_mode");
 		}
 		else org.bukkit.Bukkit.getLogger().severe("Unknown spectate mode: "+mode);
+	}
+	public static boolean isDefaultSpectateMode(Player player){
+		return !player.getScoreboardTags().contains("whitelist_mode") && 
+				!player.getScoreboardTags().contains("blacklist_mode");
 	}
 
 	static Player getClosestGm0WithPerms(Location loc, Player spec){
@@ -192,7 +199,13 @@ public class SpectatorManager implements Listener{
 					if(newTarget == null){
 						specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
 					}
-					else specP.setSpectatorTarget(newTarget);
+					else{
+						specP.setSpectatorTarget(newTarget);
+						new BukkitRunnable(){@Override public void run(){
+							specP.setSpectatorTarget(null);
+							specP.setSpectatorTarget(newTarget);
+						}}.runTaskLater(pl, 40);
+					}
 				}
 			}
 		}}.runTaskTimer(pl, 20, 20);

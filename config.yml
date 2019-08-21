@@ -30,3 +30,6 @@ advancements-included:
   - nether
   - end
   - husbandry
+
+set-whitelist-mode-when-has-x-advancements: 15
+set-whitelist-mode-when-has-x-levels: 50
