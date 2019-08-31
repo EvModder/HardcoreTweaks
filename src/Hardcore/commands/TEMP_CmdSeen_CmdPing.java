@@ -47,12 +47,17 @@ public class TEMP_CmdSeen_CmdPing implements Listener {
 					pl.getLogger().info("Target player: "+target.getName());
 					final String lastDeath = HCTweaks.getLastDeath(target.getName());
 					final int numDeaths = HCTweaks.getNumDeaths(target.getName());
+					final int augEvtParticip = HCTweaks.augEventParicipant(target.getUniqueId());
 					final UUID uuid = player.getUniqueId();
 					new BukkitRunnable(){@Override public void run(){
 						Player player = pl.getServer().getPlayer(uuid);
 						if(player != null){
 							player.sendMessage(ChatColor.GOLD+" - Last Death: "+ChatColor.RED+lastDeath);
 							player.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+numDeaths);
+							if(augEvtParticip > 0){
+								player.sendMessage(ChatColor.GOLD+" - Aug'19 Event"+
+							(augEvtParticip == 1 ? " participant" : ": "+ChatColor.RED+"champion"));
+							}
 							//TODO: join date(?), used TPs
 							if(target.isOnline()){
 								List<String> tps = TeleportManager.get_tp_tags(target.getPlayer());
@@ -73,7 +78,8 @@ public class TEMP_CmdSeen_CmdPing implements Listener {
 									long SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
 									long sinceDeath = target.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
 									long secondsLeft = SECONDS_UNTIL_RESPAWN - sinceDeath;
-									player.sendMessage(SpectatorManager.formatTimeUntilRespawn(
+									player.sendMessage(ChatColor.GOLD+" - "+
+											SpectatorManager.formatTimeUntilRespawn(
 											secondsLeft, ChatColor.RED, ChatColor.GOLD));
 								}
 								player.sendMessage(ChatColor.GOLD+" - Spectators: "+ChatColor.WHITE

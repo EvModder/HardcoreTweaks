@@ -200,11 +200,23 @@ public class SpectatorManager implements Listener{
 						specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
 					}
 					else{
+						UUID targetUUID = newTarget.getUniqueId();
 						specP.setSpectatorTarget(newTarget);
 						new BukkitRunnable(){@Override public void run(){
 							specP.setSpectatorTarget(null);
-							specP.setSpectatorTarget(newTarget);
+							Player target = pl.getServer().getPlayer(targetUUID);
+							if(target != null) specP.setSpectatorTarget(newTarget);
+						}}.runTaskLater(pl, 20);
+						new BukkitRunnable(){@Override public void run(){
+							specP.setSpectatorTarget(null);
+							Player target = pl.getServer().getPlayer(targetUUID);
+							if(target != null) specP.setSpectatorTarget(newTarget);
 						}}.runTaskLater(pl, 40);
+						new BukkitRunnable(){@Override public void run(){
+							specP.setSpectatorTarget(null);
+							Player target = pl.getServer().getPlayer(targetUUID);
+							if(target != null) specP.setSpectatorTarget(newTarget);
+						}}.runTaskLater(pl, 80);
 					}
 				}
 			}

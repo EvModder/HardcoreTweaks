@@ -20,13 +20,14 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -216,13 +217,17 @@ public class NewPlayerManager implements Listener{
 		player.setWalkSpeed(0f);
 
 		ItemStack myGuide = GUIDE_BOOK.clone();
-		ItemMeta meta = myGuide.getItemMeta();
+		BookMeta meta = (BookMeta) myGuide.getItemMeta();
 		List<String> lore = meta.getLore();
 		lore.add(ChatColor.GRAY+"Owner: "+player.getName());
 		String dateStr = new SimpleDateFormat("yyy-MM-dd").format(new Date());
 		lore.add(ChatColor.GRAY+"Printed: "+dateStr);
 		meta.setLore(lore);
-		myGuide.setItemMeta(meta);
+		int idx = 0;
+		for(String page : meta.getPages()){
+			//pl.getLogger().info("Page "+idx+": "+page);
+			meta.setPage(++idx, page.replaceAll("%name%", player.getName()));
+		}
 		player.getInventory().setItemInMainHand(myGuide);
 
 		File deathDir = new File("./plugins/EvFolder/deaths/"+player.getName());
@@ -233,6 +238,9 @@ public class NewPlayerManager implements Listener{
 		}
 		else{
 			pl.getServer().broadcastMessage(SPAWN_MSG.replaceAll("%name%", player.getName()));
+		}
+		if(new File("./plugins/EvFolder/aug_evt/"+player.getUniqueId()+".txt").exists()){
+			player.addScoreboardTag("event_participant");
 		}
 
 		//TODO: new permissions plugin. This is garbage.
@@ -275,10 +283,9 @@ public class NewPlayerManager implements Listener{
 		}
 	}
 
-	@EventHandler
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
-		if(evt.getMessage().trim().equals("/accept-terms")
-				&& evt.getPlayer().removeScoreboardTag("unconfirmed")){
+		if(evt.getMessage().trim().equals("/accept-terms") && evt.getPlayer().removeScoreboardTag("unconfirmed")){
 			Player player = evt.getPlayer();
 			evt.setCancelled(true);
 			player.setWalkSpeed(0.2f);

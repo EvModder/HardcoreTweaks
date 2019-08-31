@@ -108,6 +108,27 @@ public class TeleportManager implements Listener{
 	public static List<String> get_tp_tags(Player p1){
 		return p1.getScoreboardTags().stream().filter(tag -> tag.startsWith("tp_")).collect(Collectors.toList());
 	}
+	public static String getNameFromTpTag(String tag){
+		try{
+			OfflinePlayer player = org.bukkit.Bukkit.getOfflinePlayer(UUID.fromString(tag.substring(3)));
+			return player.getName();
+		}
+		catch(NullPointerException | IllegalArgumentException ex){return null;}
+	}
+
+	public void notifyTpTarget(Player target, Player sender){
+		target.sendMessage(ChatColor.GREEN+sender.getName()+" has sent you a teleport request");
+		target.sendMessage(ChatColor.GRAY+"To accept it, type "
+						+ChatColor.DARK_GREEN+"/tpaccept "+sender.getName());
+		StringBuilder builder = new StringBuilder("").append(ChatColor.GRAY).append(
+				"If you accept it, you will no longer be able to teleport the following players: ");
+		for(String tag : get_tp_tags(sender)){
+			if(!target.getScoreboardTags().contains(tag)){
+				builder.append(ChatColor.GOLD).append(getNameFromTpTag(tag)).append(ChatColor.GRAY).append(", ");
+			}
+		}
+		target.sendMessage(builder.substring(0, builder.length()-2)+".");
+	}
 
 	@EventHandler
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
@@ -157,6 +178,7 @@ public class TeleportManager implements Listener{
 			}
 			else{
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "Sent a tpa to " + target.getName());
+				notifyTpTarget(target, player);
 				pendingTpas.put(player.getUniqueId(), target.getUniqueId());
 			}
 		}
@@ -185,6 +207,7 @@ public class TeleportManager implements Listener{
 			}
 			else{
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "Sent a tpahere to " + target.getName());
+				notifyTpTarget(target, player);
 				pendingTpaheres.put(player.getUniqueId(), target.getUniqueId());
 			}
 		}
@@ -209,7 +232,7 @@ public class TeleportManager implements Listener{
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onTeleport(PlayerTeleportEvent evt){
-		if(evt.isCancelled()) return;
+		if(evt.isCancelled() || evt.getPlayer().getScoreboardTags().contains("unconfirmed")) return;
 		pl.getLogger().info(evt.getPlayer().getName()+" teleport cause: "+evt.getCause());
 		switch(evt.getCause()){
 			//Unknown: nether portal = two teleport events:

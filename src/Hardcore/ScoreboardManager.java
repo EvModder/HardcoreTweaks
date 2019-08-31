@@ -1,17 +1,12 @@
 package Hardcore;
 
 import java.util.HashSet;
-import java.util.UUID;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLevelChangeEvent;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.EvUtils;
 
@@ -71,7 +66,7 @@ public class ScoreboardManager implements Listener{
 		addObjectiveAndTeam(evt.getPlayer(), advancements);
 	}
 
-	@EventHandler
+	/*@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent evt){
 		pl.getServer().getScoreboardManager().getMainScoreboard()
 			.getObjective("levels").setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -87,9 +82,9 @@ public class ScoreboardManager implements Listener{
 			XP_ACTIVE = false;
 		}}.runTaskLater(pl, 20*5); //5s
 		XP_ACTIVE = true;
-	}
+	}*/
 
-	boolean XP_ACTIVE = false;
+	/*boolean XP_ACTIVE = false;
 	@EventHandler
 	public void onLevelUp(PlayerLevelChangeEvent evt){
 		pl.getServer().getScoreboardManager().getMainScoreboard()
@@ -104,4 +99,5 @@ public class ScoreboardManager implements Listener{
 		}}.runTaskLater(pl, 20*30);
 		XP_ACTIVE = true;
 	}
+	*/
 }

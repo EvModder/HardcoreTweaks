@@ -124,4 +124,10 @@ public class HCTweaks extends EvPlugin{
 	public void runCommand(String command){
 		getServer().dispatchCommand(getServer().getConsoleSender(), command);
 	}
+
+	public static int augEventParicipant(UUID uniqueId){
+		return new File("./plugins/EvFolder/aug_evt/"+uniqueId+".txt").exists()
+				? (new File("./plugins/EvFolder/aug_evt/"+uniqueId+".txt").length() > 10 ? 2 : 1)
+				: 0;
+	}
 }
