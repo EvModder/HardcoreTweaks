@@ -32,7 +32,7 @@ public class TEMP_CmdSeen_CmdPing implements Listener {
 
 	@EventHandler @SuppressWarnings("deprecation")
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
-		if(evt.getMessage().charAt(0) != '/') return;
+		if(evt.getMessage().charAt(0) != '/' || evt.isCancelled()) return;
 		String message = evt.getMessage().trim();
 		String command = message.toLowerCase().trim();
 		int space = command.indexOf(' ');

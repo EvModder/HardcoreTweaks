@@ -60,8 +60,8 @@ permissions:
       default: true
 
    hardcore.showscores:
-      description: Permission to use /deathlog
-      default: true
+      description: Permission to use /showscores
+      default: op
 
    hardcore.spectateconfig:
       description: Permission to use /spectate

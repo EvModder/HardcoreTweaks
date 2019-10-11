@@ -123,6 +123,7 @@ public class CommandSpectate extends EvCommand{
 			}
 			else if(args[0].equals("mode")) displayCurrentMode(player);
 			else{
+				@SuppressWarnings("deprecation")
 				Player target = pl.getServer().getPlayer(args[0]);
 				if(target != null){
 					sender.sendMessage("Command interpreted as /tp "+target.getName());

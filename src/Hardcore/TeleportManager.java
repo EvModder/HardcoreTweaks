@@ -130,7 +130,7 @@ public class TeleportManager implements Listener{
 		target.sendMessage(builder.substring(0, builder.length()-2)+".");
 	}
 
-	@EventHandler
+	@SuppressWarnings("deprecation") @EventHandler
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		if(evt.getMessage().charAt(0) != '/') return;
 		String message = evt.getMessage().trim();
