@@ -183,6 +183,23 @@ public class NewPlayerManager implements Listener{
 		loc.getBlock().setType(Material.AIR);
 	}
 
+	public void giveGuideBook(Player player){
+		ItemStack myGuide = GUIDE_BOOK.clone();
+		BookMeta meta = (BookMeta) myGuide.getItemMeta();
+		List<String> lore = meta.getLore();
+		lore.add(ChatColor.GRAY+"Owner: "+player.getName());
+		String dateStr = new SimpleDateFormat("yyy-MM-dd").format(new Date());
+		lore.add(ChatColor.GRAY+"Printed: "+dateStr);
+		meta.setLore(lore);
+		/*int idx = 0;
+		for(String page : meta.getPages()){
+			pl.getLogger().info("Page "+idx+": "+page);
+			if(page.contains("%name%")) meta.setPage(++idx, page.replaceAll("%name%", player.getName()));
+		}*/
+		myGuide.setItemMeta(meta);
+		player.getInventory().setItemInMainHand(myGuide);
+	}
+
 	public void spawnNewPlayer(Player player){
 		pl.getLogger().warning("Spawning new player: "+player.getName());
 		final UUID uuid = player.getUniqueId();
@@ -215,20 +232,7 @@ public class NewPlayerManager implements Listener{
 		}}.runTaskLater(pl, 20);
 		player.setBedSpawnLocation(spawnLoc);
 		player.setWalkSpeed(0f);
-
-		ItemStack myGuide = GUIDE_BOOK.clone();
-		BookMeta meta = (BookMeta) myGuide.getItemMeta();
-		List<String> lore = meta.getLore();
-		lore.add(ChatColor.GRAY+"Owner: "+player.getName());
-		String dateStr = new SimpleDateFormat("yyy-MM-dd").format(new Date());
-		lore.add(ChatColor.GRAY+"Printed: "+dateStr);
-		meta.setLore(lore);
-		int idx = 0;
-		for(String page : meta.getPages()){
-			//pl.getLogger().info("Page "+idx+": "+page);
-			meta.setPage(++idx, page.replaceAll("%name%", player.getName()));
-		}
-		player.getInventory().setItemInMainHand(myGuide);
+		giveGuideBook(player);
 
 		File deathDir = new File("./plugins/EvFolder/deaths/"+player.getName());
 		if(deathDir.exists()){
@@ -258,6 +262,8 @@ public class NewPlayerManager implements Listener{
 			player.sendMessage(ChatColor.GREEN+">> "
 					+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
 			createSpawnBox(player.getLocation());
+			player.getInventory().clear();
+			giveGuideBook(player);
 		}
 
 		// Update tags

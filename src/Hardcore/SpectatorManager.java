@@ -197,7 +197,9 @@ public class SpectatorManager implements Listener{
 				if(target == null || !(target instanceof Player)){
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
 					if(newTarget == null){
-						specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
+						new BukkitRunnable(){@Override public void run(){
+							specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
+						}}.runTaskLater(pl, 1);
 					}
 					else{
 						UUID targetUUID = newTarget.getUniqueId();
