@@ -1,19 +1,27 @@
 package Hardcore;
 
 import java.util.HashSet;
+import java.util.UUID;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLevelChangeEvent;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.EvUtils;
 
 public class ScoreboardManager implements Listener{
 	final HashSet<String> included;
 	final int ADV_WL_TRIGGER, LVL_WL_TRIGGER;
-	//final Scoreboard emptyBoard;
 	final HCTweaks pl;
 
 	public ScoreboardManager(HCTweaks plugin){
@@ -22,7 +30,16 @@ public class ScoreboardManager implements Listener{
 		included.addAll(pl.getConfig().getStringList("advancements-included"));
 		ADV_WL_TRIGGER = pl.getConfig().getInt("set-whitelist-mode-when-has-x-advancements", 15);
 		LVL_WL_TRIGGER = pl.getConfig().getInt("set-whitelist-mode-when-has-x-levels", 50);
-		//emptyBoard = pl.getServer().getScoreboardManager().getNewScoreboard();
+
+		/*
+		Scoreboard mainBoard = pl.getServer().getScoreboardManager().getMainScoreboard();
+		mainBoard.registerNewObjective("buildscore", "dummy", "§[■] Blocks Placed [■]");
+		mainBoard.registerNewObjective("advancements", "dummy ", "");
+		mainBoard.registerNewObjective("deaths", "deathCount", "");
+		mainBoard.registerNewObjective("murderscore", "playerKillCount ", "");
+		mainBoard.registerNewObjective("levels", "level", "§e- §bLevels §e-");
+		mainBoard.registerNewObjective("health", "health", "Health");
+		//*/
 	}
 
 	boolean isMainAdvancement(Advancement adv){
@@ -45,13 +62,22 @@ public class ScoreboardManager implements Listener{
 		pl.getServer().getScoreboardManager().getMainScoreboard().getObjective("advancements")
 			.getScore(player.getName()).setScore(numAdvancements);
 
+		boolean wasUpdated = false;
 		String oldTeamName = getAdvancementTeamName(numAdvancements-1);
 		Team oldTeam = player.getScoreboard().getTeam(oldTeamName);
-		if(oldTeam != null) oldTeam.removeEntry(player.getName());
+		if(oldTeam != null) wasUpdated |= oldTeam.removeEntry(player.getName());
 		String newTeamName = getAdvancementTeamName(numAdvancements);
 		Team newTeam = player.getScoreboard().getTeam(newTeamName);
 		if(newTeam == null) newTeam = player.getScoreboard().registerNewTeam(newTeamName);
+		wasUpdated |= (!newTeam.hasEntry(player.getName()));
 		newTeam.addEntry(player.getName());
+		if(wasUpdated){//TODO: Does this actually fix the issue?
+			Plugin btlp = pl.getServer().getPluginManager().getPlugin("BungeeTabListPlus");
+			if(btlp != null){
+				pl.getServer().getPluginManager().disablePlugin(btlp);
+				pl.getServer().getPluginManager().enablePlugin(btlp);
+			}
+		}
 	}
 
 	@EventHandler
@@ -66,38 +92,81 @@ public class ScoreboardManager implements Listener{
 		addObjectiveAndTeam(evt.getPlayer(), advancements);
 	}
 
-	/*@EventHandler
+	private static boolean SIDEBAR_ACTIVE = false;
+	public static void showOnSidebar(String objective, int seconds){
+		HCTweaks pl = HCTweaks.getPlugin();
+		pl.getServer().getScoreboardManager().getMainScoreboard().getObjective(objective).setDisplaySlot(DisplaySlot.SIDEBAR);
+
+		if(!SIDEBAR_ACTIVE){
+			SIDEBAR_ACTIVE = true;
+			new BukkitRunnable(){@Override public void run(){
+				pl.getServer().getScoreboardManager().getMainScoreboard().clearSlot(DisplaySlot.SIDEBAR);
+				SIDEBAR_ACTIVE = false;
+			}}.runTaskLater(pl, 20*seconds);
+		}
+	}
+
+	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent evt){
-		pl.getServer().getScoreboardManager().getMainScoreboard()
-			.getObjective("levels").setDisplaySlot(DisplaySlot.SIDEBAR);
+		//showOnSidebar("levels", 5);//TODO: remove
 		UUID uuid = evt.getPlayer().getUniqueId();
-		if(!XP_ACTIVE) new BukkitRunnable(){@Override public void run(){
+		new BukkitRunnable(){@Override public void run(){
 			Player player = pl.getServer().getPlayer(uuid);
 			if(player != null && !SpectatorManager.isSpectatorFavorYes(player)){
 				int advancements = EvUtils.getVanillaAdvancements(player, included).size();
 				pl.getLogger().info(player.getName()+" has "+advancements+" advancements");
 				addObjectiveAndTeam(player, advancements);
 			}
-			pl.getServer().getScoreboardManager().getMainScoreboard().clearSlot(DisplaySlot.SIDEBAR);
-			XP_ACTIVE = false;
 		}}.runTaskLater(pl, 20*5); //5s
-		XP_ACTIVE = true;
-	}*/
+	}
 
-	/*boolean XP_ACTIVE = false;
 	@EventHandler
 	public void onLevelUp(PlayerLevelChangeEvent evt){
-		pl.getServer().getScoreboardManager().getMainScoreboard()
-			.getObjective("levels").setDisplaySlot(DisplaySlot.SIDEBAR);
-		if(evt.getNewLevel() == LVL_WL_TRIGGER &&
-				!evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
+		//showOnSidebar("levels", 30);//TODO: remove
+		if(evt.getNewLevel() == LVL_WL_TRIGGER && !evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
 			evt.getPlayer().addScoreboardTag("whitelist_mode");
 		}
-		if(!XP_ACTIVE) new BukkitRunnable(){@Override public void run(){
-			pl.getServer().getScoreboardManager().getMainScoreboard().clearSlot(DisplaySlot.SIDEBAR);
-			XP_ACTIVE = false;
-		}}.runTaskLater(pl, 20*30);
-		XP_ACTIVE = true;
 	}
-	*/
+
+	private HashSet<int[]> blockPlacedCoords = new HashSet<int[]>();
+	@EventHandler
+	public void onBlockPlaced(BlockPlaceEvent evt){
+		Block b = evt.getBlock();
+		if(b.isLiquid() || b.isPassable() || b.getType().hasGravity() || b.getType().isSolid()) return;
+		if(!blockPlacedCoords.add(new int[]{b.getX(), b.getY(), b.getZ()})) return;
+		
+		Score buildScore = pl.getServer().getScoreboardManager().getMainScoreboard()
+				.getObjective("buildscore").getScore(evt.getPlayer().getName());
+		switch(evt.getBlock().getType()){
+			case NETHERRACK:
+			case DIRT: case GRASS_BLOCK:
+			case COBBLESTONE:
+			case STONE: case STONE_BRICKS:
+				buildScore.setScore(buildScore.getScore() + 1);
+				break;
+			case OBSIDIAN:
+			case END_STONE:
+			case GLASS:
+			case BLACK_STAINED_GLASS:
+			case BLUE_STAINED_GLASS:
+			case BROWN_STAINED_GLASS:
+			case CYAN_STAINED_GLASS:
+			case GRAY_STAINED_GLASS:
+			case GREEN_STAINED_GLASS:
+			case LIGHT_BLUE_STAINED_GLASS:
+			case LIGHT_GRAY_STAINED_GLASS:
+			case LIME_STAINED_GLASS:
+			case MAGENTA_STAINED_GLASS:
+			case ORANGE_STAINED_GLASS:
+			case PINK_STAINED_GLASS:
+			case PURPLE_STAINED_GLASS:
+			case RED_STAINED_GLASS:
+			case WHITE_STAINED_GLASS:
+			case YELLOW_STAINED_GLASS:
+				buildScore.setScore(buildScore.getScore() + 3);
+				break;
+			default:
+				buildScore.setScore(buildScore.getScore() + 2);
+		}
+	}
 }

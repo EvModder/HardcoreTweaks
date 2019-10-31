@@ -24,6 +24,8 @@ teleports-per-life: 100 #TODO
 can-teleport-person-twice: false #TODO
 can-teleport-person-twice-indirectly: false #TODO
 
+set-whitelist-mode-when-has-x-advancements: 15
+set-whitelist-mode-when-has-x-levels: 50
 advancements-included:
   - story
   - adventure
@@ -31,5 +33,8 @@ advancements-included:
   - end
   - husbandry
 
-set-whitelist-mode-when-has-x-advancements: 15
-set-whitelist-mode-when-has-x-levels: 50
+
+#----------------------------------------------------------#
+#                      Event Related                       #
+#----------------------------------------------------------#
+#TODO
