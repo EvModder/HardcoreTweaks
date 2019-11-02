@@ -19,6 +19,7 @@ import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.EvUtils;
 
+
 public class ScoreboardManager implements Listener{
 	final HashSet<String> included;
 	final int ADV_WL_TRIGGER, LVL_WL_TRIGGER;
@@ -132,7 +133,7 @@ public class ScoreboardManager implements Listener{
 	@EventHandler
 	public void onBlockPlaced(BlockPlaceEvent evt){
 		Block b = evt.getBlock();
-		if(b.isLiquid() || b.isPassable() || b.getType().hasGravity() || b.getType().isSolid()) return;
+		if(b.isLiquid() || b.isPassable() || b.getType().hasGravity() || !b.getType().isSolid()) return;
 		if(!blockPlacedCoords.add(new int[]{b.getX(), b.getY(), b.getZ()})) return;
 		
 		Score buildScore = pl.getServer().getScoreboardManager().getMainScoreboard()
