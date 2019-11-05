@@ -2,6 +2,7 @@ package Hardcore;
 
 import java.util.HashSet;
 import java.util.UUID;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.Block;
@@ -129,20 +130,32 @@ public class ScoreboardManager implements Listener{
 		}
 	}
 
-	private HashSet<int[]> blockPlacedCoords = new HashSet<int[]>();
+	class Coord{
+		int x, y, z;
+		Coord(int a, int b, int c){x=a; y=b; z=c;} 
+		@Override public boolean equals(Object o){return o instanceof Coord &&
+				((Coord)o).x == x && ((Coord)o).y == y && ((Coord)o).z == z;}
+		@Override public int hashCode(){return x * y * z;}
+	}
+	private HashSet<Coord> blockPlacedCoords = new HashSet<Coord>();
 	@EventHandler
 	public void onBlockPlaced(BlockPlaceEvent evt){
 		Block b = evt.getBlock();
-		if(b.isLiquid() || b.isPassable() || b.getType().hasGravity() || !b.getType().isSolid()) return;
-		if(!blockPlacedCoords.add(new int[]{b.getX(), b.getY(), b.getZ()})) return;
-		
+		if(b.isLiquid() || b.isPassable() || !b.getType().isSolid()
+				|| evt.getBlockReplacedState().getType() != Material.AIR) return;
+		if(!blockPlacedCoords.add(new Coord(b.getX(), b.getY(), b.getZ()))) return;
+
+		String name10 = evt.getPlayer().getName();
+		if(name10.length() > 10) name10 = name10.substring(0, 10);
 		Score buildScore = pl.getServer().getScoreboardManager().getMainScoreboard()
-				.getObjective("buildscore").getScore(evt.getPlayer().getName());
+				.getObjective("buildscore").getScore(name10);
 		switch(evt.getBlock().getType()){
 			case NETHERRACK:
 			case DIRT: case GRASS_BLOCK:
 			case COBBLESTONE:
 			case STONE: case STONE_BRICKS:
+			case ACACIA_LEAVES: case BIRCH_LEAVES: case DARK_OAK_LEAVES:
+			case JUNGLE_LEAVES: case OAK_LEAVES: case SPRUCE_LEAVES:
 				buildScore.setScore(buildScore.getScore() + 1);
 				break;
 			case OBSIDIAN:
@@ -167,7 +180,11 @@ public class ScoreboardManager implements Listener{
 				buildScore.setScore(buildScore.getScore() + 3);
 				break;
 			default:
-				buildScore.setScore(buildScore.getScore() + 2);
+				if(b.getType().isOccluding())
+					buildScore.setScore(buildScore.getScore() + 2);
+				else
+					buildScore.setScore(buildScore.getScore() + 1);
 		}
 	}
+
 }

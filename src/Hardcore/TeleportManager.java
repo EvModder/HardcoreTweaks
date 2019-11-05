@@ -48,6 +48,7 @@ public class TeleportManager implements Listener{
 	}
 
 	static void add_tp_tags(Player p1, Player p2){
+		HCTweaks.getPlugin().getLogger().info("Tagging "+p1.getName()+"<=>"+p2.getName());
 		p1.sendMessage(ChatColor.GRAY+"You will no longer be able to tp to "+
 				ChatColor.WHITE+p2.getName()+ChatColor.GRAY+" (in this life).");
 		p2.sendMessage(ChatColor.GRAY+"You will no longer be able to tp to "+

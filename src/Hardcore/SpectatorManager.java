@@ -59,9 +59,10 @@ public class SpectatorManager implements Listener{
 	}
 
 	public static boolean canSpectate(UUID spectator, Player target){
+		if(spectator.equals(target.getUniqueId())) return false;
 		String bl_tag = "spectator_blacklist_"+spectator;
 		String wl_tag = "spectator_whitelist_"+spectator;
-		boolean ans= !target.getScoreboardTags().contains(bl_tag) &&
+		boolean ans = !target.getScoreboardTags().contains(bl_tag) &&
 				(getSpectateMode(target) != WatchMode.WHITELIST
 				|| target.getScoreboardTags().contains(wl_tag));
 		org.bukkit.Bukkit.getLogger().info(org.bukkit.Bukkit.getOfflinePlayer(spectator).getName()

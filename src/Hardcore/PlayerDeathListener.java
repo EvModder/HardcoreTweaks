@@ -22,6 +22,7 @@ public class PlayerDeathListener implements Listener{
 		evt.getEntity().saveData();
 		evt.getEntity().loadData();
 		evt.getEntity().getScoreboard().resetScores(name);
+		if(name.length() > 10) evt.getEntity().getScoreboard().resetScores(name.substring(0, 10));
 		evt.getEntity().addScoreboardTag("dead");
 		pl.getLogger().warning("Death of "+name+": "+evt.getDeathMessage());
 
