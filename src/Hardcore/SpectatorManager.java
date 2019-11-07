@@ -30,7 +30,7 @@ public class SpectatorManager implements Listener{
 	static WatchMode DEFAULT_MODE;
 	final int MAX_DIST_SQ = 32*32;
 	final long SECONDS_UNTIL_RESPAWN;
-	final float FLY_SPEED = 0.01f;
+	final float FLY_SPEED = 0.02f;
 	static HashSet<UUID> spectators;
 	final Location WORLD_SPAWN;
 
@@ -176,16 +176,22 @@ public class SpectatorManager implements Listener{
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
 					if(newTarget == null){
 						if(specP.hasPotionEffect(PotionEffectType.BLINDNESS)){
+							specP.setFlySpeed(FLY_SPEED);
 							specP.removePotionEffect(PotionEffectType.BLINDNESS);
 							specP.teleport(WORLD_SPAWN, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
-							specP.sendTitle("", "There is nobody online who you can spectate right now", 10, 20*60, 20);
+							specP.sendTitle("", "There is nobody you can spectate right now", 10, 20*60, 20);
 							new BukkitRunnable(){@Override public void run(){
-								specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
+								if(!specP.hasPotionEffect(PotionEffectType.BLINDNESS)){
+									specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
+								}
 							}}.runTaskLater(pl, 20*60);
 						}
 					}
 					else{
-						specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+						if(!specP.hasPotionEffect(PotionEffectType.BLINDNESS)){
+							specP.resetTitle();
+							specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+						}
 						UUID targetUUID = newTarget.getUniqueId();
 						specP.setSpectatorTarget(newTarget);
 						new BukkitRunnable(){@Override public void run(){
@@ -208,6 +214,11 @@ public class SpectatorManager implements Listener{
 			}
 		}}.runTaskTimer(pl, 20, 20);
 	}
+
+	/*TODO: @EventHandler
+	public void onSpectatePlayer(PlayerSpectateEvent evt){
+		//set specP inv contents <- target inv contents (empty if target == null)
+	}*/
 
 	public void addSpectator(Player player){
 		if(spectators.add(player.getUniqueId())){

@@ -50,9 +50,9 @@ public class TeleportManager implements Listener{
 
 	static void add_tp_tags(Player p1, Player p2){
 		HCTweaks.getPlugin().getLogger().info("Tagging "+p1.getName()+"<=>"+p2.getName());
-		p1.sendMessage(ChatColor.GRAY+"You will no longer be able to tp to "+
+		p1.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
 				ChatColor.WHITE+p2.getName()+ChatColor.GRAY+" (in this life).");
-		p2.sendMessage(ChatColor.GRAY+"You will no longer be able to tp to "+
+		p2.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
 				ChatColor.WHITE+p1.getName()+ChatColor.GRAY+" (in this life).");
 
 		TreeSet<String> p1tps = new TreeSet<String>(), p2tps = new TreeSet<String>();
@@ -64,7 +64,7 @@ public class TeleportManager implements Listener{
 					&& !("tp_"+p1.getUniqueId()).equals(tag)) p2tps.add(tag);
 		if(!p1tps.isEmpty()){
 			p2.sendMessage(ChatColor.GRAY+"Due to "+
-					ChatColor.WHITE+p1.getName()+ChatColor.GRAY+"'s past teleports, you can no longer tp:");
+					ChatColor.WHITE+p1.getName()+ChatColor.GRAY+"'s tp-history, you can also no longer tp:");
 			StringBuilder noTps = new StringBuilder("");
 			for(String tag : p1tps){
 				try{
@@ -163,8 +163,7 @@ public class TeleportManager implements Listener{
 			}
 			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
 			if(space < 0 || target == null){
-				player.sendMessage(ChatColor.RED + "Please specify who to tpa to "
-						+ ChatColor.UNDERLINE + "exactly");
+				player.sendMessage(ChatColor.RED + "Please specify who to tpa to " + ChatColor.UNDERLINE + "exactly");
 				evt.setCancelled(true);
 			}
 			else if(target.getUniqueId().equals(player.getUniqueId())){
@@ -202,8 +201,7 @@ public class TeleportManager implements Listener{
 				return;
 			}
 			else if(check_tp_tags(player, target)){
-				player.sendMessage(ChatColor.RED +
-						"You have already used a tp that is connected to " + target.getName());
+				player.sendMessage(ChatColor.RED + "You have already used a tp connected to " + target.getName());
 				evt.setCancelled(true);
 				return;
 			}
@@ -219,7 +217,8 @@ public class TeleportManager implements Listener{
 				evt.setCancelled(true);
 				return;
 			}
-			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
+			String targetName = message.substring(space + 1).trim();
+			Player target = pl.getServer().getPlayer(targetName);
 			if(space < 0 || target == null){
 				player.sendMessage(ChatColor.RED + "Please specify the player whose request you are accepting");
 				player.sendMessage(ChatColor.GRAY+"/tpaccept <name>");
@@ -227,8 +226,12 @@ public class TeleportManager implements Listener{
 				return;
 			}
 			else if(pendingTpaheres.containsKey(target.getUniqueId())){
-				player.sendMessage(ChatColor.LIGHT_PURPLE + "Accepted " + target.getName() + "'s tp request");
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "Accepting " + targetName + "'s tpahere request");
 			}
+			else if(pendingTpas.containsKey(target.getUniqueId())){
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "Accepting " + targetName + "'s tpa request");
+			}
+			else {}
 		}
 	}
 
@@ -254,14 +257,16 @@ public class TeleportManager implements Listener{
 			//Unknown: nether portal = two teleport events:
 			//one for dimension shift, and one for y axis. Second event is "UNKNOWN"
 			case COMMAND: case SPECTATE: case PLUGIN: break;
-			default: if(evt.getPlayer().getGameMode() == GameMode.SURVIVAL) return;
+			case CHORUS_FRUIT: return;
+			default:
+				if(evt.getPlayer().getGameMode() == GameMode.SURVIVAL) return;
 		}
 		Player teleporter = evt.getPlayer();
 		Player receiver = getNearbyGm0WithPerms(evt.getTo(), teleporter);
 		if(receiver == null){
-			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			teleporter.sendMessage(ChatColor.RED+"Unable to locate destination player");
 			pl.getLogger().warning("Teleport failed: receiver == null");
+			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			evt.setCancelled(true);
 		}
 		else if(pendingTpas.getOrDefault(teleporter.getUniqueId(), UUID.randomUUID()).equals(receiver.getUniqueId())){
@@ -289,6 +294,7 @@ public class TeleportManager implements Listener{
 		else{
 			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			if(teleporter.getGameMode() != GameMode.SURVIVAL){
+				pl.getLogger().info("GameMode != SURVIVAL; tp permitted");
 				if(teleporter.getGameMode() == GameMode.SPECTATOR) teleporter.setSpectatorTarget(receiver);
 				return;
 			}

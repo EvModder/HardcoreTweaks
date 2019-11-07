@@ -3,15 +3,21 @@ package Hardcore.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
+import org.bukkit.plugin.Plugin;
 import Hardcore.HCTweaks;
 import Hardcore.SpectatorManager;
 import Hardcore.TeleportManager;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Server;
 import org.bukkit.Statistic;
 import net.evmodder.EvLib.EvCommand;
 
@@ -75,7 +81,28 @@ public class CommandAbout extends EvCommand{
 			numDeaths = HCTweaks.getNumDeaths(onlineTarget.getName());
 			augEvtParticip = HCTweaks.augEventParicipant(onlineTarget.getUniqueId());
 		}
-		pl.getServer().getPluginCommand("essentials:seen").execute(sender, "essentials:seen", args);
+		pl.getServer().getPluginCommand("essentials:seen").execute(new CommandSender(){
+			@Override public Set<PermissionAttachmentInfo> getEffectivePermissions(){return sender.getEffectivePermissions();}
+			@Override public boolean isPermissionSet(String perm){return sender.isPermissionSet(perm);}
+			@Override public boolean isPermissionSet(Permission perm){return sender.isPermissionSet(perm);}
+			@Override public void recalculatePermissions(){sender.recalculatePermissions();}
+			@Override public void removeAttachment(PermissionAttachment pa){sender.removeAttachment(pa);}
+			@Override public boolean isOp(){return sender.isOp();}
+			@Override public void setOp(boolean op){sender.setOp(op);}
+			@Override public String getName(){return sender.getName();}
+			@Override public Server getServer(){return sender.getServer();}
+			@Override public void sendMessage(String msg){sender.sendMessage(msg);}
+			@Override public void sendMessage(String[] msgs){sender.sendMessage(msgs);}
+			@Override public PermissionAttachment addAttachment(Plugin pl){return sender.addAttachment(pl);}
+			@Override public PermissionAttachment addAttachment(Plugin pl, int i){return sender.addAttachment(pl, i);}
+			@Override public PermissionAttachment addAttachment(Plugin pl, String s, boolean b){
+				return sender.addAttachment(pl, s, b);}
+			@Override public PermissionAttachment addAttachment(Plugin pl, String s, boolean b, int i){
+				return sender.addAttachment(pl, s, b, i);}
+
+			@Override public boolean hasPermission(String perm){return true;}
+			@Override public boolean hasPermission(Permission perm){return true;}
+		}, "essentials:seen", args);
 
 		sender.sendMessage(ChatColor.GOLD+" - Last Death: "+ChatColor.RED+lastDeath);
 		sender.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+numDeaths);

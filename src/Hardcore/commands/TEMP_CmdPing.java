@@ -28,7 +28,8 @@ public class TEMP_CmdPing implements Listener {
 			if(target != null){
 				player.sendMessage(ChatColor.GOLD+"Ping: "+ChatColor.GREEN+CommandAutoQuit.getPing(target));
 			}
-			if(player.hasPermission("essentials.ping")) evt.setCancelled(true);
+			//if(!player.hasPermission("essentials.ping"))
+				evt.setCancelled(true);
 		}
 	}
 }
