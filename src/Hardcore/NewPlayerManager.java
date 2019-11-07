@@ -315,5 +315,19 @@ public class NewPlayerManager implements Listener{
 			evt.getPlayer().sendMessage(ChatColor.RED+"You need to read the book first");
 			evt.setCancelled(true);
 		}
+		else if(evt.getPlayer().getScoreboardTags().contains("dead") && evt.getMessage().trim().equals("/respawn")){
+			evt.getPlayer().kickPlayer(ChatColor.GOLD+"Resetting playerdata...\n"+
+					ChatColor.GRAY+"When you rejoin, you will respawn as a fresh start!");
+
+			UUID uuid = evt.getPlayer().getUniqueId();
+			new BukkitRunnable(){
+				int attempts = 0;
+				@Override public void run(){
+					//Make sure they're offline
+					Player p = pl.getServer().getPlayer(uuid);
+					if((p == null && pl.deletePlayerdata(uuid)) || ++attempts == 10) cancel();
+				}
+			}.runTaskTimer(pl, 5, 20);
+		}
 	}
 }

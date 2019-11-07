@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
@@ -231,6 +232,20 @@ public class TeleportManager implements Listener{
 		}
 	}
 
+	static Player getNearbyGm0WithPerms(Location loc, Player spec){
+		double closestDistGm0 = 10000D;
+		Player closestPlayer = null;
+		for(Player p : loc.getWorld().getPlayers()){
+			double dist;
+			if(p.getGameMode() == GameMode.SURVIVAL && (dist=p.getLocation().distanceSquared(loc)) < closestDistGm0
+					&& (!SpectatorManager.isSpectatorFavorYes(spec) || SpectatorManager.canSpectate(spec.getUniqueId(), p))){
+				closestDistGm0 = dist;
+				closestPlayer = p;
+			}
+		}
+		return closestPlayer;
+	}
+
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onTeleport(PlayerTeleportEvent evt){
 		if(evt.isCancelled() || evt.getPlayer().getScoreboardTags().contains("unconfirmed")) return;
@@ -239,17 +254,18 @@ public class TeleportManager implements Listener{
 			//Unknown: nether portal = two teleport events:
 			//one for dimension shift, and one for y axis. Second event is "UNKNOWN"
 			case COMMAND: case SPECTATE: case PLUGIN: break;
-			default:
-				if(evt.getPlayer().getGameMode() == GameMode.SURVIVAL) return;
+			default: if(evt.getPlayer().getGameMode() == GameMode.SURVIVAL) return;
 		}
 		Player teleporter = evt.getPlayer();
-		Player receiver = SpectatorManager.getNearbyGm0WithPerms(evt.getTo(), teleporter);
+		Player receiver = getNearbyGm0WithPerms(evt.getTo(), teleporter);
 		if(receiver == null){
 			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			teleporter.sendMessage(ChatColor.RED+"Unable to locate destination player");
+			pl.getLogger().warning("Teleport failed: receiver == null");
+			evt.setCancelled(true);
 		}
-		else if(pendingTpas.containsKey(teleporter.getUniqueId())
-				&& pendingTpas.get(teleporter.getUniqueId()).equals(receiver.getUniqueId())){
+		else if(pendingTpas.getOrDefault(teleporter.getUniqueId(), UUID.randomUUID()).equals(receiver.getUniqueId())){
+			pl.getLogger().info(receiver.getName()+" accepted "+teleporter.getName()+"'s /tpa");
 			pendingTpas.remove(teleporter.getUniqueId());
 			teleporter.sendMessage(ChatColor.GREEN+receiver.getName()+" accepted your tpa");
 			receiver.sendMessage(ChatColor.GREEN+"Accepted "+teleporter.getName()+"'s tpa");
@@ -259,9 +275,9 @@ public class TeleportManager implements Listener{
 //			teleporter.removeScoreboardTag("has_tpa");
 //			receiver.removeScoreboardTag("has_tpaccept");
 		}
-		else if(pendingTpaheres.containsKey(receiver.getUniqueId())
-				&& pendingTpaheres.get(receiver.getUniqueId()).equals(teleporter.getUniqueId())){
+		else if(pendingTpaheres.getOrDefault(receiver.getUniqueId(), UUID.randomUUID()).equals(teleporter.getUniqueId())){
 			pendingTpaheres.remove(receiver.getUniqueId());
+			pl.getLogger().info(teleporter.getName()+" accepted "+receiver.getName()+"'s /tpahere");
 			receiver.sendMessage(ChatColor.GREEN+teleporter.getName()+" accepted your tpa");
 			teleporter.sendMessage(ChatColor.GREEN+"Accepted "+receiver.getName()+"'s tpa");
 //			if(!receiver.isOp()) pl.setPermission(receiver, "essentials.tpahere", false);
@@ -277,8 +293,8 @@ public class TeleportManager implements Listener{
 				return;
 			}
 			teleporter.sendMessage(ChatColor.RED+"Error: Could not find a pending tpa with "+receiver.getName());
-			//evt.setCancelled(true);
-			return;
+			pl.getLogger().warning("Unable to find a tpa from "+teleporter.getName()+" to "+receiver.getName());
+			evt.setCancelled(true);
 		}
 	}
 

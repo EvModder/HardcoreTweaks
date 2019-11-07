@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -31,6 +32,7 @@ public class SpectatorManager implements Listener{
 	final long SECONDS_UNTIL_RESPAWN;
 	final float FLY_SPEED = 0.01f;
 	static HashSet<UUID> spectators;
+	final Location WORLD_SPAWN;
 
 	public SpectatorManager(HCTweaks plugin){
 		pl = plugin;
@@ -41,6 +43,7 @@ public class SpectatorManager implements Listener{
 		DEFAULT_MODE = pl.getConfig().getString("spectator-mode", "blacklist").equals("blacklist") ?
 				WatchMode.BLACKLIST : WatchMode.WHITELIST;
 		spectators = new HashSet<UUID>();
+		WORLD_SPAWN = new Location(pl.getServer().getWorlds().get(0), 0, 90, 0);
 		loopActive = false;
 		runSpecatorLoop();
 	}
@@ -108,19 +111,6 @@ public class SpectatorManager implements Listener{
 		}
 		return closestPlayer;
 	}
-	static Player getNearbyGm0WithPerms(Location loc, Player spec){
-		double closestDistGm0 = 10000D;
-		Player closestPlayer = null;
-		for(Player p : loc.getWorld().getPlayers()){
-			double dist;
-			if(p.getGameMode() == GameMode.SURVIVAL && (spec == null || canSpectate(spec.getUniqueId(), p)) &&
-					(dist=p.getLocation().distanceSquared(loc)) < closestDistGm0){
-				closestDistGm0 = dist;
-				closestPlayer = p;
-			}
-		}
-		return closestPlayer;
-	}
 
 	public static String formatTimeUntilRespawn(long SECONDS_LEFT, ChatColor numC, ChatColor textC){
 		long secondsLeft = SECONDS_LEFT;
@@ -172,24 +162,11 @@ public class SpectatorManager implements Listener{
 			}
 			for(UUID uuid : spectators){
 				Player specP = pl.getServer().getPlayer(uuid).getPlayer();
-				specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
 
 				int secondsSinceDeath = specP.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
 				long secondsLeft = SECONDS_UNTIL_RESPAWN - secondsSinceDeath;
-				if(secondsLeft <= 0){
-					new BukkitRunnable(){@Override public void run(){
-						specP.kickPlayer(ChatColor.GREEN+"You may now respawn!");
-					}}.runTaskLater(pl, 1);
-					secondsLeft = 0;
-					new BukkitRunnable(){
-						int attempts = 0;
-						@Override public void run(){
-							//Make sure they're offline
-							Player p = pl.getServer().getPlayer(uuid);
-							if((p == null && pl.deletePlayerdata(uuid)) || ++attempts == 10) cancel();
-						}
-					}.runTaskTimer(pl, 5, 20);
-				}
+				if(secondsLeft <= 0) ActionBarUtils.sendToPlayer(
+						ChatColor.GREEN+"You may now respawn with "+ChatColor.AQUA+"/respawn", specP);
 				else ActionBarUtils.sendToPlayer(
 						formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY), specP);
 
@@ -198,11 +175,17 @@ public class SpectatorManager implements Listener{
 				if(target == null || !(target instanceof Player)){
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
 					if(newTarget == null){
-						new BukkitRunnable(){@Override public void run(){
-							specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
-						}}.runTaskLater(pl, 1);
+						if(specP.hasPotionEffect(PotionEffectType.BLINDNESS)){
+							specP.removePotionEffect(PotionEffectType.BLINDNESS);
+							specP.teleport(WORLD_SPAWN, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
+							specP.sendTitle("", "There is nobody online who you can spectate right now", 10, 20*60, 20);
+							new BukkitRunnable(){@Override public void run(){
+								specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
+							}}.runTaskLater(pl, 20*60);
+						}
 					}
 					else{
+						specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
 						UUID targetUUID = newTarget.getUniqueId();
 						specP.setSpectatorTarget(newTarget);
 						new BukkitRunnable(){@Override public void run(){
@@ -230,6 +213,7 @@ public class SpectatorManager implements Listener{
 		if(spectators.add(player.getUniqueId())){
 			pl.getLogger().info("Added spectator: "+player.getName());
 			player.setFlySpeed(FLY_SPEED);
+			player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
 //			pl.setPermission(player, "essentials.tpa", false);
 //			pl.setPermission(player, "essentials.tpahere", false);
 //			pl.setPermission(player, "essentials.tpaccept", false);
