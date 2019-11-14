@@ -3,23 +3,19 @@ package Hardcore.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
-import org.bukkit.plugin.Plugin;
 import Hardcore.HCTweaks;
 import Hardcore.SpectatorManager;
 import Hardcore.TeleportManager;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Server;
 import org.bukkit.Statistic;
 import net.evmodder.EvLib.EvCommand;
+import net.evmodder.EvLib.extras.MethodMocker;
 
 public class CommandAbout extends EvCommand{
 	HCTweaks pl;
@@ -46,10 +42,6 @@ public class CommandAbout extends EvCommand{
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String args[]){
-		if(sender instanceof Player == false){
-			sender.sendMessage(ChatColor.RED+"This command can only be run by in-game players!");
-			return true;
-		}
 		if(args.length == 0){
 			sender.sendMessage(ChatColor.RED+"Too few arguments");
 			return false;
@@ -81,7 +73,14 @@ public class CommandAbout extends EvCommand{
 			numDeaths = HCTweaks.getNumDeaths(onlineTarget.getName());
 			augEvtParticip = HCTweaks.augEventParicipant(onlineTarget.getUniqueId());
 		}
-		pl.getServer().getPluginCommand("essentials:seen").execute(new CommandSender(){
+		if(sender instanceof Player) pl.getServer().getPluginCommand("essentials:seen").execute(
+				(Player)MethodMocker.getProxy(
+						(Player)sender, new Class<?>[]{Player.class},
+						Collections.singletonMap("hasPermission",
+								x -> x.toString().equals("essentials.seen") || sender.hasPermission(x.toString())),
+						false
+				)
+		/*new CommandSender(){
 			@Override public Set<PermissionAttachmentInfo> getEffectivePermissions(){return sender.getEffectivePermissions();}
 			@Override public boolean isPermissionSet(String perm){return sender.isPermissionSet(perm);}
 			@Override public boolean isPermissionSet(Permission perm){return sender.isPermissionSet(perm);}
@@ -100,9 +99,13 @@ public class CommandAbout extends EvCommand{
 			@Override public PermissionAttachment addAttachment(Plugin pl, String s, boolean b, int i){
 				return sender.addAttachment(pl, s, b, i);}
 
-			@Override public boolean hasPermission(String perm){return true;}
-			@Override public boolean hasPermission(Permission perm){return true;}
-		}, "essentials:seen", args);
+			@Override public boolean hasPermission(String perm){
+				return perm.equals("essentials.seen") || sender.hasPermission(perm);}
+			@Override public boolean hasPermission(Permission perm){
+				return perm.toString().equals("essentials.seen") || sender.hasPermission(perm);}
+		}*/
+				, "essentials:seen", args);
+		else pl.getServer().getPluginCommand("essentials:seen").execute(sender, "essentials:seen", args);
 
 		sender.sendMessage(ChatColor.GOLD+" - Last Death: "+ChatColor.RED+lastDeath);
 		sender.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+numDeaths);
