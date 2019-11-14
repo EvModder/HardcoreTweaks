@@ -43,9 +43,11 @@ public class NewPlayerManager implements Listener{
 	final ItemStack GUIDE_BOOK;
 	final ArrayDeque<Location> spawnLocs;
 	final String WORLD_NAME, SPAWN_MSG, RESPAWN_MSG;
+	final long SECONDS_UNTIL_RESPAWN;
 
 	public NewPlayerManager(HCTweaks plugin){
 		pl = plugin;
+		SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
 		WORLD_NAME = pl.getConfig().getString("world-name", "Reliquist");
 		World hardcoreWorld = pl.getServer().getWorld(WORLD_NAME);
 		Block chestBlock = hardcoreWorld.getBlockAt(0, 1, 0);
@@ -316,6 +318,14 @@ public class NewPlayerManager implements Listener{
 			evt.setCancelled(true);
 		}
 		else if(evt.getPlayer().getScoreboardTags().contains("dead") && evt.getMessage().trim().equals("/respawn")){
+			int secondsSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
+			if(secondsSinceDeath < SECONDS_UNTIL_RESPAWN){
+				evt.getPlayer().sendMessage(ChatColor.RED+"You cannot use that command yet");
+				evt.getPlayer().sendMessage(SpectatorManager.
+						formatTimeUntilRespawn(SECONDS_UNTIL_RESPAWN - secondsSinceDeath, ChatColor.GOLD, ChatColor.GRAY));
+				return;
+			}
+			evt.getPlayer().resetTitle();
 			evt.getPlayer().kickPlayer(ChatColor.GOLD+"Resetting playerdata...\n"+
 					ChatColor.GRAY+"When you rejoin, you will respawn as a fresh start!");
 

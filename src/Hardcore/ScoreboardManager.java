@@ -177,6 +177,9 @@ public class ScoreboardManager implements Listener{
 			case RED_STAINED_GLASS:
 			case WHITE_STAINED_GLASS:
 			case YELLOW_STAINED_GLASS:
+			case QUARTZ_BLOCK:
+			case QUARTZ_PILLAR:
+			case BLUE_ICE:
 				buildScore.setScore(buildScore.getScore() + 3);
 				break;
 			default:

@@ -28,9 +28,9 @@ public class TeleportManager implements Listener{
 
 	public TeleportManager(HCTweaks plugin){
 		pl = plugin;
-		PluginCommand cmdTpa = pl.getServer().getPluginCommand("tpa");
-		PluginCommand cmdTpahere = pl.getServer().getPluginCommand("tpahere");
-		PluginCommand cmdTpaccept = pl.getServer().getPluginCommand("tpaccept");
+		PluginCommand cmdTpa = pl.getServer().getPluginCommand("essentials:tpa");
+		PluginCommand cmdTpahere = pl.getServer().getPluginCommand("essentials:tpahere");
+		PluginCommand cmdTpaccept = pl.getServer().getPluginCommand("essentials:tpaccept");
 		if(cmdTpa == null || cmdTpa.getAliases() == null || cmdTpa.getLabel() == null)
 			pl.getLogger().warning("Could not find command: /tpa");
 		if(cmdTpahere == null) pl.getLogger().warning("Could not find command: /tpahere");
@@ -235,8 +235,8 @@ public class TeleportManager implements Listener{
 		}
 	}
 
-	static Player getNearbyGm0WithPerms(Location loc, Player spec){
-		double closestDistGm0 = 10000D;
+	static Player getNearbyGm0WithPermsInRadius(Location loc, Player spec, double r){
+		double closestDistGm0 = r*r; // distanceSquared
 		Player closestPlayer = null;
 		for(Player p : loc.getWorld().getPlayers()){
 			double dist;
@@ -262,10 +262,11 @@ public class TeleportManager implements Listener{
 				if(evt.getPlayer().getGameMode() == GameMode.SURVIVAL) return;
 		}
 		Player teleporter = evt.getPlayer();
-		Player receiver = getNearbyGm0WithPerms(evt.getTo(), teleporter);
+		Player receiver = getNearbyGm0WithPermsInRadius(evt.getTo(), teleporter, 100D);
 		if(receiver == null){
 			teleporter.sendMessage(ChatColor.RED+"Unable to locate destination player");
-			pl.getLogger().warning("Teleport failed: receiver == null");
+			//pl.getLogger().warning("Teleport failed: receiver == null,"
+			//		+ "tpToLoc: "+evt.getTo().getBlockX()+","+evt.getTo().getBlockY()+","+evt.getTo().getBlockZ());
 			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			evt.setCancelled(true);
 		}

@@ -179,7 +179,7 @@ public class SpectatorManager implements Listener{
 							specP.setFlySpeed(FLY_SPEED);
 							specP.removePotionEffect(PotionEffectType.BLINDNESS);
 							specP.teleport(WORLD_SPAWN, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
-							specP.sendTitle("", "There is nobody you can spectate right now", 10, 20*60, 20);
+							specP.sendTitle("", "There is nobody who you can spectate", 10, 20*60, 20);
 							new BukkitRunnable(){@Override public void run(){
 								if(!specP.hasPotionEffect(PotionEffectType.BLINDNESS)){
 									specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
@@ -252,7 +252,7 @@ public class SpectatorManager implements Listener{
 			long secondsSinceDeath = ticksSinceDeath/20;
 			pl.getLogger().info("Ticks since death: "+ticksSinceDeath);
 			pl.getLogger().info("Hours since death: "+(secondsSinceDeath/(60*60)));
-			if(secondsSinceDeath >= SECONDS_UNTIL_RESPAWN){
+			/*if(secondsSinceDeath >= SECONDS_UNTIL_RESPAWN){
 				//Reset playerdata & stats so next time they log in they will respawn :)
 				final UUID uuid = evt.getPlayer().getUniqueId();
 				new BukkitRunnable(){@Override public void run(){
@@ -265,7 +265,7 @@ public class SpectatorManager implements Listener{
 					Player p = pl.getServer().getPlayer(uuid);
 					if(p == null) pl.deletePlayerdata(uuid);
 				}}.runTaskLater(pl, 20);
-			}
+			}*/
 		}
 	}
 
