@@ -156,6 +156,8 @@ public class ScoreboardManager implements Listener{
 			case STONE: case STONE_BRICKS:
 			case ACACIA_LEAVES: case BIRCH_LEAVES: case DARK_OAK_LEAVES:
 			case JUNGLE_LEAVES: case OAK_LEAVES: case SPRUCE_LEAVES:
+			case ACACIA_PLANKS: case BIRCH_PLANKS: case DARK_OAK_PLANKS:
+			case JUNGLE_PLANKS: case OAK_PLANKS: case SPRUCE_PLANKS:
 				buildScore.setScore(buildScore.getScore() + 1);
 				break;
 			case OBSIDIAN:
