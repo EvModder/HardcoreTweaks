@@ -78,11 +78,19 @@ public class CompassManager implements Listener{
 				}
 			}
 			if(closestUUID != null){
-				evt.getPlayer().setCompassTarget(bedLocs.get(closestUUID));
+				Location bedLoc = bedLocs.get(closestUUID);
+				evt.getPlayer().setCompassTarget(bedLoc);
 				OfflinePlayer targetPlayer = pl.getServer().getOfflinePlayer(closestUUID);
 				String target = targetPlayer == null ? "Unknown" : targetPlayer.getName();
 				evt.getPlayer().sendMessage(ChatColor.RED+"Compass is pointing towards "+
 						ChatColor.GOLD+target+ChatColor.RED+"'s bed");
+				if(evt.getPlayer().hasPermission("hardcore.compass.coords")){
+					evt.getPlayer().sendMessage(""+
+							ChatColor.GRAY+bedLoc.getBlockX()+ChatColor.GREEN+", "+
+							ChatColor.GRAY+bedLoc.getBlockY()+ChatColor.GREEN+", "+
+							ChatColor.GRAY+bedLoc.getBlockZ()+ChatColor.GREEN+"."
+					);
+				}
 			}
 		}
 	}
