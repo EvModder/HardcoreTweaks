@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
@@ -311,5 +312,30 @@ public class SpectatorManager implements Listener{
 			Player p = pl.getServer().getPlayer(uuid);
 			if(p != null) addSpectator(p);
 		}}.runTaskLater(pl, 20*5);
+	}
+
+	@SuppressWarnings("deprecation") @EventHandler
+	public void onPreCommand(PlayerCommandPreprocessEvent evt){
+		if(evt.getMessage().charAt(0) != '/') return;
+		String message = evt.getMessage().trim();
+		String command = message.toLowerCase();
+		int space = command.indexOf(' ');
+		command = (space > 0 ? command.substring(1, space) : command.substring(1));
+		Player player = evt.getPlayer();
+
+		if(command.equals("tp")) {
+			if(SpectatorManager.isSpectator(player)){
+				evt.setCancelled(true);
+				Player target = null;
+				if(space < 0 || (target=pl.getServer().getPlayer(message.substring(space + 1))) == null){
+					player.sendMessage(ChatColor.RED+"Please specify who you wish to tp to (exact username)");
+					player.sendMessage("Note: you can also use vanilla spectator menu (press 1)");
+				}
+				else{
+					player.teleport(target, TeleportCause.COMMAND);
+					player.setSpectatorTarget(target);
+				}
+			}
+		}
 	}
 }

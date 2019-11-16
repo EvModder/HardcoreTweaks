@@ -3,51 +3,49 @@ package Hardcore;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.scheduler.BukkitRunnable;
 import Hardcore.SpectatorManager.WatchMode;
+import Hardcore.commands.CommandTpa;
+import Hardcore.commands.CommandTpaccept;
+import Hardcore.commands.CommandTpahere;
+import net.evmodder.EvLib.util.Pair;
 
 public class TeleportManager implements Listener{
 	final HCTweaks pl;
-	final HashSet<String> tpaAliases, tpahereAliases, tpacceptAliases;
-	final HashMap<UUID, UUID> pendingTpas, pendingTpaheres;//from -> to
+	final HashMap<UUID, HashSet<UUID>> pendingTpas, pendingTpaheres;//to -> from
+	final HashMap<Pair<UUID, UUID>, BukkitRunnable> tpTimeouts;
 
 	public TeleportManager(HCTweaks plugin){
 		pl = plugin;
-		PluginCommand cmdTpa = pl.getServer().getPluginCommand("essentials:tpa");
-		PluginCommand cmdTpahere = pl.getServer().getPluginCommand("essentials:tpahere");
-		PluginCommand cmdTpaccept = pl.getServer().getPluginCommand("essentials:tpaccept");
-		if(cmdTpa == null || cmdTpa.getAliases() == null || cmdTpa.getLabel() == null)
-			pl.getLogger().warning("Could not find command: /tpa");
-		if(cmdTpahere == null) pl.getLogger().warning("Could not find command: /tpahere");
-		if(cmdTpaccept == null) pl.getLogger().warning("Could not find command: /tpaccept");
-		tpaAliases = new HashSet<String>();
-		tpahereAliases = new HashSet<String>();
-		tpacceptAliases = new HashSet<String>();
-		tpaAliases.addAll(cmdTpa.getAliases()); tpaAliases.add(cmdTpa.getLabel());
-		tpahereAliases.addAll(cmdTpahere.getAliases()); tpahereAliases.add(cmdTpahere.getLabel());
-		tpacceptAliases.addAll(cmdTpaccept.getAliases()); tpacceptAliases.add(cmdTpaccept.getLabel());
-		pl.getLogger().fine("Tpa aliases: " + tpaAliases.toString());
-		pl.getLogger().fine("Tpahere aliases: " + tpahereAliases.toString());
-		pl.getLogger().fine("Tpaccept aliases: " + tpacceptAliases.toString());
-		pendingTpas = new HashMap<UUID, UUID>();
-		pendingTpaheres = new HashMap<UUID, UUID>();
+		pendingTpas = new HashMap<UUID, HashSet<UUID>>();
+		pendingTpaheres = new HashMap<UUID, HashSet<UUID>>();
+		tpTimeouts = new HashMap<Pair<UUID, UUID>, BukkitRunnable>();
+		new CommandTpaccept(pl, this);
+		new CommandTpa(pl, this);
+		new CommandTpahere(pl, this);
 	}
 
+	public static String name_from_tp_tag(String tag){
+		try{
+			OfflinePlayer player = org.bukkit.Bukkit.getOfflinePlayer(UUID.fromString(tag.substring(3)));
+			return player.getName();
+		}
+		catch(NullPointerException | IllegalArgumentException ex){return null;}
+	}
+	public static List<String> get_tp_tags(Player p1){
+		return p1.getScoreboardTags().stream().filter(tag -> tag.startsWith("tp_")).collect(Collectors.toList());
+	}
+	public static boolean check_tp_tags(Player p1, Player p2){
+		return p1.getScoreboardTags().contains("tp_"+p2.getUniqueId()) ||
+				p2.getScoreboardTags().contains("tp_"+p1.getUniqueId());
+	}
 	static void add_tp_tags(Player p1, Player p2){
 		HCTweaks.getPlugin().getLogger().info("Tagging "+p1.getName()+"<=>"+p2.getName());
 		p1.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
@@ -55,44 +53,29 @@ public class TeleportManager implements Listener{
 		p2.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
 				ChatColor.WHITE+p1.getName()+ChatColor.GRAY+" (in this life).");
 
-		TreeSet<String> p1tps = new TreeSet<String>(), p2tps = new TreeSet<String>();
-		for(String tag : p1.getScoreboardTags())
-			if(tag.startsWith("tp_") && !p2.getScoreboardTags().contains(tag)
-					&& !("tp_"+p2.getUniqueId()).equals(tag)) p1tps.add(tag);
-		for(String tag : p2.getScoreboardTags())
-			if(tag.startsWith("tp_") && !p1.getScoreboardTags().contains(tag)
-					&& !("tp_"+p1.getUniqueId()).equals(tag)) p2tps.add(tag);
+		List<String> p1tps = p1.getScoreboardTags().stream()
+				.filter(tag -> tag.startsWith("tp_") && !p2.getScoreboardTags().contains(tag))
+				.collect(Collectors.toList());
+		List<String> p2tps = p2.getScoreboardTags().stream()
+				.filter(tag -> tag.startsWith("tp_") && !p1.getScoreboardTags().contains(tag))
+				.collect(Collectors.toList());
 		if(!p1tps.isEmpty()){
-			p2.sendMessage(ChatColor.GRAY+"Due to "+
-					ChatColor.WHITE+p1.getName()+ChatColor.GRAY+"'s tp-history, you can also no longer tp:");
-			StringBuilder noTps = new StringBuilder("");
-			for(String tag : p1tps){
-				try{
-					UUID uuid = UUID.fromString(tag.substring(3));
-					OfflinePlayer player = org.bukkit.Bukkit.getOfflinePlayer(uuid);
-					if(player != null) noTps.append(ChatColor.WHITE).append(player.getName())
-						.append(ChatColor.GRAY).append(", ");
-				}
-				catch(IllegalArgumentException ex){continue;}
-				p2.addScoreboardTag(tag);
-			}
-			p2.sendMessage(noTps.toString().substring(0, noTps.length()-2)+".");
+			p2.getScoreboardTags().addAll(p1tps);
+			p2.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+p1.getDisplayName()+
+					ChatColor.GRAY+"'s tp-history, you can also no longer tp: \n"+
+					p1tps.stream()
+					.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
+					.sorted().collect(Collectors.joining(ChatColor.GRAY+", "))
+					+".");
 		}
 		if(!p2tps.isEmpty()){
-			p1.sendMessage(ChatColor.GRAY+"Due to "+
-					ChatColor.WHITE+p2.getName()+ChatColor.GRAY+"'s past teleports, you can no longer tp:");
-			StringBuilder noTps = new StringBuilder("");
-			for(String tag : p2tps){
-				try{
-					UUID uuid = UUID.fromString(tag.substring(3));
-					OfflinePlayer player = org.bukkit.Bukkit.getOfflinePlayer(uuid);
-					if(player != null) noTps.append(ChatColor.WHITE).append(player.getName())
-						.append(ChatColor.GRAY).append(", ");
-				}
-				catch(IllegalArgumentException ex){continue;}
-				p1.addScoreboardTag(tag);
-			}
-			p1.sendMessage(noTps.toString().substring(0, noTps.length()-2)+".");
+			p1.getScoreboardTags().addAll(p2tps);
+			p1.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+p2.getDisplayName()+
+					ChatColor.GRAY+"'s past teleports, you can also no longer tp: \n"+
+					p2tps.stream()
+					.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
+					.sorted().collect(Collectors.joining(ChatColor.GRAY+", "))
+					+".");
 		}
 		p1.addScoreboardTag("tp_"+p2.getUniqueId());
 		p2.addScoreboardTag("tp_"+p1.getUniqueId());
@@ -103,139 +86,125 @@ public class TeleportManager implements Listener{
 		if(p2Mode != SpectatorManager.DEFAULT_MODE && SpectatorManager.isDefaultSpectateMode(p1))
 			SpectatorManager.setSpectateMode(p1, p2Mode);
 	}
-	static boolean check_tp_tags(Player p1, Player p2){
-		return p1.getScoreboardTags().contains("tp_"+p2.getUniqueId()) ||
-				p2.getScoreboardTags().contains("tp_"+p1.getUniqueId());
-	}
-	public static List<String> get_tp_tags(Player p1){
-		return p1.getScoreboardTags().stream().filter(tag -> tag.startsWith("tp_")).collect(Collectors.toList());
-	}
-	public static String getNameFromTpTag(String tag){
-		try{
-			OfflinePlayer player = org.bukkit.Bukkit.getOfflinePlayer(UUID.fromString(tag.substring(3)));
-			return player.getName();
-		}
-		catch(NullPointerException | IllegalArgumentException ex){return null;}
+
+	public List<String> get_pending_tps(UUID target){
+		HashSet<UUID> requesters = new HashSet<UUID>();
+		requesters.addAll(pendingTpas.getOrDefault(target, new HashSet<UUID>()));
+		requesters.addAll(pendingTpaheres.getOrDefault(target, new HashSet<UUID>()));
+		return requesters.stream()
+				.map((uuid) -> {
+					OfflinePlayer player = org.bukkit.Bukkit.getOfflinePlayer(uuid);
+					return player == null ? null : player.getName();
+				})
+				.filter(x -> x != null).sorted().collect(Collectors.toList());
 	}
 
-	public void notifyTpTarget(Player target, Player sender){
-		target.sendMessage(ChatColor.GREEN+sender.getName()+" has sent you a teleport request");
-		target.sendMessage(ChatColor.GRAY+"To accept it, type "
-						+ChatColor.DARK_GREEN+"/tpaccept "+sender.getName());
-		StringBuilder builder = new StringBuilder("").append(ChatColor.GRAY).append(
-				"If you accept it, you will no longer be able to teleport the following players: ");
-		for(String tag : get_tp_tags(sender)){
-			if(!target.getScoreboardTags().contains(tag)){
-				builder.append(ChatColor.GOLD).append(getNameFromTpTag(tag)).append(ChatColor.GRAY).append(", ");
-			}
-		}
-		target.sendMessage(builder.substring(0, builder.length()-2)+".");
+	private void cancelTimeout(Pair<UUID, UUID> tpPair){
+		BukkitRunnable timeout = tpTimeouts.remove(tpPair);
+		if(timeout != null && !timeout.isCancelled()) timeout.cancel();
 	}
 
-	@SuppressWarnings("deprecation") @EventHandler
-	public void onPreCommand(PlayerCommandPreprocessEvent evt){
-		if(evt.getMessage().charAt(0) != '/') return;
-		String message = evt.getMessage().trim();
-		String command = message.toLowerCase();
-		int space = command.indexOf(' ');
-		command = (space > 0 ? command.substring(1, space) : command.substring(1));
-		Player player = evt.getPlayer();
+	public void addPendingTpa(Player from, Player target){
+		if(check_tp_tags(from, target)){
+			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
+					+target.getDisplayName());
+			return;
+		}
+		final UUID fromUUID = from.getUniqueId(), targetUUID = target.getUniqueId();
+		HashSet<UUID> tpasToTarget = pendingTpas.getOrDefault(targetUUID, new HashSet<UUID>());
+		if(!tpasToTarget.add(fromUUID)){
+			from.sendMessage(ChatColor.RED+"You already have a pending tpa to "+ChatColor.GREEN+target.getDisplayName());
+			return;
+		}
+		if(pendingTpaheres.getOrDefault(targetUUID, new HashSet<UUID>()).contains(fromUUID)){
+			from.sendMessage(ChatColor.RED+"You cannot send a tpa to "+
+					ChatColor.GREEN+target.getDisplayName()+" until your tpahere request expires");
+			return;
+		}
+		target.sendMessage(ChatColor.GREEN+from.getDisplayName()+ChatColor.LIGHT_PURPLE+" requests to teleport to you");
+		target.sendMessage(ChatColor.LIGHT_PURPLE+"To accept, type "+ChatColor.AQUA+"/tpaccept "+from.getName());
+		target.sendMessage(ChatColor.GRAY+"If you accept, you will no longer be able to teleport: \n"+
+				get_tp_tags(from).stream()
+				.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
+				.collect(Collectors.joining(ChatColor.GRAY+", ")));
+		from.sendMessage(ChatColor.LIGHT_PURPLE+"Sent a tpa request to "+ChatColor.GREEN+target.getDisplayName());
 
-		if(command.equals("tp")) {
-			if(SpectatorManager.isSpectator(player)){
-				evt.setCancelled(true);
-				Player target = null;
-				if(space < 0 || (target=pl.getServer().getPlayer(message.substring(space + 1))) == null){
-					player.sendMessage(ChatColor.RED+"Please specify who you wish to tp to (exact username)");
-					player.sendMessage("Note: you can also use vanilla spectator menu (press 1)");
-				}
-				else{
-					player.teleport(target, TeleportCause.COMMAND);
-					player.setSpectatorTarget(target);
-				}
-			}
-		}
-		else if(tpaAliases.contains(command)){
-			if(SpectatorManager.isSpectator(player)){
-				player.sendMessage(ChatColor.RED+"Only the living may use this command");
-				evt.setCancelled(true);
-				return;
-			}
-			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
-			if(space < 0 || target == null){
-				player.sendMessage(ChatColor.RED + "Please specify who to tpa to " + ChatColor.UNDERLINE + "exactly");
-				evt.setCancelled(true);
-			}
-			else if(target.getUniqueId().equals(player.getUniqueId())){
-				player.sendMessage(ChatColor.RED + "No need to teleport to yourself =P");
-				evt.setCancelled(true);
-				return;
-			}
-			else if(check_tp_tags(player, target)){
-				player.sendMessage(ChatColor.RED +
-						"You have already used a tp that is connected to " + target.getName());
-				evt.setCancelled(true);
-				return;
-			}
-			else{
-				player.sendMessage(ChatColor.LIGHT_PURPLE + "Sent a tpa to " + target.getName());
-				notifyTpTarget(target, player);
-				pendingTpas.put(player.getUniqueId(), target.getUniqueId());
-			}
-		}
-		else if(tpahereAliases.contains(command)){
-			if(SpectatorManager.isSpectator(player)){
-				player.sendMessage(ChatColor.RED+"Only the living may use this command");
-				evt.setCancelled(true);
-				return;
-			}
-			Player target = pl.getServer().getPlayer(message.substring(space + 1).trim());
-			if(space < 0 || target == null){
-				player.sendMessage(ChatColor.RED + "Please specify who to tpahere " + ChatColor.UNDERLINE + "exactly");
-				evt.setCancelled(true);
-				return;
-			}
-			else if(target.getUniqueId().equals(player.getUniqueId())){
-				player.sendMessage(ChatColor.RED + "No need to teleport yourself =P");
-				evt.setCancelled(true);
-				return;
-			}
-			else if(check_tp_tags(player, target)){
-				player.sendMessage(ChatColor.RED + "You have already used a tp connected to " + target.getName());
-				evt.setCancelled(true);
-				return;
-			}
-			else{
-				player.sendMessage(ChatColor.LIGHT_PURPLE + "Sent a tpahere to " + target.getName());
-				notifyTpTarget(target, player);
-				pendingTpaheres.put(player.getUniqueId(), target.getUniqueId());
-			}
-		}
-		else if(tpacceptAliases.contains(command)){
-			if(SpectatorManager.isSpectator(player)){
-				player.sendMessage(ChatColor.RED+"Only the living may use this command");
-				evt.setCancelled(true);
-				return;
-			}
-			String targetName = message.substring(space + 1).trim();
-			Player target = pl.getServer().getPlayer(targetName);
-			if(space < 0 || target == null){
-				player.sendMessage(ChatColor.RED + "Please specify the player whose request you are accepting");
-				player.sendMessage(ChatColor.GRAY+"/tpaccept <name>");
-				evt.setCancelled(true);
-				return;
-			}
-			else if(pendingTpaheres.containsKey(target.getUniqueId())){
-				player.sendMessage(ChatColor.LIGHT_PURPLE + "Accepting " + targetName + "'s tpahere request");
-			}
-			else if(pendingTpas.containsKey(target.getUniqueId())){
-				player.sendMessage(ChatColor.LIGHT_PURPLE + "Accepting " + targetName + "'s tpa request");
-			}
-			else {}
-		}
+		BukkitRunnable timeout = new BukkitRunnable(){@Override public void run(){
+			Player from = pl.getServer().getPlayer(fromUUID), target = pl.getServer().getPlayer(targetUUID);
+			if(from != null) from.sendMessage(ChatColor.RED+"Your tpa request to "+
+					ChatColor.GREEN+target.getDisplayName()+ChatColor.RED+" has expired");
+			if(target != null) target.sendMessage(ChatColor.RED+"The tpa request from "+
+					ChatColor.GREEN+from.getCustomName()+ChatColor.RED+" has expired");
+			tpTimeouts.remove(new Pair<UUID, UUID>(fromUUID, targetUUID));
+		}};
+		tpTimeouts.put(new Pair<UUID, UUID>(fromUUID, targetUUID), timeout);
+		timeout.runTaskLater(pl, 2*60*20);
 	}
 
-	static Player getNearbyGm0WithPermsInRadius(Location loc, Player spec, double r){
+	public void addPendingTpahere(Player from, Player target){
+		if(check_tp_tags(from, target)){
+			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
+					+target.getDisplayName());
+			return;
+		}
+		final UUID fromUUID = from.getUniqueId(), targetUUID = target.getUniqueId();
+		HashSet<UUID> tpaheresToTarget = pendingTpaheres.getOrDefault(targetUUID, new HashSet<UUID>());
+		if(!tpaheresToTarget.add(fromUUID)){
+			from.sendMessage(ChatColor.RED+"You already have a pending tpahere for "+ChatColor.GREEN+target.getDisplayName());
+			return;
+		}
+		if(pendingTpas.getOrDefault(targetUUID, new HashSet<UUID>()).contains(fromUUID)){
+			from.sendMessage(ChatColor.RED+"You cannot send a tpahere to "+
+					ChatColor.GREEN+target.getDisplayName()+" until your tpa request expires");
+			return;
+		}
+		target.sendMessage(ChatColor.GREEN+from.getDisplayName()+ChatColor.LIGHT_PURPLE+" requests that you teleport to them");
+		target.sendMessage(ChatColor.LIGHT_PURPLE+"To accept, type "+ChatColor.AQUA+"/tpaccept "+from.getName());
+		target.sendMessage(ChatColor.GRAY+"If you accept, you will no longer be able to teleport: \n"+
+				get_tp_tags(from).stream()
+				.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
+				.collect(Collectors.joining(ChatColor.GRAY+", ")));
+		from.sendMessage(ChatColor.LIGHT_PURPLE+"Sent a tpahere request to "+ChatColor.GREEN+target.getDisplayName());
+
+		BukkitRunnable timeout = new BukkitRunnable(){@Override public void run(){
+			Player from = pl.getServer().getPlayer(fromUUID), target = pl.getServer().getPlayer(targetUUID);
+			if(from != null) from.sendMessage(ChatColor.RED+"Your tpahere request to "+
+					ChatColor.GREEN+target.getDisplayName()+ChatColor.RED+" has expired");
+			if(target != null) target.sendMessage(ChatColor.RED+"The tpahere request from "+
+					ChatColor.GREEN+from.getCustomName()+ChatColor.RED+" has expired");
+			tpTimeouts.remove(new Pair<UUID, UUID>(fromUUID, targetUUID));
+		}};
+		tpTimeouts.put(new Pair<UUID, UUID>(fromUUID, targetUUID), timeout);
+		timeout.runTaskLater(pl, 2*60*20);
+	}
+
+	public void acceptTeleport(Player accepter, Player from){
+		pl.getLogger().info(accepter.getName()+" accepted "+from.getName()+"'s tp request");
+
+		final UUID fromUUID = from.getUniqueId(), accepterUUID = accepter.getUniqueId();
+		boolean tpa = pendingTpas.getOrDefault(accepterUUID, new HashSet<UUID>()).remove(fromUUID);
+		boolean tpahere = pendingTpaheres.getOrDefault(accepterUUID, new HashSet<UUID>()).remove(fromUUID);
+		if(!tpa && !tpahere){
+			accepter.sendMessage(ChatColor.RED+"You do not have a pending teleport from "+ChatColor.GREEN+from.getDisplayName());
+			return;
+		}
+		cancelTimeout(new Pair<UUID, UUID>(fromUUID, accepterUUID));
+		if(check_tp_tags(from, accepter)){
+			accepter.sendMessage(ChatColor.RED+"You already have a teleport connected to "+from.getDisplayName());
+			from.sendMessage(ChatColor.RED+"You already have a teleport connected to "+accepter.getDisplayName());
+			return;
+		}
+		from.sendMessage(ChatColor.GREEN+accepter.getDisplayName()+
+				ChatColor.LIGHT_PURPLE+" accepted your "+(tpa ? "/tpa" : "/tpahere"));
+		accepter.sendMessage(ChatColor.LIGHT_PURPLE+"Accepted "+ChatColor.GREEN+from.getDisplayName()+
+				ChatColor.LIGHT_PURPLE+"'s "+(tpa ? "/tpa" : "/tpahere"));
+		add_tp_tags(accepter, from);
+		if(tpa) from.teleport(accepter, TeleportCause.CHORUS_FRUIT);
+		if(tpahere) accepter.teleport(from, TeleportCause.CHORUS_FRUIT);
+	}
+
+
+	/*static Player getNearbyGm0WithPermsInRadius(Location loc, Player spec, double r){
 		double closestDistGm0 = r*r; // distanceSquared
 		Player closestPlayer = null;
 		for(Player p : loc.getWorld().getPlayers()){
@@ -251,8 +220,8 @@ public class TeleportManager implements Listener{
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onTeleport(PlayerTeleportEvent evt){
+		pl.getLogger().info(evt.getPlayer().getName()+" TeleportCause: "+evt.getCause());
 		if(evt.isCancelled() || evt.getPlayer().getScoreboardTags().contains("unconfirmed")) return;
-		pl.getLogger().info(evt.getPlayer().getName()+" teleport cause: "+evt.getCause());
 		switch(evt.getCause()){
 			//Unknown: nether portal = two teleport events:
 			//one for dimension shift, and one for y axis. Second event is "UNKNOWN"
@@ -270,28 +239,6 @@ public class TeleportManager implements Listener{
 			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			evt.setCancelled(true);
 		}
-		else if(pendingTpas.getOrDefault(teleporter.getUniqueId(), UUID.randomUUID()).equals(receiver.getUniqueId())){
-			pl.getLogger().info(receiver.getName()+" accepted "+teleporter.getName()+"'s /tpa");
-			pendingTpas.remove(teleporter.getUniqueId());
-			teleporter.sendMessage(ChatColor.GREEN+receiver.getName()+" accepted your tpa");
-			receiver.sendMessage(ChatColor.GREEN+"Accepted "+teleporter.getName()+"'s tpa");
-//			if(!teleporter.isOp()) pl.setPermission(teleporter, "essentials.tpa", false);
-//			if(!receiver.isOp()) pl.setPermission(receiver, "essentials.tpaccept", false);
-			add_tp_tags(teleporter, receiver);
-//			teleporter.removeScoreboardTag("has_tpa");
-//			receiver.removeScoreboardTag("has_tpaccept");
-		}
-		else if(pendingTpaheres.getOrDefault(receiver.getUniqueId(), UUID.randomUUID()).equals(teleporter.getUniqueId())){
-			pendingTpaheres.remove(receiver.getUniqueId());
-			pl.getLogger().info(teleporter.getName()+" accepted "+receiver.getName()+"'s /tpahere");
-			receiver.sendMessage(ChatColor.GREEN+teleporter.getName()+" accepted your tpa");
-			teleporter.sendMessage(ChatColor.GREEN+"Accepted "+receiver.getName()+"'s tpa");
-//			if(!receiver.isOp()) pl.setPermission(receiver, "essentials.tpahere", false);
-//			if(!teleporter.isOp()) pl.setPermission(teleporter, "essentials.tpaccept", false);
-			add_tp_tags(receiver, teleporter);
-//			receiver.removeScoreboardTag("has_tpahere");
-//			teleporter.removeScoreboardTag("has_tpaccept");
-		}
 		else{
 			if(teleporter.hasPermission("hardcore.teleport.override")) return;
 			if(teleporter.getGameMode() != GameMode.SURVIVAL){
@@ -303,11 +250,5 @@ public class TeleportManager implements Listener{
 			pl.getLogger().warning("Unable to find a tpa from "+teleporter.getName()+" to "+receiver.getName());
 			evt.setCancelled(true);
 		}
-	}
-
-	@EventHandler
-	public void onPlayerQuit(PlayerQuitEvent evt){
-		pendingTpas.remove(evt.getPlayer().getUniqueId());
-		pendingTpaheres.remove(evt.getPlayer().getUniqueId());
-	}
+	}*/
 }

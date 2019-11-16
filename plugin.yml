@@ -48,6 +48,27 @@ commands:
       permission: hardcore.spectateconfig
       permission-message: You do not have permission to do this.
 
+   tpa:
+      description: Request to teleport to the specified player
+      usage: /tpa <name>
+      aliases: [htpa]
+      permission: hardcore.tpa
+      permission-message: You do not have permission to do this.
+
+   tpahere:
+      description: Request that the specified player teleport to you
+      usage: /tpa <name>
+      aliases: [htpahere]
+      permission: hardcore.tpahere
+      permission-message: You do not have permission to do this.
+
+   tpaccept:
+      description: Accepts teleport request from the specified player
+      usage: /tpaccept <name>
+      aliases: [htpaccept]
+      permission: hardcore.tpaccept
+      permission-message: You do not have permission to do this.
+
 
 permissions:
    hardcore.about:
@@ -61,6 +82,10 @@ permissions:
    hardcore.color:
       description: Permission to use /color
       default: true
+
+   hardcore.compass.coords:
+      description: Tell coordinates when using a compass tracker
+      default: op
 
    hardcore.seen:
       description: Permission to use /seen
@@ -81,3 +106,15 @@ permissions:
    hardcore.teleport.override:
       description: Prevents plugin from canceling teleports
       default: op
+
+   hardcore.tpa:
+      description: Permission to use /tpa <name>
+      default: true
+
+   hardcore.tpahere:
+      description: Permission to use /tpahere <name>
+      default: true
+
+   hardcore.tpaccept:
+      description: Permission to use /tpaccept <name>
+      default: true

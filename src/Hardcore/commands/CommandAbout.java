@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
@@ -30,14 +29,6 @@ public class CommandAbout extends EvCommand{
 			return tabCompletes;
 		}
 		return null;
-	}
-
-	String getNameFromTpTag(String tag){
-		try{
-			OfflinePlayer player = pl.getServer().getOfflinePlayer(UUID.fromString(tag.substring(3)));
-			return player.getName();
-		}
-		catch(NullPointerException | IllegalArgumentException ex){return null;}
 	}
 
 	@Override
@@ -89,10 +80,10 @@ public class CommandAbout extends EvCommand{
 				Iterator<String> it = tps.iterator();
 				StringBuilder builder = new StringBuilder("").append(ChatColor.GOLD)
 					.append(" - Unable to teleport: ").append(ChatColor.RED)
-					.append(getNameFromTpTag(it.next()));
+					.append(TeleportManager.name_from_tp_tag(it.next()));
 				while(it.hasNext()) builder.append(ChatColor.GOLD)
 						.append(", ").append(ChatColor.RED)
-						.append(getNameFromTpTag(it.next()));
+						.append(TeleportManager.name_from_tp_tag(it.next()));
 				sender.sendMessage(builder.toString());
 			}
 			if(SpectatorManager.isSpectatorFavorYes(onlineTarget)){
