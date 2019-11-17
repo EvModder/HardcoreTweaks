@@ -42,6 +42,10 @@ public class TeleportManager implements Listener{
 	public static List<String> get_tp_tags(Player p1){
 		return p1.getScoreboardTags().stream().filter(tag -> tag.startsWith("tp_")).collect(Collectors.toList());
 	}
+	public static List<String> get_tp_tags_diff(Player p1, Player p2){
+		return p1.getScoreboardTags().stream().filter(tag -> tag.startsWith("tp_") &&
+				!p2.getScoreboardTags().contains(tag)).collect(Collectors.toList());
+	}
 	public static boolean check_tp_tags(Player p1, Player p2){
 		return p1.getScoreboardTags().contains("tp_"+p2.getUniqueId()) ||
 				p2.getScoreboardTags().contains("tp_"+p1.getUniqueId());
@@ -49,16 +53,12 @@ public class TeleportManager implements Listener{
 	static void add_tp_tags(Player p1, Player p2){
 		HCTweaks.getPlugin().getLogger().info("Tagging "+p1.getName()+"<=>"+p2.getName());
 		p1.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
-				ChatColor.WHITE+p2.getName()+ChatColor.GRAY+" (in this life).");
+				ChatColor.GREEN+p2.getDisplayName()+ChatColor.GRAY+" (in this life).");
 		p2.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
-				ChatColor.WHITE+p1.getName()+ChatColor.GRAY+" (in this life).");
+				ChatColor.GREEN+p1.getDisplayName()+ChatColor.GRAY+" (in this life).");
 
-		List<String> p1tps = p1.getScoreboardTags().stream()
-				.filter(tag -> tag.startsWith("tp_") && !p2.getScoreboardTags().contains(tag))
-				.collect(Collectors.toList());
-		List<String> p2tps = p2.getScoreboardTags().stream()
-				.filter(tag -> tag.startsWith("tp_") && !p1.getScoreboardTags().contains(tag))
-				.collect(Collectors.toList());
+		List<String> p1tps = get_tp_tags_diff(p1, p2);
+		List<String> p2tps = get_tp_tags_diff(p2, p1);
 		if(!p1tps.isEmpty()){
 			p2.getScoreboardTags().addAll(p1tps);
 			p2.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+p1.getDisplayName()+
@@ -105,17 +105,23 @@ public class TeleportManager implements Listener{
 	}
 
 	public void addPendingTpa(Player from, Player target){
+		pl.getLogger().info(from.getName()+" requesting /tpa to "+target.getName());
 		if(check_tp_tags(from, target)){
 			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
 					+target.getDisplayName());
 			return;
 		}
 		final UUID fromUUID = from.getUniqueId(), targetUUID = target.getUniqueId();
+		if(fromUUID.equals(targetUUID)){
+			from.sendMessage(ChatColor.LIGHT_PURPLE+"Poof! teleported to yourself :)");
+			return;
+		}
 		HashSet<UUID> tpasToTarget = pendingTpas.getOrDefault(targetUUID, new HashSet<UUID>());
 		if(!tpasToTarget.add(fromUUID)){
 			from.sendMessage(ChatColor.RED+"You already have a pending tpa to "+ChatColor.GREEN+target.getDisplayName());
 			return;
 		}
+		pendingTpas.put(targetUUID, tpasToTarget);//TODO: Not sure if necessary. Better safe than sorry.
 		if(pendingTpaheres.getOrDefault(targetUUID, new HashSet<UUID>()).contains(fromUUID)){
 			from.sendMessage(ChatColor.RED+"You cannot send a tpa to "+
 					ChatColor.GREEN+target.getDisplayName()+" until your tpahere request expires");
@@ -123,18 +129,21 @@ public class TeleportManager implements Listener{
 		}
 		target.sendMessage(ChatColor.GREEN+from.getDisplayName()+ChatColor.LIGHT_PURPLE+" requests to teleport to you");
 		target.sendMessage(ChatColor.LIGHT_PURPLE+"To accept, type "+ChatColor.AQUA+"/tpaccept "+from.getName());
-		target.sendMessage(ChatColor.GRAY+"If you accept, you will no longer be able to teleport: \n"+
-				get_tp_tags(from).stream()
+		List<String> new_tags = get_tp_tags_diff(from, target);
+		if(!new_tags.isEmpty()) target.sendMessage(ChatColor.GRAY+"If you accept, you will no longer be able to teleport: \n"+
+				ChatColor.GOLD+from.getName()+ChatColor.GRAY+", "+
+				new_tags.stream()
 				.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
 				.collect(Collectors.joining(ChatColor.GRAY+", ")));
 		from.sendMessage(ChatColor.LIGHT_PURPLE+"Sent a tpa request to "+ChatColor.GREEN+target.getDisplayName());
 
 		BukkitRunnable timeout = new BukkitRunnable(){@Override public void run(){
-			Player from = pl.getServer().getPlayer(fromUUID), target = pl.getServer().getPlayer(targetUUID);
-			if(from != null) from.sendMessage(ChatColor.RED+"Your tpa request to "+
-					ChatColor.GREEN+target.getDisplayName()+ChatColor.RED+" has expired");
-			if(target != null) target.sendMessage(ChatColor.RED+"The tpa request from "+
-					ChatColor.GREEN+from.getCustomName()+ChatColor.RED+" has expired");
+			OfflinePlayer from = pl.getServer().getOfflinePlayer(fromUUID);
+			OfflinePlayer target = pl.getServer().getOfflinePlayer(targetUUID);
+			if(from.isOnline()) from.getPlayer().sendMessage(ChatColor.RED+"Your tpa request to "+
+					ChatColor.GREEN+target.getName()+ChatColor.RED+" has expired");
+			if(target.isOnline()) target.getPlayer().sendMessage(ChatColor.RED+"The tpa request from "+
+					ChatColor.GREEN+from.getName()+ChatColor.RED+" has expired");
 			tpTimeouts.remove(new Pair<UUID, UUID>(fromUUID, targetUUID));
 		}};
 		tpTimeouts.put(new Pair<UUID, UUID>(fromUUID, targetUUID), timeout);
@@ -142,17 +151,23 @@ public class TeleportManager implements Listener{
 	}
 
 	public void addPendingTpahere(Player from, Player target){
+		pl.getLogger().info(from.getName()+" requesting /tpahere from "+target.getName());
 		if(check_tp_tags(from, target)){
 			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
 					+target.getDisplayName());
 			return;
 		}
 		final UUID fromUUID = from.getUniqueId(), targetUUID = target.getUniqueId();
+		if(fromUUID.equals(targetUUID)){
+			from.sendMessage(ChatColor.LIGHT_PURPLE+"Poof! teleported to yourself :)");
+			return;
+		}
 		HashSet<UUID> tpaheresToTarget = pendingTpaheres.getOrDefault(targetUUID, new HashSet<UUID>());
 		if(!tpaheresToTarget.add(fromUUID)){
 			from.sendMessage(ChatColor.RED+"You already have a pending tpahere for "+ChatColor.GREEN+target.getDisplayName());
 			return;
 		}
+		pendingTpaheres.put(targetUUID, tpaheresToTarget);//TODO: Not sure if necessary. Better safe than sorry.
 		if(pendingTpas.getOrDefault(targetUUID, new HashSet<UUID>()).contains(fromUUID)){
 			from.sendMessage(ChatColor.RED+"You cannot send a tpahere to "+
 					ChatColor.GREEN+target.getDisplayName()+" until your tpa request expires");
@@ -160,18 +175,21 @@ public class TeleportManager implements Listener{
 		}
 		target.sendMessage(ChatColor.GREEN+from.getDisplayName()+ChatColor.LIGHT_PURPLE+" requests that you teleport to them");
 		target.sendMessage(ChatColor.LIGHT_PURPLE+"To accept, type "+ChatColor.AQUA+"/tpaccept "+from.getName());
-		target.sendMessage(ChatColor.GRAY+"If you accept, you will no longer be able to teleport: \n"+
-				get_tp_tags(from).stream()
+		List<String> new_tags = get_tp_tags_diff(from, target);
+		if(!new_tags.isEmpty()) target.sendMessage(ChatColor.GRAY+"If you accept, you will no longer be able to teleport: \n"+
+				ChatColor.GOLD+from.getName()+ChatColor.GRAY+", "+
+				new_tags.stream()
 				.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
 				.collect(Collectors.joining(ChatColor.GRAY+", ")));
 		from.sendMessage(ChatColor.LIGHT_PURPLE+"Sent a tpahere request to "+ChatColor.GREEN+target.getDisplayName());
 
 		BukkitRunnable timeout = new BukkitRunnable(){@Override public void run(){
-			Player from = pl.getServer().getPlayer(fromUUID), target = pl.getServer().getPlayer(targetUUID);
-			if(from != null) from.sendMessage(ChatColor.RED+"Your tpahere request to "+
-					ChatColor.GREEN+target.getDisplayName()+ChatColor.RED+" has expired");
-			if(target != null) target.sendMessage(ChatColor.RED+"The tpahere request from "+
-					ChatColor.GREEN+from.getCustomName()+ChatColor.RED+" has expired");
+			OfflinePlayer from = pl.getServer().getPlayer(fromUUID);
+			OfflinePlayer target = pl.getServer().getPlayer(targetUUID);
+			if(from.isOnline()) from.getPlayer().sendMessage(ChatColor.RED+"Your tpahere request to "+
+					ChatColor.GREEN+target.getName()+ChatColor.RED+" has expired");
+			if(target.isOnline()) target.getPlayer().sendMessage(ChatColor.RED+"The tpahere request from "+
+					ChatColor.GREEN+from.getName()+ChatColor.RED+" has expired");
 			tpTimeouts.remove(new Pair<UUID, UUID>(fromUUID, targetUUID));
 		}};
 		tpTimeouts.put(new Pair<UUID, UUID>(fromUUID, targetUUID), timeout);

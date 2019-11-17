@@ -185,7 +185,6 @@ public class ScoreboardManager implements Listener{
 		if(b.isLiquid() || b.isPassable() || !b.getType().isSolid()
 				|| evt.getBlockReplacedState().getType() != Material.AIR) return;
 		if(!blockPlacedCoords.add(new Coord(b.getX(), b.getY(), b.getZ()))) return;
-		if(!blockPlacedCoords.add(new Coord(b.getX(), b.getY(), b.getZ()))) return;
 
 		String name10 = evt.getPlayer().getName();
 		if(name10.length() > 10) name10 = name10.substring(0, 10);

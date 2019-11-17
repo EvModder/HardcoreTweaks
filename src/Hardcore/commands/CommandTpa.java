@@ -7,6 +7,7 @@ import Hardcore.TeleportManager;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import net.evmodder.EvLib.EvCommand;
 import net.evmodder.EvLib.EvPlugin;
 
@@ -39,7 +40,13 @@ public class CommandTpa extends EvCommand{
 		@SuppressWarnings("deprecation")
 		Player target = pl.getServer().getPlayer(args[0]);
 		if(target == null){
-			sender.sendMessage(ChatColor.RED+"Could not find online player: "+args[0]);
+			@SuppressWarnings("deprecation")
+			OfflinePlayer offP = pl.getServer().getOfflinePlayer(args[0]);
+			if(offP != null && offP.hasPlayedBefore()){
+				sender.sendMessage(ChatColor.RED+offP.getName()+" needs to be online");
+				return true;
+			}
+			sender.sendMessage(ChatColor.RED+"Could not find player: "+args[0]);
 			return false;
 		}
 		tpMan.addPendingTpa((Player)sender, target);
