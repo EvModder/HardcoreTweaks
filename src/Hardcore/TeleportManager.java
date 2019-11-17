@@ -52,30 +52,30 @@ public class TeleportManager implements Listener{
 	}
 	static void add_tp_tags(Player p1, Player p2){
 		HCTweaks.getPlugin().getLogger().info("Tagging "+p1.getName()+"<=>"+p2.getName());
-		p1.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
-				ChatColor.GREEN+p2.getDisplayName()+ChatColor.GRAY+" (in this life).");
-		p2.sendMessage(ChatColor.GRAY+"You will no longer be able to tp "+
-				ChatColor.GREEN+p1.getDisplayName()+ChatColor.GRAY+" (in this life).");
+		p1.sendMessage(ChatColor.GRAY+"Added "+ChatColor.GREEN+p2.getDisplayName()+
+				ChatColor.GRAY+" to your used tp list (for this life).");
+		p2.sendMessage(ChatColor.GRAY+"Added "+ChatColor.GREEN+p1.getDisplayName()+
+				ChatColor.GRAY+" to your used tp list (for this life).");
 
 		List<String> p1tps = get_tp_tags_diff(p1, p2);
 		List<String> p2tps = get_tp_tags_diff(p2, p1);
 		if(!p1tps.isEmpty()){
 			p2.getScoreboardTags().addAll(p1tps);
-			p2.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+p1.getDisplayName()+
+			/*p2.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+p1.getDisplayName()+
 					ChatColor.GRAY+"'s tp-history, you can also no longer tp: \n"+
 					p1tps.stream()
 					.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
 					.sorted().collect(Collectors.joining(ChatColor.GRAY+", "))
-					+".");
+					+".");*/
 		}
 		if(!p2tps.isEmpty()){
 			p1.getScoreboardTags().addAll(p2tps);
-			p1.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+p2.getDisplayName()+
+			/*p1.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+p2.getDisplayName()+
 					ChatColor.GRAY+"'s past teleports, you can also no longer tp: \n"+
 					p2tps.stream()
 					.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
 					.sorted().collect(Collectors.joining(ChatColor.GRAY+", "))
-					+".");
+					+".");*/
 		}
 		p1.addScoreboardTag("tp_"+p2.getUniqueId());
 		p2.addScoreboardTag("tp_"+p1.getUniqueId());
@@ -220,53 +220,4 @@ public class TeleportManager implements Listener{
 		if(tpa) from.teleport(accepter, TeleportCause.CHORUS_FRUIT);
 		if(tpahere) accepter.teleport(from, TeleportCause.CHORUS_FRUIT);
 	}
-
-
-	/*static Player getNearbyGm0WithPermsInRadius(Location loc, Player spec, double r){
-		double closestDistGm0 = r*r; // distanceSquared
-		Player closestPlayer = null;
-		for(Player p : loc.getWorld().getPlayers()){
-			double dist;
-			if(p.getGameMode() == GameMode.SURVIVAL && (dist=p.getLocation().distanceSquared(loc)) < closestDistGm0
-					&& (!SpectatorManager.isSpectatorFavorYes(spec) || SpectatorManager.canSpectate(spec.getUniqueId(), p))){
-				closestDistGm0 = dist;
-				closestPlayer = p;
-			}
-		}
-		return closestPlayer;
-	}
-
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onTeleport(PlayerTeleportEvent evt){
-		pl.getLogger().info(evt.getPlayer().getName()+" TeleportCause: "+evt.getCause());
-		if(evt.isCancelled() || evt.getPlayer().getScoreboardTags().contains("unconfirmed")) return;
-		switch(evt.getCause()){
-			//Unknown: nether portal = two teleport events:
-			//one for dimension shift, and one for y axis. Second event is "UNKNOWN"
-			case COMMAND: case SPECTATE: case PLUGIN: break;
-			case CHORUS_FRUIT: return;
-			default:
-				if(evt.getPlayer().getGameMode() == GameMode.SURVIVAL) return;
-		}
-		Player teleporter = evt.getPlayer();
-		Player receiver = getNearbyGm0WithPermsInRadius(evt.getTo(), teleporter, 100D);
-		if(receiver == null){
-			teleporter.sendMessage(ChatColor.RED+"Unable to locate destination player");
-			//pl.getLogger().warning("Teleport failed: receiver == null,"
-			//		+ "tpToLoc: "+evt.getTo().getBlockX()+","+evt.getTo().getBlockY()+","+evt.getTo().getBlockZ());
-			if(teleporter.hasPermission("hardcore.teleport.override")) return;
-			evt.setCancelled(true);
-		}
-		else{
-			if(teleporter.hasPermission("hardcore.teleport.override")) return;
-			if(teleporter.getGameMode() != GameMode.SURVIVAL){
-				pl.getLogger().info("GameMode != SURVIVAL; tp permitted");
-				if(teleporter.getGameMode() == GameMode.SPECTATOR) teleporter.setSpectatorTarget(receiver);
-				return;
-			}
-			teleporter.sendMessage(ChatColor.RED+"Error: Could not find a pending tpa with "+receiver.getName());
-			pl.getLogger().warning("Unable to find a tpa from "+teleporter.getName()+" to "+receiver.getName());
-			evt.setCancelled(true);
-		}
-	}*/
 }
