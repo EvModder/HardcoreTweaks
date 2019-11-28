@@ -19,6 +19,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -49,17 +50,15 @@ public class SpectatorManager implements Listener{
 		runSpecatorLoop();
 	}
 
-	static boolean isSpectator(Player player){
-		return !player.isOp() && (
-				(player.getGameMode() == GameMode.SPECTATOR || player.isDead()) &&
-				player.getScoreboardTags().contains("dead")
-		);
+	public static boolean isSpectator(Player player){
+		return (player.getGameMode() == GameMode.SPECTATOR || player.isDead())
+				&& player.getScoreboardTags().contains("dead");
 	}
 
-	public static boolean isSpectatorFavorYes(Player player){
-		return player.getGameMode() != GameMode.SURVIVAL ||
-				player.isDead() || player.getScoreboardTags().contains("dead") ||
-				(spectators != null && spectators.contains(player.getUniqueId()));
+	static boolean isSpectatorFavorYes(Player player){
+		return player.getGameMode() != GameMode.SURVIVAL &&
+				(player.isDead() || player.getScoreboardTags().contains("dead") ||
+				(spectators != null && spectators.contains(player.getUniqueId())));
 	}
 
 	public static boolean canSpectate(UUID spectator, Player target){
@@ -171,7 +170,7 @@ public class SpectatorManager implements Listener{
 				else ActionBarUtils.sendToPlayer(
 						formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY), specP);
 
-				if(specP.isDead()) continue;
+				if(specP.isDead() || specP.isOp()) continue;
 				Entity target = specP.getSpectatorTarget();
 				if(target == null || !(target instanceof Player)){
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
@@ -216,10 +215,16 @@ public class SpectatorManager implements Listener{
 		}}.runTaskTimer(pl, 20, 20);
 	}
 
-	/*TODO: @EventHandler
+	/*@EventHandler
 	public void onSpectatePlayer(PlayerSpectateEvent evt){
-		//set specP inv contents <- target inv contents (empty if target == null)
+		//TODO: set specP inv contents <- target inv contents (empty if target == null)
 	}*/
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void onSpectateTeleport(PlayerTeleportEvent evt){
+		if(!isSpectatorFavorYes(evt.getPlayer())) return;
+		Player target = getClosestGm0WithPerms(evt.getTo(), evt.getPlayer());
+		if(target == null || target.getLocation().distanceSquared(evt.getTo()) > 400) evt.setCancelled(true);
+	}
 
 	public void addSpectator(Player player){
 		if(spectators.add(player.getUniqueId())){
@@ -310,7 +315,7 @@ public class SpectatorManager implements Listener{
 		final UUID uuid = evt.getPlayer().getUniqueId();
 		new BukkitRunnable(){@Override public void run(){
 			Player p = pl.getServer().getPlayer(uuid);
-			if(p != null) addSpectator(p);
+			if(p != null && isSpectatorFavorYes(p)) addSpectator(p);
 		}}.runTaskLater(pl, 20*5);
 	}
 

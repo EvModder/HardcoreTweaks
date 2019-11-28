@@ -3,7 +3,6 @@ package Hardcore;
 import java.util.HashSet;
 import java.util.UUID;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.Block;
@@ -142,15 +141,21 @@ public class ScoreboardManager implements Listener{
 			case ACACIA_PLANKS: case BIRCH_PLANKS: case DARK_OAK_PLANKS:
 			case JUNGLE_PLANKS: case OAK_PLANKS: case SPRUCE_PLANKS:
 				return 1;
-			case OBSIDIAN:
-			case END_STONE:
 			case GLASS:
-			case BLACK_STAINED_GLASS:
-			case BLUE_STAINED_GLASS:
+			case GREEN_STAINED_GLASS:
+			case RED_STAINED_GLASS:
+			case WHITE_STAINED_GLASS:
+			case YELLOW_STAINED_GLASS:
 			case BROWN_STAINED_GLASS:
+			case BLUE_STAINED_GLASS:
+				return 2;
+			case QUARTZ_BLOCK:
+			case QUARTZ_PILLAR:
+			case BLUE_ICE:
+			case END_STONE:
+			case BLACK_STAINED_GLASS:
 			case CYAN_STAINED_GLASS:
 			case GRAY_STAINED_GLASS:
-			case GREEN_STAINED_GLASS:
 			case LIGHT_BLUE_STAINED_GLASS:
 			case LIGHT_GRAY_STAINED_GLASS:
 			case LIME_STAINED_GLASS:
@@ -158,13 +163,10 @@ public class ScoreboardManager implements Listener{
 			case ORANGE_STAINED_GLASS:
 			case PINK_STAINED_GLASS:
 			case PURPLE_STAINED_GLASS:
-			case RED_STAINED_GLASS:
-			case WHITE_STAINED_GLASS:
-			case YELLOW_STAINED_GLASS:
-			case QUARTZ_BLOCK:
-			case QUARTZ_PILLAR:
-			case BLUE_ICE:
+			case RED_NETHER_BRICKS:
 				return 3;
+			case OBSIDIAN:
+				return 5;
 			default:
 				return b.getType().isOccluding() ? 2 : 1;
 		}
@@ -180,10 +182,12 @@ public class ScoreboardManager implements Listener{
 	private HashSet<Coord> blockPlacedCoords = new HashSet<Coord>();
 	@EventHandler
 	public void onBlockPlaced(BlockPlaceEvent evt){
-		if(evt.getBlockReplacedState().getType() != Material.AIR) return;
+		switch(evt.getBlockReplacedState().getType()){
+			case AIR: case WATER: case GRASS: case FERN: case VINE: break;
+			default: return;
+		}
 		Block b = evt.getBlock();
-		if(b.isLiquid() || b.isPassable() || !b.getType().isSolid()
-				|| evt.getBlockReplacedState().getType() != Material.AIR) return;
+		if(b.isLiquid() || b.isPassable() || !b.getType().isSolid()) return;
 		if(!blockPlacedCoords.add(new Coord(b.getX(), b.getY(), b.getZ()))) return;
 
 		String name10 = evt.getPlayer().getName();

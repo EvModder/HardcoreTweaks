@@ -38,7 +38,8 @@ public class HCTweaks extends EvPlugin{
 		new CommandDeathlog(this);
 		new CommandShowScores(this, false/* TODO: enable when an event is ongoing */);
 		new CommandSpectate(this);
-		getServer().getPluginManager().registerEvents(new CompassManager(this), this);
+		if(config.getBoolean("enable-compass-tracker", false))
+			getServer().getPluginManager().registerEvents(new CompassManager(this), this);
 		getServer().getPluginManager().registerEvents(new NewPlayerManager(this), this);
 		getServer().getPluginManager().registerEvents(new ScoreboardManager(this), this);
 		getServer().getPluginManager().registerEvents(new SpectatorManager(this), this);

@@ -11,6 +11,10 @@ respawn-wait: 20
 spawn-welcome-message: '&b>> &6&lWelcome, &a%name%&6&l, to &4&lH&ca&4&lrd&cc&4&lore&6&l!'
 respawn-welcome-message: '&b>> &6&lWelcome back, &a%name%&6&l has been reborn!'
 
+# Compass Manager
+enable-compass-tracker: true
+
+
 # Enable spectating
 enable-spectating: true #TODO
 

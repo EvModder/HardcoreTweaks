@@ -216,7 +216,14 @@ public class TeleportManager implements Listener{
 				ChatColor.LIGHT_PURPLE+" accepted your "+(tpa ? "/tpa" : "/tpahere"));
 		accepter.sendMessage(ChatColor.LIGHT_PURPLE+"Accepted "+ChatColor.GREEN+from.getDisplayName()+
 				ChatColor.LIGHT_PURPLE+"'s "+(tpa ? "/tpa" : "/tpahere"));
+		List<String> new_tags = get_tp_tags_diff(accepter, from);
 		add_tp_tags(accepter, from);
+		if(!new_tags.isEmpty()) from.sendMessage(ChatColor.GRAY+"Due to "+ChatColor.GREEN+accepter.getDisplayName()+
+				ChatColor.GRAY+"'s tp-history, you can also no longer tp: \n"+
+				new_tags.stream()
+				.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
+				.sorted().collect(Collectors.joining(ChatColor.GRAY+", "))
+				+".");
 		if(tpa) from.teleport(accepter, TeleportCause.CHORUS_FRUIT);
 		if(tpahere) accepter.teleport(from, TeleportCause.CHORUS_FRUIT);
 	}

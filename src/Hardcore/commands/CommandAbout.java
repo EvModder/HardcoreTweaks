@@ -86,7 +86,7 @@ public class CommandAbout extends EvCommand{
 						.append(TeleportManager.name_from_tp_tag(it.next()));
 				sender.sendMessage(builder.toString());
 			}
-			if(SpectatorManager.isSpectatorFavorYes(onlineTarget)){
+			if(SpectatorManager.isSpectator(onlineTarget)){
 				long SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
 				long sinceDeath = onlineTarget.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
 				long secondsLeft = SECONDS_UNTIL_RESPAWN - sinceDeath;

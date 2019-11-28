@@ -87,6 +87,10 @@ permissions:
       description: Tell coordinates when using a compass tracker
       default: op
 
+   hardcore.compass.coords.approximate:
+      description: Tell approximate coordinates when using a compass tracker
+      default: true
+
    hardcore.seen:
       description: Permission to use /seen
       default: true
