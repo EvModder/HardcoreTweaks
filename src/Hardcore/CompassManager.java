@@ -92,13 +92,13 @@ public class CompassManager implements Listener{
 					);
 				}
 				else if(evt.getPlayer().hasPermission("hardcore.compass.coords.approximate")){
-					int diffX = evt.getPlayer().getLocation().getBlockX() - bedLoc.getBlockX();
-					int diffZ = evt.getPlayer().getLocation().getBlockZ() - bedLoc.getBlockZ();
+					int diffX = Math.abs(evt.getPlayer().getLocation().getBlockX() - bedLoc.getBlockX());
+					int diffZ = Math.abs(evt.getPlayer().getLocation().getBlockZ() - bedLoc.getBlockZ());
 					float scaleX = 1, scaleZ = 1;
 					while(scaleX * 10 < diffX) scaleX *= 10;
 					while(scaleZ * 10 < diffZ) scaleZ *= 10;
 					int approxX = (int)(Math.round(bedLoc.getBlockX()/scaleX)*scaleX);
-					int approxZ = (int)(Math.round(bedLoc.getBlockX()/scaleZ)*scaleZ);
+					int approxZ = (int)(Math.round(bedLoc.getBlockZ()/scaleZ)*scaleZ);
 					evt.getPlayer().sendMessage(ChatColor.GREEN+"Approx. X, Z = "+
 							ChatColor.GRAY+approxX+ChatColor.GREEN+", "+
 							ChatColor.GRAY+approxZ+ChatColor.GREEN+"."

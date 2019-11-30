@@ -3,6 +3,7 @@ package Hardcore.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import Hardcore.SpectatorManager;
 import Hardcore.TeleportManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,10 @@ public class CommandTpahere extends EvCommand{
 			sender.sendMessage(ChatColor.RED+"This command can only be run by in-game players!");
 			return true;
 		}
+		if(SpectatorManager.isSpectator((Player)sender)){
+			sender.sendMessage(ChatColor.RED+"This command can only be used by alive players");
+			return true;
+		}
 		if(args.length == 0){
 			sender.sendMessage(ChatColor.RED+"Please specify who you wish to teleport here");
 			return false;
@@ -48,6 +53,10 @@ public class CommandTpahere extends EvCommand{
 			}
 			sender.sendMessage(ChatColor.RED+"Could not find player: "+args[0]);
 			return false;
+		}
+		if(SpectatorManager.isSpectator(target)){
+			sender.sendMessage(ChatColor.GRAY+target.getDisplayName()+ChatColor.RED+" is not alive and can't accept your tpahere");
+			return true;
 		}
 		tpMan.addPendingTpahere((Player)sender, target);
 		return true;

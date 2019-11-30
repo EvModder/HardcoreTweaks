@@ -68,8 +68,8 @@ public class SpectatorManager implements Listener{
 		boolean ans = !target.getScoreboardTags().contains(bl_tag) &&
 				(getSpectateMode(target) != WatchMode.WHITELIST
 				|| target.getScoreboardTags().contains(wl_tag));
-		org.bukkit.Bukkit.getLogger().info(org.bukkit.Bukkit.getOfflinePlayer(spectator).getName()
-				+ " able to spectate "+target.getName()+": "+ans);
+		//org.bukkit.Bukkit.getLogger().info(org.bukkit.Bukkit.getOfflinePlayer(spectator).getName()
+		//		+ " able to spectate "+target.getName()+": "+ans);
 		return ans;
 	}
 	public static WatchMode getSpectateMode(Player player){
@@ -175,8 +175,9 @@ public class SpectatorManager implements Listener{
 				if(target == null || !(target instanceof Player)){
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
 					if(newTarget == null){
-						if(specP.hasPotionEffect(PotionEffectType.BLINDNESS)){
-							specP.setFlySpeed(FLY_SPEED);
+						if(specP.getScoreboardTags().contains("spectating")){
+							specP.removeScoreboardTag("spectating");
+							if(!specP.hasPermission("hardcore.spectator.bypass.effects")) specP.setFlySpeed(FLY_SPEED);
 							specP.removePotionEffect(PotionEffectType.BLINDNESS);
 							specP.teleport(WORLD_SPAWN, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
 							specP.sendTitle("", "There is nobody who you can spectate", 10, 20*60, 20);
@@ -188,9 +189,14 @@ public class SpectatorManager implements Listener{
 						}
 					}
 					else{
-						if(!specP.hasPotionEffect(PotionEffectType.BLINDNESS)){
+						pl.getLogger().info(specP.getName()+" is now spectating "+newTarget.getName());
+						newTarget.sendMessage(ChatColor.GRAY+specP.getName()+ChatColor.AQUA+" is now spectating you");
+						if(!specP.getScoreboardTags().contains("spectating")){
 							specP.resetTitle();
-							specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+							specP.addScoreboardTag("spectating");
+							if(!specP.hasPermission("hardcore.spectator.bypass.effects")){
+								specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+							}
 						}
 						UUID targetUUID = newTarget.getUniqueId();
 						specP.setSpectatorTarget(newTarget);
@@ -221,20 +227,31 @@ public class SpectatorManager implements Listener{
 	}*/
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSpectateTeleport(PlayerTeleportEvent evt){
-		if(!isSpectatorFavorYes(evt.getPlayer())) return;
+		if(!isSpectatorFavorYes(evt.getPlayer()) || evt.getPlayer().hasPermission("hardcore.spectator.bypass.tpcheck")) return;
 		Player target = getClosestGm0WithPerms(evt.getTo(), evt.getPlayer());
-		if(target == null || target.getLocation().distanceSquared(evt.getTo()) > 400) evt.setCancelled(true);
+		if(target == null || !target.getWorld().getUID().equals(evt.getTo().getWorld().getUID())
+				|| target.getLocation().distanceSquared(evt.getTo()) > 400){
+			evt.getPlayer().sendMessage(ChatColor.RED+"No valid spectator target found at teleport destination");
+			evt.setCancelled(true);
+			return;
+		}
+		evt.getPlayer().setSpectatorTarget(target);
+		pl.getLogger().info(evt.getPlayer().getName()+" is now spectating "+target.getName());
+		target.sendMessage(ChatColor.GRAY+evt.getPlayer().getName()+ChatColor.AQUA+" is now spectating you");
 	}
 
 	public void addSpectator(Player player){
 		if(spectators.add(player.getUniqueId())){
 			pl.getLogger().info("Added spectator: "+player.getName());
-			player.setFlySpeed(FLY_SPEED);
-			player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+			player.addScoreboardTag("spectating");
+			if(!player.hasPermission("hardcore.spectator.bypass.effects")){
+				player.setFlySpeed(FLY_SPEED);
+				player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+			}
 //			pl.setPermission(player, "essentials.tpa", false);
 //			pl.setPermission(player, "essentials.tpahere", false);
 //			pl.setPermission(player, "essentials.tpaccept", false);
-			player.getScoreboard().resetScores(player.getName());
+//			player.getScoreboard().resetScores(player.getName());
 			runSpecatorLoop();
 		}
 	}
@@ -302,7 +319,7 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler
 	public void onGameModeChange(PlayerGameModeChangeEvent evt){
-		if(evt.getNewGameMode() != GameMode.SURVIVAL){
+		if(evt.getNewGameMode() == GameMode.SPECTATOR){
 			if(isSpectator(evt.getPlayer())) addSpectator(evt.getPlayer());
 			pl.getServer().getScoreboardManager().getMainScoreboard()
 				.getTeam("Spectators").addEntry(evt.getPlayer().getName());
@@ -328,7 +345,7 @@ public class SpectatorManager implements Listener{
 		command = (space > 0 ? command.substring(1, space) : command.substring(1));
 		Player player = evt.getPlayer();
 
-		if(command.equals("tp")) {
+		if(command.equals("tp") && message.indexOf(' ', space+1) == -1){
 			if(SpectatorManager.isSpectator(player)){
 				evt.setCancelled(true);
 				Player target = null;

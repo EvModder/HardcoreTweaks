@@ -47,15 +47,15 @@ public class CommandSpectate extends EvCommand{
 		return null;
 	}
 
-	String getNameFromListTag(String tag){
+	static String getNameFromListTag(String tag){
 		try{//spectator_whitelist_
-			OfflinePlayer player = pl.getServer().getOfflinePlayer(UUID.fromString(tag.substring(20)));
+			OfflinePlayer player = org.bukkit.Bukkit.getServer().getOfflinePlayer(UUID.fromString(tag.substring(20)));
 			return player.getName();
 		}
 		catch(NullPointerException | IllegalArgumentException ex){return null;}
 	}
 
-	void displayWhitelist(Player player){
+	static void displayWhitelist(Player player){
 		StringBuilder builder = new StringBuilder("").append(ChatColor.GRAY).append("Current whitelist: ");
 		boolean empty = true;
 		for(String tag : player.getScoreboardTags()){
@@ -68,7 +68,7 @@ public class CommandSpectate extends EvCommand{
 		if(empty) player.sendMessage(builder.append(ChatColor.WHITE).append("Empty").toString());
 		else player.sendMessage(builder.substring(0, builder.length()-2));
 	}
-	void displayBlacklist(Player player){
+	static void displayBlacklist(Player player){
 		StringBuilder builder = new StringBuilder("").append(ChatColor.GRAY).append("Current blacklist: ");
 		boolean empty = true;
 		for(String tag : player.getScoreboardTags()){
@@ -81,15 +81,18 @@ public class CommandSpectate extends EvCommand{
 		if(empty) player.sendMessage(builder.append(ChatColor.WHITE).append("Empty").toString());
 		else player.sendMessage(builder.substring(0, builder.length()-2));
 	}
-	void displayCurrentMode(Player player){
-		player.sendMessage(ChatColor.GRAY+"Current mode: "
-					+ChatColor.RED+SpectatorManager.getSpectateMode(player));
+	static void displayCurrentMode(Player player){
+		player.sendMessage(""+ChatColor.GRAY+ChatColor.BOLD+"Current mode: "
+					+ChatColor.AQUA+ChatColor.BOLD+SpectatorManager.getSpectateMode(player)+"\n"
+					+ChatColor.GRAY+"Available modes: ");
 		player.sendMessage(ChatColor.WHITE+"WHITELIST"
-					+ChatColor.GOLD+" - List the only people who CAN spectate you\n"
-							+ChatColor.GRAY+"(Blocks everyone by default)");
+					+ChatColor.GRAY+" - List the only people who CAN spectate you\n"
+		//					+ChatColor.GRAY+"(Blocks everyone by default)"
+					);
 		player.sendMessage(ChatColor.WHITE+"BLACKLIST"
-					+ChatColor.GOLD+" - List the only people who CANNOT spectate you\n"
-							+ChatColor.GRAY+"(Blocks nobody by default");
+					+ChatColor.GRAY+" - List the only people who CANNOT spectate you\n"
+		//					+ChatColor.GRAY+"(Blocks nobody by default"
+					);
 	}
 
 	@Override
@@ -105,7 +108,7 @@ public class CommandSpectate extends EvCommand{
 		}
 		if(args.length == 0) return false;
 		args[0] = args[0].toLowerCase().replaceAll("-", "");
-		if(args.length == 1){
+		if(args.length == 1 && label.equals("spectate")){
 			if(args[0].equals("whitelist") || args[0].equals("wl")
 					|| args[0].equals("blockall") || args[0].equals("disable") || args[0].equals("off")){
 				if(SpectatorManager.getSpectateMode(player) == WatchMode.WHITELIST) displayWhitelist(player);
@@ -150,7 +153,9 @@ public class CommandSpectate extends EvCommand{
 			else if(args[0].equals("whitelist") || args[0].equals("wl")){
 				@SuppressWarnings("deprecation")
 				OfflinePlayer spectator = pl.getServer().getOfflinePlayer(args[1]);
-				if(spectator == null) sender.sendMessage("Could not find player \""+args[1]+"\"");
+				if(spectator == null || spectator.getUniqueId().equals(player.getUniqueId())){
+					sender.sendMessage(ChatColor.RED+"Could not find player \""+args[1]+"\"");
+				}
 				else{
 					if(player.addScoreboardTag("spectator_whitelist_"+spectator.getUniqueId())){
 						sender.sendMessage(ChatColor.AQUA+spectator.getName()
@@ -160,14 +165,16 @@ public class CommandSpectate extends EvCommand{
 					else{
 						player.removeScoreboardTag("spectator_whitelist_"+spectator.getUniqueId());
 						sender.sendMessage(ChatColor.AQUA+spectator.getName()
-							+ChatColor.GRAY+" has been removed to your whitelist");
+							+ChatColor.GRAY+" has been removed from your whitelist");
 					}
 				}
 			}
 			else if(args[0].equals("blacklist") || args[0].equals("bl") || args[0].contains("block")){
 				@SuppressWarnings("deprecation")
 				OfflinePlayer spectator = pl.getServer().getOfflinePlayer(args[1]);
-				if(spectator == null) sender.sendMessage("Could not find player \""+args[1]+"\"");
+				if(spectator == null || spectator.getUniqueId().equals(player.getUniqueId())){
+					sender.sendMessage(ChatColor.RED+"Could not find player \""+args[1]+"\"");
+				}
 				else{
 					if(player.addScoreboardTag("spectator_blacklist_"+spectator.getUniqueId())){
 						sender.sendMessage(ChatColor.RED+spectator.getName()
@@ -177,7 +184,7 @@ public class CommandSpectate extends EvCommand{
 					else{
 						player.removeScoreboardTag("spectator_blacklist_"+spectator.getUniqueId());
 						sender.sendMessage(ChatColor.RED+spectator.getName()
-							+ChatColor.GRAY+" has been removed to your blacklist");
+							+ChatColor.GRAY+" has been removed from your blacklist");
 					}
 				}
 			}

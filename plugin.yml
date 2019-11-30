@@ -48,6 +48,20 @@ commands:
       permission: hardcore.spectateconfig
       permission-message: You do not have permission to do this.
 
+   whitelist:
+      description: Display or edit your spectator whitelist
+      usage: /whitelist [add/remove] [name]
+      aliases: [wl]
+      permission: hardcore.spectateconfig
+      permission-message: You do not have permission to do this.
+
+   blacklist:
+      description: Display or edit your spectator blacklist
+      usage: /blacklist [add/remove] [name]
+      aliases: [bl]
+      permission: hardcore.spectateconfig
+      permission-message: You do not have permission to do this.
+
    tpa:
       description: Request to teleport to the specified player
       usage: /tpa <name>
@@ -122,3 +136,11 @@ permissions:
    hardcore.tpaccept:
       description: Permission to use /tpaccept <name>
       default: true
+
+   hardcore.spectator.bypass.tpcheck:
+      description: Bypass check for valid target at destination when teleporting as a spectator
+      default: op
+
+   hardcore.spectator.bypass.effects:
+      description: Prevents a spectator from being given blindness and slowness
+      default: op

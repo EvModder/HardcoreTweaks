@@ -165,6 +165,8 @@ public class ScoreboardManager implements Listener{
 			case PURPLE_STAINED_GLASS:
 			case RED_NETHER_BRICKS:
 				return 3;
+			case BRICKS:
+				return 4;
 			case OBSIDIAN:
 				return 5;
 			default:
