@@ -2,24 +2,19 @@ package Hardcore;
 
 import java.util.HashSet;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.EvUtils;
-import net.evmodder.EvLib.extras.ActionBarUtils;
 
 public class ScoreboardManager implements Listener{
 	final HashSet<String> included;
@@ -128,76 +123,5 @@ public class ScoreboardManager implements Listener{
 		if(evt.getNewLevel() == LVL_WL_TRIGGER && !evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
 			evt.getPlayer().addScoreboardTag("whitelist_mode");
 		}
-	}
-
-	static int getBuildScorePoints(Block b){
-		switch(b.getType()){
-			case NETHERRACK:
-			case DIRT: case GRASS_BLOCK:
-			case COBBLESTONE:
-			case STONE: case STONE_BRICKS:
-			case ACACIA_LEAVES: case BIRCH_LEAVES: case DARK_OAK_LEAVES:
-			case JUNGLE_LEAVES: case OAK_LEAVES: case SPRUCE_LEAVES:
-			case ACACIA_PLANKS: case BIRCH_PLANKS: case DARK_OAK_PLANKS:
-			case JUNGLE_PLANKS: case OAK_PLANKS: case SPRUCE_PLANKS:
-				return 1;
-			case GLASS:
-			case GREEN_STAINED_GLASS:
-			case RED_STAINED_GLASS:
-			case WHITE_STAINED_GLASS:
-			case YELLOW_STAINED_GLASS:
-			case BROWN_STAINED_GLASS:
-			case BLUE_STAINED_GLASS:
-				return 2;
-			case QUARTZ_BLOCK:
-			case QUARTZ_PILLAR:
-			case BLUE_ICE:
-			case END_STONE:
-			case BLACK_STAINED_GLASS:
-			case CYAN_STAINED_GLASS:
-			case GRAY_STAINED_GLASS:
-			case LIGHT_BLUE_STAINED_GLASS:
-			case LIGHT_GRAY_STAINED_GLASS:
-			case LIME_STAINED_GLASS:
-			case MAGENTA_STAINED_GLASS:
-			case ORANGE_STAINED_GLASS:
-			case PINK_STAINED_GLASS:
-			case PURPLE_STAINED_GLASS:
-			case RED_NETHER_BRICKS:
-				return 3;
-			case BRICKS:
-				return 4;
-			case OBSIDIAN:
-				return 5;
-			default:
-				return b.getType().isOccluding() ? 2 : 1;
-		}
-	}
-
-	class Coord{
-		int x, y, z;
-		Coord(int a, int b, int c){x=a; y=b; z=c;} 
-		@Override public boolean equals(Object o){return o instanceof Coord &&
-				((Coord)o).x == x && ((Coord)o).y == y && ((Coord)o).z == z;}
-		@Override public int hashCode(){return x * y * z;}
-	}
-	private HashSet<Coord> blockPlacedCoords = new HashSet<Coord>();
-	@EventHandler
-	public void onBlockPlaced(BlockPlaceEvent evt){
-		switch(evt.getBlockReplacedState().getType()){
-			case AIR: case WATER: case GRASS: case FERN: case VINE: break;
-			default: return;
-		}
-		Block b = evt.getBlock();
-		if(b.isLiquid() || b.isPassable() || !b.getType().isSolid()) return;
-		if(!blockPlacedCoords.add(new Coord(b.getX(), b.getY(), b.getZ()))) return;
-
-		String name10 = evt.getPlayer().getName();
-		if(name10.length() > 10) name10 = name10.substring(0, 10);
-		Score buildScore = pl.getServer().getScoreboardManager().getMainScoreboard()
-				.getObjective("buildscore").getScore(name10);
-		int newScore = buildScore.getScore() + getBuildScorePoints(b);
-		buildScore.setScore(newScore);
-		ActionBarUtils.sendToPlayer(ChatColor.GRAY+"Your Score: "+ChatColor.GREEN+newScore, evt.getPlayer());
 	}
 }
