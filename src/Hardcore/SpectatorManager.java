@@ -145,8 +145,9 @@ public class SpectatorManager implements Listener{
 	private void sendSpectateNotice(Player specP, Player target){
 		pl.getLogger().info(specP.getName()+" is now spectating "+target.getName());
 		specP.sendMessage(ChatColor.GRAY+"You are now spectating "+ChatColor.AQUA+target.getDisplayName());
-		if(target.getWorld().getUID().equals(specP.getWorld().getUID()) &&
-				target.getLocation().distanceSquared(specP.getLocation()) > 100*100)
+		if(!specP.hasPermission("hardcore.spectator.bypass.notify")
+				&& target.getWorld().getUID().equals(specP.getWorld().getUID())
+				&& target.getLocation().distanceSquared(specP.getLocation()) > 100*100)
 			target.sendMessage("§7>> §b"+specP.getDisplayName()+"§7 is now spectating you");
 	}
 
@@ -289,8 +290,10 @@ public class SpectatorManager implements Listener{
 //			pl.setPermission(player, "essentials.tpahere", false);
 //			pl.setPermission(player, "essentials.tpaccept", false);
 //			player.getScoreboard().resetScores(player.getName());
-			Player newTarget = getClosestGm0WithPerms(player.getLocation(), player);
-			if(newTarget != null) newTarget.sendMessage("§7>> §b"+player.getDisplayName()+"§7 is now spectating you");
+			if(!player.hasPermission("hardcore.spectator.bypass.notify")){
+				Player newTarget = getClosestGm0WithPerms(player.getLocation(), player);
+				if(newTarget != null) newTarget.sendMessage("§7>> §b"+player.getDisplayName()+"§7 is now spectating you");
+			}
 			runSpecatorLoop();
 		}
 	}

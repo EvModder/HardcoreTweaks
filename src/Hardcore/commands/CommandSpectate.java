@@ -11,6 +11,7 @@ import Hardcore.SpectatorManager;
 import Hardcore.SpectatorManager.WatchMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ public class CommandSpectate extends EvCommand{
 	}
 
 	@Override public List<String> onTabComplete(CommandSender s, Command c, String a, String[] args){
+		if(s instanceof Player == false) return null;
 		if(args.length == 1){
 			ArrayList<String> tabCompletes = new ArrayList<String>();
 			if("blacklist".startsWith(args[0])) tabCompletes.add("blacklist");
@@ -33,6 +35,7 @@ public class CommandSpectate extends EvCommand{
 			if("block-all".startsWith(args[0])) tabCompletes.add("whitelist");
 			if("disable".startsWith(args[0])) tabCompletes.add("whitelist");
 			if("mode".startsWith(args[0])) tabCompletes.add("mode");
+			if("list".startsWith(args[0]) && !SpectatorManager.isSpectator((Player)s)) tabCompletes.add("list");
 			return tabCompletes.isEmpty() ? null : tabCompletes;
 		}
 		else if(args.length == 2){
@@ -106,8 +109,25 @@ public class CommandSpectate extends EvCommand{
 			sender.sendMessage(ChatColor.RED+"Too many arguments");
 			return true;
 		}
-		if(args.length == 0) return false;
-		args[0] = args[0].toLowerCase().replaceAll("-", "");
+		if(args.length == 0 || (args[0]=args[0].toLowerCase().replaceAll("-", "")).equals("list")){
+			if(SpectatorManager.isSpectator(player)) return false;
+			ArrayList<String> specs = new ArrayList<String>();
+			for(Player p : player.getWorld().getPlayers()){
+				if(SpectatorManager.isSpectator(p) && p.getLocation().distanceSquared(player.getLocation()) < 60*60){
+					specs.add(p.getDisplayName());
+				}
+			}
+			if(specs.isEmpty()) sender.sendMessage(ChatColor.GRAY+"No nearby spectators detected.");
+			else if(specs.size() == 1) sender.sendMessage(
+					ChatColor.GRAY+"You are currently being spectated by "+ChatColor.WHITE+specs.get(0));
+			else{
+				Collections.sort(specs);
+				sender.sendMessage(ChatColor.GRAY+"You are currently being spectated by "
+						+ChatColor.AQUA+specs.size()+ChatColor.GRAY+" players:");
+				sender.sendMessage(String.join(ChatColor.GRAY+", "+ChatColor.WHITE, specs)+ChatColor.GRAY+".");
+			}
+			return true;
+		}
 		if(args.length == 1){
 			if(args[0].equals("whitelist") || args[0].equals("wl")
 					|| args[0].equals("blockall") || args[0].equals("disable") || args[0].equals("off")){
