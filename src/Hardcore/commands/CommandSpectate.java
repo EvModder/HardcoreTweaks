@@ -33,7 +33,7 @@ public class CommandSpectate extends EvCommand{
 			if("block-all".startsWith(args[0])) tabCompletes.add("whitelist");
 			if("disable".startsWith(args[0])) tabCompletes.add("whitelist");
 			if("mode".startsWith(args[0])) tabCompletes.add("mode");
-			return tabCompletes;
+			return tabCompletes.isEmpty() ? null : tabCompletes;
 		}
 		else if(args.length == 2){
 			args[1] = args[1].toLowerCase();
@@ -55,31 +55,31 @@ public class CommandSpectate extends EvCommand{
 		catch(NullPointerException | IllegalArgumentException ex){return null;}
 	}
 
-	static void displayWhitelist(Player player){
+	static void displayWhitelist(CommandSender requester, Player target){
 		StringBuilder builder = new StringBuilder("").append(ChatColor.GRAY).append("Current whitelist: ");
 		boolean empty = true;
-		for(String tag : player.getScoreboardTags()){
+		for(String tag : target.getScoreboardTags()){
 			if(tag.startsWith("spectator_whitelist_")){
 				String name = getNameFromListTag(tag);
 				builder.append(ChatColor.AQUA).append(name).append(ChatColor.GRAY).append(", ");
 				empty = false;
 			}
 		}
-		if(empty) player.sendMessage(builder.append(ChatColor.WHITE).append("Empty").toString());
-		else player.sendMessage(builder.substring(0, builder.length()-2));
+		if(empty) requester.sendMessage(builder.append(ChatColor.WHITE).append("Empty").toString());
+		else requester.sendMessage(builder.substring(0, builder.length()-2));
 	}
-	static void displayBlacklist(Player player){
+	static void displayBlacklist(CommandSender requester, Player target){
 		StringBuilder builder = new StringBuilder("").append(ChatColor.GRAY).append("Current blacklist: ");
 		boolean empty = true;
-		for(String tag : player.getScoreboardTags()){
+		for(String tag : target.getScoreboardTags()){
 			if(tag.startsWith("spectator_blacklist_")){
 				String name = getNameFromListTag(tag);
 				builder.append(ChatColor.RED).append(name).append(ChatColor.GRAY).append(", ");
 				empty = false;
 			}
 		}
-		if(empty) player.sendMessage(builder.append(ChatColor.WHITE).append("Empty").toString());
-		else player.sendMessage(builder.substring(0, builder.length()-2));
+		if(empty) requester.sendMessage(builder.append(ChatColor.WHITE).append("Empty").toString());
+		else requester.sendMessage(builder.substring(0, builder.length()-2));
 	}
 	static void displayCurrentMode(Player player){
 		player.sendMessage(""+ChatColor.GRAY+ChatColor.BOLD+"Current mode: "
@@ -108,17 +108,17 @@ public class CommandSpectate extends EvCommand{
 		}
 		if(args.length == 0) return false;
 		args[0] = args[0].toLowerCase().replaceAll("-", "");
-		if(args.length == 1 && label.equals("spectate")){
+		if(args.length == 1){
 			if(args[0].equals("whitelist") || args[0].equals("wl")
 					|| args[0].equals("blockall") || args[0].equals("disable") || args[0].equals("off")){
-				if(SpectatorManager.getSpectateMode(player) == WatchMode.WHITELIST) displayWhitelist(player);
+				if(SpectatorManager.getSpectateMode(player) == WatchMode.WHITELIST) displayWhitelist(player, player);
 				else{
 					SpectatorManager.setSpectateMode(player, WatchMode.WHITELIST);
 					displayCurrentMode(player);
 				}
 			}
 			else if(args[0].equals("blacklist") || args[0].equals("bl") || args[0].equals("blocked")){
-				if(SpectatorManager.getSpectateMode(player) == WatchMode.BLACKLIST) displayBlacklist(player);
+				if(SpectatorManager.getSpectateMode(player) == WatchMode.BLACKLIST) displayBlacklist(player, player);
 				else{
 					SpectatorManager.setSpectateMode(player, WatchMode.BLACKLIST);
 					displayCurrentMode(player);

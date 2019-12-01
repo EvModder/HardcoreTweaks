@@ -40,17 +40,25 @@ public class CommandBlacklist extends EvCommand{
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String args[]){
 		if(sender instanceof Player == false){
-			sender.sendMessage(ChatColor.RED+"This command can only be run by in-game players!");
+			if(args.length != 1){
+				sender.sendMessage(ChatColor.RED+"Console usage: /blacklist <name>");
+			}
+			else{
+				@SuppressWarnings("deprecation")
+				Player target = pl.getServer().getPlayer(args[0]);
+				if(target == null) sender.sendMessage(ChatColor.RED+"Could not find player \""+args[0]+"\"");
+				else CommandSpectate.displayBlacklist(sender, target);
+			}
 			return true;
 		}
 		Player player = (Player) sender;
 		if(SpectatorManager.getSpectateMode(player) == WatchMode.WHITELIST){
-			sender.sendMessage(ChatColor.GOLD+"Warning: "+ChatColor.GRAY+"your current mode is "+ChatColor.WHITE+"WHITELIST"
-					+ChatColor.GRAY+".\nTo change to "+ChatColor.WHITE+"BLACKLIST"+ChatColor.GRAY+" mode, run "
+			sender.sendMessage(ChatColor.GOLD+"Warning: "+ChatColor.GRAY+"your current mode is "+ChatColor.RED+"WHITELIST"
+					+ChatColor.GRAY+".\nTo change to "+ChatColor.RED+"BLACKLIST"+ChatColor.GRAY+" mode, run "
 					+ChatColor.GREEN+"/spectate mode blacklist");
 		}
 		if(args.length == 0){
-			CommandSpectate.displayBlacklist(player);
+			CommandSpectate.displayBlacklist(player, player);
 			return true;
 		}
 		if(args.length > 2){

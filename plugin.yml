@@ -43,8 +43,8 @@ commands:
 
    spectate:
       description: Configure spectator settings
-      usage: /sp [mode] <blacklist/whitelist> [name]
-      aliases: [spec,sp,spectators]
+      usage: /spec [mode] <blacklist/whitelist> [name]
+      aliases: [sp,spec,spectators]
       permission: hardcore.spectateconfig
       permission-message: You do not have permission to do this.
 
@@ -141,6 +141,18 @@ permissions:
       description: Bypass check for valid target at destination when teleporting as a spectator
       default: op
 
-   hardcore.spectator.bypass.effects:
-      description: Prevents a spectator from being given blindness and slowness
+   hardcore.spectator.bypass.blindness:
+      description: Prevents a spectator from being given blindness
+      default: op
+
+   hardcore.spectator.bypass.slowness:
+      description: Prevents a spectator from being given slowness
+      default: op
+
+   hardcore.spectator.bypass.forcedtarget:
+      description: Prevents a spectator from being forced to spectate from a player's POV
+      default: op
+
+   hardcore.spectator.bypass.maxrange:
+      description: Prevents a spectator from being forced to remain within a radius of an alive player
       default: op

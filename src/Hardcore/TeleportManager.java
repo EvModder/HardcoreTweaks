@@ -145,6 +145,7 @@ public class TeleportManager implements Listener{
 			if(target.isOnline()) target.getPlayer().sendMessage(ChatColor.RED+"The tpa request from "+
 					ChatColor.GREEN+from.getName()+ChatColor.RED+" has expired");
 			tpTimeouts.remove(new Pair<UUID, UUID>(fromUUID, targetUUID));
+			pendingTpas.get(targetUUID).remove(fromUUID);
 		}};
 		tpTimeouts.put(new Pair<UUID, UUID>(fromUUID, targetUUID), timeout);
 		timeout.runTaskLater(pl, 2*60*20);
@@ -191,6 +192,7 @@ public class TeleportManager implements Listener{
 			if(target.isOnline()) target.getPlayer().sendMessage(ChatColor.RED+"The tpahere request from "+
 					ChatColor.GREEN+from.getName()+ChatColor.RED+" has expired");
 			tpTimeouts.remove(new Pair<UUID, UUID>(fromUUID, targetUUID));
+			pendingTpaheres.get(targetUUID).remove(fromUUID);
 		}};
 		tpTimeouts.put(new Pair<UUID, UUID>(fromUUID, targetUUID), timeout);
 		timeout.runTaskLater(pl, 2*60*20);

@@ -241,9 +241,14 @@ public class NewPlayerManager implements Listener{
 			int numDeaths = deathDir.listFiles().length;
 			player.setStatistic(Statistic.DEATHS, numDeaths);
 			pl.getServer().broadcastMessage(RESPAWN_MSG.replaceAll("%name%", player.getName()));
+			player.sendTitle(/*title=*/"", /*subtitle=*/"§7§lWelcome back to §6§lH§ea§6§lrd§ec§6§lore§7§l!",
+					/*fadeIn=*/10, /*stay=*/20*15, /*fadeOut=*/20);
 		}
 		else{
 			pl.getServer().broadcastMessage(SPAWN_MSG.replaceAll("%name%", player.getName()));
+			player.sendTitle(/*title=*/"§7§lWelcome to §6§lH§ea§6§lrd§ec§6§lore§7§l!",
+					/*subtitle=*/"§9Read the book to be set free and spawn in the world",
+					/*fadeIn=*/10, /*stay=*/20*15, /*fadeOut=*/20);
 		}
 		if(new File("./plugins/EvFolder/aug_evt/"+player.getUniqueId()+".txt").exists()){
 			player.addScoreboardTag("event_participant");
