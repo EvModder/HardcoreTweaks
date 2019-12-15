@@ -41,8 +41,7 @@ public class CommandAbout extends EvCommand{
 		final String lastDeath;
 		final int numDeaths;
 		final int augEvtParticip;
-		
-		@SuppressWarnings("deprecation")
+
 		Player onlineTarget = pl.getServer().getPlayer(name);
 		if(onlineTarget == null) for(Player p : pl.getServer().getOnlinePlayers())
 			if(p.getName().toLowerCase().startsWith(name)) onlineTarget = p;

@@ -180,9 +180,23 @@ public class NewPlayerManager implements Listener{
 		loc.getBlock().getRelative(BlockFace.WEST).setType(Material.BEDROCK);
 		for(int x=-3; x<=3; ++x) for(int y=-3; y<=3; ++y) for(int z=-3; z<=3; ++z){
 			Block block = loc.clone().add(x, y, z).getBlock();
-			if(block != null && block.getType() == Material.AIR) block.setType(Material.BEDROCK);
+			if(block.isEmpty()) block.setType(Material.BEDROCK);
 		}
 		loc.getBlock().setType(Material.AIR);
+	}
+
+	void sendSpawnBoxAtmosphere(Player player){
+		player.sendBlockChange(player.getLocation().add(1, 1, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, 1, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 1, 1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 1, -1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(1, 2, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, 2, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 2, 1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 2, -1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 1, 0), Material.AIR.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 2, 0), Material.END_GATEWAY.createBlockData());
 	}
 
 	public void giveGuideBook(Player player){
@@ -224,13 +238,17 @@ public class NewPlayerManager implements Listener{
 		}}.runTaskLater/*Asynchronously*/(pl, 20*60);//60s
 
 		createSpawnBox(spawnLoc);
+		sendSpawnBoxAtmosphere(player);
 
 		spawnLoc.setX(spawnLoc.getBlockX() + 0.5);
 		spawnLoc.setZ(spawnLoc.getBlockZ() + 0.5);
 		player.teleport(spawnLoc);
 		new BukkitRunnable(){@Override public void run(){
 			Player player = pl.getServer().getPlayer(uuid);
-			if(player != null) player.teleport(spawnLoc);
+			if(player != null){
+				player.teleport(spawnLoc);
+				sendSpawnBoxAtmosphere(player);
+			}
 		}}.runTaskLater(pl, 20);
 		player.setBedSpawnLocation(spawnLoc);
 		player.setWalkSpeed(0f);
@@ -260,7 +278,7 @@ public class NewPlayerManager implements Listener{
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent evt){
-		Player player = evt.getPlayer();
+		final Player player = evt.getPlayer();
 		// Newly (re)spawned player
 		if(player.getScoreboardTags().isEmpty()) spawnNewPlayer(player);
 
@@ -269,6 +287,10 @@ public class NewPlayerManager implements Listener{
 			player.sendMessage(ChatColor.GREEN+">> "
 					+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
 			createSpawnBox(player.getLocation());
+			sendSpawnBoxAtmosphere(player);
+			new BukkitRunnable(){@Override public void run(){sendSpawnBoxAtmosphere(player);}}.runTaskLater(pl, 1*20);
+			new BukkitRunnable(){@Override public void run(){sendSpawnBoxAtmosphere(player);}}.runTaskLater(pl, 2*20);
+			new BukkitRunnable(){@Override public void run(){sendSpawnBoxAtmosphere(player);}}.runTaskLater(pl, 4*20);
 			player.getInventory().clear();
 			giveGuideBook(player);
 		}

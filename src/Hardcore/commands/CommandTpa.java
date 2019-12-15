@@ -42,7 +42,7 @@ public class CommandTpa extends EvCommand{
 			sender.sendMessage(ChatColor.RED+"Please specify who you wish to teleport to");
 			return false;
 		}
-		@SuppressWarnings("deprecation")
+
 		Player target = pl.getServer().getPlayer(args[0]);
 		if(target == null){
 			@SuppressWarnings("deprecation")

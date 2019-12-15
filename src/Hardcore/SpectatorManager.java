@@ -236,10 +236,10 @@ public class SpectatorManager implements Listener{
 								sendSpectateNotice(specP, newTarget);
 								specP.teleport(newTarget, TeleportCause.CHORUS_FRUIT);
 							}
-							else if(newTarget.getLocation().distanceSquared(specP.getLocation()) > 50*50){
+							else if(newTarget.getLocation().distanceSquared(specP.getLocation()) > 20*20){
 								Vector fromSpecToTarget = newTarget.getLocation().toVector()
-											.subtract(specP.getLocation().toVector()).normalize();
-								specP.setVelocity(fromSpecToTarget.multiply(5));
+											.subtract(specP.getLocation().toVector());
+								specP.setVelocity(fromSpecToTarget.normalize().multiply(5F));
 							}
 						}
 					}
@@ -378,7 +378,7 @@ public class SpectatorManager implements Listener{
 		}}.runTaskLater(pl, 20*5);
 	}
 
-	@SuppressWarnings("deprecation") @EventHandler
+	@EventHandler
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		if(evt.getMessage().charAt(0) != '/') return;
 		String message = evt.getMessage().trim();

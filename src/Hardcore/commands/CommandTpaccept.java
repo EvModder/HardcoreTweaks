@@ -43,7 +43,7 @@ public class CommandTpaccept extends EvCommand{
 					String.join(", ", tpMan.get_pending_tps(((Player)sender).getUniqueId()))+"]");
 			return false;
 		}
-		@SuppressWarnings("deprecation")
+
 		Player from = pl.getServer().getPlayer(args[0]);
 		if(from == null){
 			sender.sendMessage(ChatColor.RED+"Could not find online player: "+args[0]);

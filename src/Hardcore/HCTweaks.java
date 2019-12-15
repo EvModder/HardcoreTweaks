@@ -43,6 +43,8 @@ public class HCTweaks extends EvPlugin{
 
 		if(config.getBoolean("enable-compass-tracker", false))
 			getServer().getPluginManager().registerEvents(new CompassManager(this), this);
+		if(config.getBoolean("remember-visiting-players", false))
+			getServer().getPluginManager().registerEvents(new ChunkLoadListener(this), this);
 		getServer().getPluginManager().registerEvents(new NewPlayerManager(this), this);
 		getServer().getPluginManager().registerEvents(new ScoreboardManager(this), this);
 		getServer().getPluginManager().registerEvents(new SpectatorManager(this), this);

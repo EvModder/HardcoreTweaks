@@ -44,7 +44,6 @@ public class CommandBlacklist extends EvCommand{
 				sender.sendMessage(ChatColor.RED+"Console usage: /blacklist <name>");
 			}
 			else{
-				@SuppressWarnings("deprecation")
 				Player target = pl.getServer().getPlayer(args[0]);
 				if(target == null) sender.sendMessage(ChatColor.RED+"Could not find player \""+args[0]+"\"");
 				else CommandSpectate.displayBlacklist(sender, target);

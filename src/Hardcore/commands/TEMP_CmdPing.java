@@ -14,7 +14,7 @@ public class TEMP_CmdPing implements Listener {
 		pl = plugin;
 	}
 
-	@EventHandler @SuppressWarnings("deprecation")
+	@EventHandler
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		if(evt.getMessage().charAt(0) != '/' || evt.isCancelled()) return;
 		String message = evt.getMessage().trim();
