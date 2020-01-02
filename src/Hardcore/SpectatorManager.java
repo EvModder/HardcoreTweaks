@@ -239,13 +239,19 @@ public class SpectatorManager implements Listener{
 							else if(newTarget.getLocation().distanceSquared(specP.getLocation()) > 20*20){
 								Vector fromSpecToTarget = newTarget.getLocation().toVector()
 											.subtract(specP.getLocation().toVector());
-								specP.setVelocity(fromSpecToTarget.normalize().multiply(5F));
+								Vector bounceBackV = fromSpecToTarget.normalize();
+								bounceBackV.multiply(new Vector(.5, 10, .5));
+								specP.setVelocity(bounceBackV);
 							}
 						}
 					}
 				}
 			}
 		}}.runTaskTimer(pl, 20, 20);//delay, freq
+	}
+
+	boolean notFar(Location a, Location b){
+		return a.getWorld().getUID().equals(b.getWorld().getUID()) && a.distanceSquared(b) < 50*50;
 	}
 
 	/*@EventHandler
@@ -257,7 +263,7 @@ public class SpectatorManager implements Listener{
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSpectateTeleport(PlayerTeleportEvent evt){
 		if(!isSpectatorFavorYes(evt.getPlayer()) || evt.getPlayer().hasPermission("hardcore.spectator.bypass.tpcheck")) return;
-		if(evt.getCause() == TeleportCause.CHORUS_FRUIT) return;
+		if(evt.getCause() == TeleportCause.CHORUS_FRUIT || notFar(evt.getFrom(), evt.getTo())) return;
 		Player target = getClosestGm0WithPerms(evt.getTo(), evt.getPlayer());
 		if(target == null || !target.getWorld().getUID().equals(evt.getTo().getWorld().getUID())
 				|| target.getLocation().distanceSquared(evt.getTo()) > 50*50){
@@ -394,6 +400,14 @@ public class SpectatorManager implements Listener{
 				if(space < 0 || (target=pl.getServer().getPlayer(message.substring(space + 1))) == null){
 					player.sendMessage(ChatColor.RED+"Please specify who you wish to tp to (exact username)");
 					player.sendMessage("Note: you can also use vanilla spectator menu (press 1)");
+				}
+				if(!SpectatorManager.canSpectate(player.getUniqueId(), target)){
+					if(getSpectateMode(target) == WatchMode.WHITELIST)
+						player.sendMessage(ChatColor.GRAY+target.getDisplayName()+
+								ChatColor.RED+" has not added you to their spectator whitelist");
+					else if(getSpectateMode(target) == WatchMode.BLACKLIST)
+						player.sendMessage(ChatColor.GRAY+target.getDisplayName()+
+								ChatColor.RED+" has you on their spectator blacklist");
 				}
 				else{
 					player.teleport(target, TeleportCause.COMMAND);

@@ -147,7 +147,8 @@ public class CommandSpectate extends EvCommand{
 			else if(args[0].equals("mode")) displayCurrentMode(player);
 			else{
 				Player target = pl.getServer().getPlayer(args[0]);
-				if(target != null && SpectatorManager.isSpectator(player)){
+				if(target != null && SpectatorManager.isSpectator(player)
+						&& SpectatorManager.canSpectate(player.getUniqueId(), target)){
 					sender.sendMessage("Command interpreted as /tp "+target.getName());
 					if(player.teleport(target, TeleportCause.COMMAND)){
 						player.setSpectatorTarget(target);

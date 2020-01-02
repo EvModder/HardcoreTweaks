@@ -257,7 +257,12 @@ public class NewPlayerManager implements Listener{
 		File deathDir = new File("./plugins/EvFolder/deaths/"+player.getName());
 		if(deathDir.exists()){
 			int numDeaths = deathDir.listFiles().length;
+			pl.getLogger().info(player.getName()+" has "+numDeaths+" deaths");
 			player.setStatistic(Statistic.DEATHS, numDeaths);
+			new BukkitRunnable(){@Override public void run(){
+				//player.setStatistic(Statistic.DEATHS, numDeaths);//TODO: is this line needed?
+				ScoreboardManager.setNumDeaths(player, numDeaths);
+			}}.runTaskLater(pl, 20);
 			pl.getServer().broadcastMessage(RESPAWN_MSG.replaceAll("%name%", player.getName()));
 			player.sendTitle(/*title=*/"", /*subtitle=*/"§7§lWelcome back to §6§lH§ea§6§lrd§ec§6§lore§7§l!",
 					/*fadeIn=*/10, /*stay=*/20*15, /*fadeOut=*/20);
