@@ -25,6 +25,7 @@ import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.EvUtils;
 import net.evmodder.HorseOwners.HorseLibrary;
 import net.evmodder.HorseOwners.api.events.HorseClaimEvent;
+import net.evmodder.HorseOwners.api.events.HorseDeathEvent;
 import net.evmodder.HorseOwners.api.events.HorseRenameEvent;
 
 public class ScoreboardManager implements Listener{
@@ -48,18 +49,30 @@ public class ScoreboardManager implements Listener{
 		mainBoard.registerNewObjective("levels", "level", "§e- §bLevels §e-");
 		mainBoard.registerNewObjective("health", "health", "Health");
 		//*/
-		mainBoard.registerNewObjective("horse-speed", "dummy", "§9§m  §a Horse Speed §9§m  ");
-		mainBoard.registerNewObjective("horse-health", "dummy", "§9§m  §a Horse Health §9§m  ");
-		mainBoard.registerNewObjective("horse-jump", "dummy", "§9§m  §a Horse Jump §9§m  ");
-		mainBoard.registerNewObjective("donkey-speed", "dummy", "§9§m  §a Donkey Speed §9§m  ");
-		mainBoard.registerNewObjective("donkey-health", "dummy", "§9§m  §a Donkey Health §9§m  ");
-		mainBoard.registerNewObjective("donkey-jump", "dummy", "§9§m  §a Donkey Jump §9§m  ");
-		mainBoard.registerNewObjective("mule-speed", "dummy", "§9§m  §a Mule Speed §9§m  ");
-		mainBoard.registerNewObjective("mule-health", "dummy", "§9§m  §a Mule Health §9§m  ");
-		mainBoard.registerNewObjective("mule-jump", "dummy", "§9§m  §a Mule Jump §9§m  ");
-		mainBoard.registerNewObjective("llama-speed", "dummy", "§9§m  §a Llama Speed §9§m  ");
-		mainBoard.registerNewObjective("llama-health", "dummy", "§9§m  §a Llama Health §9§m  ");
-		mainBoard.registerNewObjective("llama-jump", "dummy", "§9§m  §a Llama Jump §9§m  ");
+		if(mainBoard.getObjective("horse-speed") == null){
+			mainBoard.registerNewObjective("horse-speed", "dummy", "§9§m  §a Horse Speed §9§m  ");
+			mainBoard.registerNewObjective("horse-health", "dummy", "§9§m  §a Horse Health §9§m  ");
+			mainBoard.registerNewObjective("horse-jump", "dummy", "§9§m  §a Horse Jump §9§m  ");
+			mainBoard.registerNewObjective("donkey-speed", "dummy", "§9§m  §a Donkey Speed §9§m  ");
+			mainBoard.registerNewObjective("donkey-health", "dummy", "§9§m  §a Donkey Health §9§m  ");
+			mainBoard.registerNewObjective("donkey-jump", "dummy", "§9§m  §a Donkey Jump §9§m  ");
+			mainBoard.registerNewObjective("mule-speed", "dummy", "§9§m  §a Mule Speed §9§m  ");
+			mainBoard.registerNewObjective("mule-health", "dummy", "§9§m  §a Mule Health §9§m  ");
+			mainBoard.registerNewObjective("mule-jump", "dummy", "§9§m  §a Mule Jump §9§m  ");
+			mainBoard.registerNewObjective("llama-speed", "dummy", "§9§m  §a Llama Speed §9§m  ");
+			mainBoard.registerNewObjective("llama-health", "dummy", "§9§m  §a Llama Health §9§m  ");
+			mainBoard.registerNewObjective("llama-jump", "dummy", "§9§m  §a Llama Jump §9§m  ");
+		}
+		new BukkitRunnable(){
+			final Scoreboard sb = pl.getServer().getScoreboardManager().getMainScoreboard();
+			final String[] horseTypes = new String[]{"horse", "donkey", "mule", "llama"};
+			final String[] statTypes = new String[]{"speed", "health", "jump"};
+			int typeI = 0, statI = 0;
+			@Override public void run(){
+				sb.getObjective(horseTypes[typeI]+"-"+statTypes[statI]).setDisplaySlot(DisplaySlot.SIDEBAR);
+				if((statI = ++statI % 3) == 0) typeI = ++typeI % 3;
+			}
+		}.runTaskTimer(pl, 20*5, 20*5);
 	}
 
 	boolean isMainAdvancement(Advancement adv){
@@ -85,10 +98,13 @@ public class ScoreboardManager implements Listener{
 
 	public static void resetScores(Player player){
 		String name = player.getName();
+		String name10 = name.substring(0, 10);
 		int numDeaths = player.getScoreboard().getObjective("deaths").getScore(name).getScore();
+		int buildScore = player.getScoreboard().getObjective("buildscore").getScore(name10).getScore();
 		player.getScoreboard().resetScores(name);
-		if(name.length() > 10) player.getScoreboard().resetScores(name.substring(0, 10));
+		if(name.length() > 10) player.getScoreboard().resetScores(name10);
 		setNumDeaths(player, numDeaths);
+		player.getScoreboard().getObjective("buildscore").getScore(name10).setScore(buildScore);//save
 	}
 
 	void addObjectiveAndTeam(Player player, int numAdvancements){
@@ -127,13 +143,14 @@ public class ScoreboardManager implements Listener{
 
 	private static boolean SIDEBAR_ACTIVE = false;
 	public static void showOnSidebar(String objective, int seconds){
-		HCTweaks pl = HCTweaks.getPlugin();
-		pl.getServer().getScoreboardManager().getMainScoreboard().getObjective(objective).setDisplaySlot(DisplaySlot.SIDEBAR);
+		final HCTweaks pl = HCTweaks.getPlugin();
+		final Scoreboard mainBoard = pl.getServer().getScoreboardManager().getMainScoreboard();
+		mainBoard.getObjective(objective).setDisplaySlot(DisplaySlot.SIDEBAR);
 
 		if(!SIDEBAR_ACTIVE){
 			SIDEBAR_ACTIVE = true;
 			new BukkitRunnable(){@Override public void run(){
-				pl.getServer().getScoreboardManager().getMainScoreboard().clearSlot(DisplaySlot.SIDEBAR);
+				mainBoard.clearSlot(DisplaySlot.SIDEBAR);
 				SIDEBAR_ACTIVE = false;
 			}}.runTaskLater(pl, 20*seconds);
 		}
@@ -167,6 +184,7 @@ public class ScoreboardManager implements Listener{
 		}
 	}
 
+	// January 2020 event!
 	private void updateHorseScoreboard(AbstractHorse horse, String name){
 		switch(horse.getType()){
 			case HORSE:
@@ -184,27 +202,20 @@ public class ScoreboardManager implements Listener{
 			default:
 		}
 	}
-	// January 2020 event!
-	@EventHandler
-	public void onHorseClaim(HorseClaimEvent evt){
-		if(evt.getEntity() instanceof AbstractHorse){
-			updateHorseScoreboard((AbstractHorse) evt.getEntity(), evt.getClaimName());
-		}
-	}
-	@EventHandler
-	public void onHorseRename(HorseRenameEvent evt){
+	private void renameHorseScoreboard(String oldName, String newName){
+		pl.getLogger().info("Updating scoreboard of '"+oldName+"' to '"+newName+"'");
 		Scoreboard sb = pl.getServer().getScoreboardManager().getMainScoreboard();
 		for(String horseType : Arrays.asList("horse", "donkey", "mule", "llama")){
 			for(String scoreType : Arrays.asList("speed", "health", "jump")){
 				String objectiveName = horseType+"-"+scoreType;
 				Objective objective = sb.getObjective(objectiveName);
-				Score sOld = objective.getScore(evt.getOldFullName());
+				Score sOld = objective.getScore(oldName);
 				if(sOld.isScoreSet()){
 					int scoreNum = sOld.getScore();
 					// ----- Remove sOld ----- //
 					final HashMap<String, Integer> objMap = new HashMap<>();
 					for(String entry : sb.getEntries()){
-						if(!entry.equals(evt.getOldFullName())) objMap.put(entry, objective.getScore(entry).getScore());
+						if(!entry.equals(oldName)) objMap.put(entry, objective.getScore(entry).getScore());
 					}
 					objective.unregister();
 					objective = sb.registerNewObjective(objectiveName, "dummy",
@@ -212,9 +223,21 @@ public class ScoreboardManager implements Listener{
 					for(final Entry<String, Integer> entry : objMap.entrySet())
 						objective.getScore(entry.getKey()).setScore(entry.getValue());
 					// ----- Add sNew ----- //
-					objective.getScore(evt.getNewFullName()).setScore(scoreNum);;
+					if(newName != null) objective.getScore(newName).setScore(scoreNum);
 				}
 			}
 		}
+	}
+
+	@EventHandler public void onHorseClaim(HorseClaimEvent evt){
+		if(evt.getEntity() instanceof AbstractHorse){
+			updateHorseScoreboard((AbstractHorse) evt.getEntity(), evt.getClaimName());
+		}
+	}
+	@EventHandler public void onHorseRename(HorseRenameEvent evt){
+		renameHorseScoreboard(evt.getOldFullName(), evt.getNewFullName());
+	}
+	@EventHandler public void onHorseDeath(HorseDeathEvent evt){
+		renameHorseScoreboard(evt.getEntity().getCustomName(), null);
 	}
 }

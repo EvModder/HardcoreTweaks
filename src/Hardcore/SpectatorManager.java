@@ -213,10 +213,12 @@ public class SpectatorManager implements Listener{
 						if(!specP.hasPermission("hardcore.spectator.bypass.forcedtarget")){
 							sendSpectateNotice(specP, newTarget);
 							UUID targetUUID = newTarget.getUniqueId();
-							specP.setSpectatorTarget(newTarget);
+							specP.teleport(newTarget, TeleportCause.SPECTATE);//TODO: remove in favor of below?
+							//specP.setSpectatorTarget(newTarget);
 							new BukkitRunnable(){@Override public void run(){
 								specP.setSpectatorTarget(null);
 								Player target = pl.getServer().getPlayer(targetUUID);
+								specP.setSpectatorTarget(null);//TODO: remove?
 								if(target != null) specP.setSpectatorTarget(newTarget);
 							}}.runTaskLater(pl, 20);
 							new BukkitRunnable(){@Override public void run(){
