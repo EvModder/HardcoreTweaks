@@ -1,7 +1,6 @@
 package Hardcore;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -66,7 +65,7 @@ public class ScoreboardManager implements Listener{
 		new BukkitRunnable(){
 			final Scoreboard sb = pl.getServer().getScoreboardManager().getMainScoreboard();
 			final String[] horseTypes = new String[]{"horse", "donkey", "mule", "llama"};
-			final String[] statTypes = new String[]{"speed", "health", "jump"};
+			final String[] statTypes = new String[]{"speed", "jump", "health"};
 			int typeI = 0, statI = 0;
 			@Override public void run(){
 				sb.getObjective(horseTypes[typeI]+"-"+statTypes[statI]).setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -205,27 +204,25 @@ public class ScoreboardManager implements Listener{
 	private void renameHorseScoreboard(String oldName, String newName){
 		pl.getLogger().info("Updating scoreboard of '"+oldName+"' to '"+newName+"'");
 		Scoreboard sb = pl.getServer().getScoreboardManager().getMainScoreboard();
-		for(String horseType : Arrays.asList("horse", "donkey", "mule", "llama")){
-			for(String scoreType : Arrays.asList("speed", "health", "jump")){
-				String objectiveName = horseType+"-"+scoreType;
-				Objective objective = sb.getObjective(objectiveName);
-				Score sOld = objective.getScore(oldName);
-				if(sOld.isScoreSet()){
-					int scoreNum = sOld.getScore();
-					// ----- Remove sOld ----- //
-					final HashMap<String, Integer> objMap = new HashMap<>();
-					for(String entry : sb.getEntries()){
-						if(!entry.equals(oldName)) objMap.put(entry, objective.getScore(entry).getScore());
-					}
-					objective.unregister();
-					objective = sb.registerNewObjective(objectiveName, "dummy",
-							"§9§m  §a "+EvUtils.capitalizeAndSpacify(objectiveName, '-')+" §9§m  ");
-					for(final Entry<String, Integer> entry : objMap.entrySet())
-						objective.getScore(entry.getKey()).setScore(entry.getValue());
-					// ----- Add sNew ----- //
-					if(newName != null) objective.getScore(newName).setScore(scoreNum);
-				}
-			}
+		final HashMap<Objective, Integer> oldScores = new HashMap<Objective, Integer>();
+		final HashMap<Objective, Integer> horseScores = new HashMap<Objective, Integer>();
+		for(Objective objective : sb.getObjectives()){
+			Score score = objective.getScore(oldName);
+			if(!score.isScoreSet()) continue;
+			if(objective.getName().startsWith("horse-") ||
+				objective.getName().startsWith("donkey-") ||
+				objective.getName().startsWith("mule-") ||
+				objective.getName().startsWith("llama-")
+			) horseScores.put(objective, score.getScore());
+			else oldScores.put(objective, score.getScore());
+		}
+		sb.resetScores(oldName);
+		for(Entry<Objective, Integer> entry : oldScores.entrySet()){
+			entry.getKey().getScore(oldName).setScore(entry.getValue());
+		}
+		if(newName != null)
+		for(Entry<Objective, Integer> entry : horseScores.entrySet()){
+			entry.getKey().getScore(newName).setScore(entry.getValue());
 		}
 	}
 
