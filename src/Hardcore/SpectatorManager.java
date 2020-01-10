@@ -8,6 +8,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,6 +26,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.extras.ActionBarUtils;
 import net.evmodder.EvLib.util.Pair;
 
@@ -242,8 +244,18 @@ public class SpectatorManager implements Listener{
 								Vector fromSpecToTarget = newTarget.getLocation().toVector()
 											.subtract(specP.getLocation().toVector());
 								Vector bounceBackV = fromSpecToTarget.normalize();
-								bounceBackV.multiply(new Vector(.5, 10, .5));
+								bounceBackV.multiply(new Vector(.7, 10, .7));
 								specP.setVelocity(bounceBackV);
+							}
+							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray")
+									&& specP.getEyeLocation().getBlock().getType().isOccluding()){
+								Location closestAir = EvUtils.getClosestBlock(specP.getEyeLocation(), 10,
+										(Block b) -> {return b.getType().isOccluding();});
+								if(closestAir != null){
+									closestAir.add(0, -1, 0);
+									specP.teleport(closestAir, TeleportCause.CHORUS_FRUIT);
+								}
+								else specP.teleport(newTarget, TeleportCause.CHORUS_FRUIT);
 							}
 						}
 					}
