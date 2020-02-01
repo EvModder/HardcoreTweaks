@@ -244,7 +244,7 @@ public class SpectatorManager implements Listener{
 								Vector fromSpecToTarget = newTarget.getLocation().toVector()
 											.subtract(specP.getLocation().toVector());
 								Vector bounceBackV = fromSpecToTarget.normalize();
-								bounceBackV.multiply(new Vector(.7, 10, .7));
+								bounceBackV.multiply(new Vector(.8, 10, .8));
 								specP.setVelocity(bounceBackV);
 							}
 							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray")
@@ -415,7 +415,7 @@ public class SpectatorManager implements Listener{
 					player.sendMessage(ChatColor.RED+"Please specify who you wish to tp to (exact username)");
 					player.sendMessage("Note: you can also use vanilla spectator menu (press 1)");
 				}
-				if(!SpectatorManager.canSpectate(player.getUniqueId(), target)){
+				if(!player.isOp() && !SpectatorManager.canSpectate(player.getUniqueId(), target)){
 					if(getSpectateMode(target) == WatchMode.WHITELIST)
 						player.sendMessage(ChatColor.GRAY+target.getDisplayName()+
 								ChatColor.RED+" has not added you to their spectator whitelist");

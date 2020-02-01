@@ -17,7 +17,6 @@ remember-visiting-players: true
 # Compass Manager
 enable-compass-tracker: true
 
-
 # Enable spectating
 enable-spectating: true #TODO
 
