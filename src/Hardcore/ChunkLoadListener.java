@@ -21,7 +21,8 @@ public class ChunkLoadListener implements Listener{
 	final HCTweaks pl;
 	public ChunkLoadListener(HCTweaks plugin){ pl = plugin; }
 
-	void updateRegionLog(String filename, String newVisitor){
+	void updateRegionLog(String filename, UUID newVisitor){
+		pl.getLogger().info("Writing to: "+filename+" (triggered by: "+newVisitor+")");
 		StringBuilder builder = new StringBuilder();
 		builder.append(System.currentTimeMillis()).append(',').append(newVisitor);
 
@@ -35,7 +36,7 @@ public class ChunkLoadListener implements Listener{
 		if(reader != null){try{
 			String line;
 			while((line = reader.readLine()) != null){
-				if(line.endsWith(newVisitor)) continue;
+				if(line.endsWith(newVisitor.toString())) continue;
 				builder.append('\n').append(line);
 			}
 			reader.close();
@@ -67,7 +68,7 @@ public class ChunkLoadListener implements Listener{
 		if(queuedUpdates.add(rXZ_Key)){
 			//String rFile = "./"+pl.getServer().getWorld(worldUUID).getName()+"/region/r."+rX+"."+rZ+".mca";
 			String logFile = "./"+pl.getServer().getWorld(worldUUID).getName()+"/region/r."+rX+"."+rZ+".visitlog";
-			updateRegionLog(logFile, playerUUID.toString());
+			updateRegionLog(logFile, playerUUID);
 			new BukkitRunnable(){@Override public void run(){queuedUpdates.remove(rXZ_Key);}}.runTaskLater(pl, 20*30);//30s
 		}
 	}
