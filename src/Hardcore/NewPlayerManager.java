@@ -88,8 +88,8 @@ public class NewPlayerManager implements Listener{
 				.iterator(), '\n'));
 	}
 
-	boolean isOnChunkBoundary(Location loc){
-		return Math.abs(loc.getBlockX()) % 16 < 2 || Math.abs(loc.getBlockZ()) % 16 < 2;
+	boolean isOnChunkBoundary(long x, long z){
+		return Math.abs(x) % 16 < 2 || Math.abs(z) % 16 < 2;
 	}
 	boolean hasNearbyLava(Location loc){
 		for(int x=-15; x<=15; ++x) for(int y=-10; y<=10; ++y) for(int z=-15; z<=15; ++z){
@@ -112,14 +112,14 @@ public class NewPlayerManager implements Listener{
 	}
 	// Warning: Very laggy!  Call asynchronously when possible
 	Location getRandomSpawnLoc(){
-		World world = pl.getServer().getWorld(WORLD_NAME);
-		int seaLevel = world.getSeaLevel();
-		WorldBorder border = world.getWorldBorder();
-		double maxOffset = border.getSize()/2;
-		double stdDev = maxOffset/4;
-		//double borderHn = Math.log(maxOffset + 0.5) + EULERS_CONSTANT;
-		Random rand = new Random();
-		Location loc;
+		final Random rand = new Random();
+		final World world = pl.getServer().getWorld(WORLD_NAME);
+		final WorldBorder border = world.getWorldBorder();
+		final Location origin = border.getCenter();
+		final int seaLevel = world.getSeaLevel();
+		final double maxOffset = border.getSize()/2;
+		final double stdDev = maxOffset/4;
+		//final double borderHn = Math.log(maxOffset + 0.5) + EULERS_CONSTANT;
 		while(true){
 			//double x = (rand.nextGaussian() * rand.nextGaussian()) * stdDev;
 			//double z = (rand.nextGaussian() * rand.nextGaussian()) * stdDev;
@@ -127,19 +127,13 @@ public class NewPlayerManager implements Listener{
 			double z = getRandomCoord(maxOffset, 500, rand.nextDouble());
 			while(Math.abs(x) > maxOffset) x = rand.nextGaussian() * stdDev;
 			while(Math.abs(z) > maxOffset) z = rand.nextGaussian() * stdDev;
-			if(rand.nextBoolean()) x = -x;
-			if(rand.nextBoolean()) z = -z;
+			x = Math.floor(origin.getX() + x) + 0.5d;
+			z = Math.floor(origin.getZ() + z) + 0.5d;
+			if(isOnChunkBoundary((long)x, (long)z)) continue;
+			if(rand.nextBoolean()) x = (-x)-1;//-1 to preserve isOnChunkBoundary=true
+			if(rand.nextBoolean()) z = (-z)-1;
 
-			loc = border.getCenter();
-			loc.setX(Math.floor(loc.getX() + x) + 0.5d);
-			loc.setZ(Math.floor(loc.getZ() + z) + 0.5d);
-			loc.setY(250);
-			String debugStr = "Candidate X,Y,Z: "+loc.getBlockX()+" _ "+loc.getBlockZ();
-			if(isOnChunkBoundary(loc)){
-				pl.getLogger().info(debugStr+" >> On chunk boundary");
-				continue;
-			}
-
+			Location loc = new Location(world, x, 250, z);
 			if(!loc.getChunk().load(true)){
 				pl.getLogger().severe("Failed to generate spawnLoc chunk!");
 				return null;
@@ -148,7 +142,7 @@ public class NewPlayerManager implements Listener{
 			while(loc.getBlockY() > seaLevel & (loc.getBlock() == null || loc.getBlock().isEmpty() 
 					|| loc.getBlock().isPassable())) loc.setY(loc.getY() - 1);
 			loc.setY(loc.getY() + 2);
-			debugStr = "Candidate X,Y,Z: "+loc.getBlockX()+" "+loc.getBlockY()+" "+loc.getBlockZ();
+			String debugStr = "Candidate X,Y,Z: "+loc.getBlockX()+" "+loc.getBlockY()+" "+loc.getBlockZ();
 			if(loc.getY() < seaLevel + 3)
 				pl.getLogger().info(debugStr+" >> Below sea level");
 			else if(loc.getBlock().getRelative(BlockFace.DOWN).isLiquid())
@@ -157,10 +151,9 @@ public class NewPlayerManager implements Listener{
 				pl.getLogger().info(debugStr+" >> Near to lava");
 			else{
 				pl.getLogger().info(debugStr+" >> SUCCESS");
-				break;
+				return loc;
 			}
 		}
-		return loc;
 	}
 
 	static void removeNearbyBedrock(Location loc){

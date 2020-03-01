@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.UUID;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -25,11 +26,13 @@ public class ChunkLoadListener implements Listener{
 		pl.getLogger().info("Writing to: "+filename+" (triggered by: "+newVisitor+")");
 		StringBuilder builder = new StringBuilder();
 		builder.append(System.currentTimeMillis()).append(',').append(newVisitor);
+		boolean isNew = false;
 
 		BufferedReader reader = null;
 		try{reader = new BufferedReader(new FileReader(filename));}
 		catch(FileNotFoundException e){
 			//Create the file
+			isNew = true;
 			try{new File(filename).createNewFile();}
 			catch(IOException e1){e1.printStackTrace();}
 		}
@@ -41,6 +44,7 @@ public class ChunkLoadListener implements Listener{
 			}
 			reader.close();
 		}catch(IOException e){}}
+		if(isNew) builder.append("created: ").append(System.currentTimeMillis());
 		try{
 			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
 			writer.write(builder.toString()); writer.close();
@@ -66,10 +70,22 @@ public class ChunkLoadListener implements Listener{
 	void queueVisitorUpdate(long rX, long rZ, UUID worldUUID, UUID playerUUID){
 		final RegionUpdateEvent rXZ_Key = new RegionUpdateEvent(rX, rZ, worldUUID, playerUUID);
 		if(queuedUpdates.add(rXZ_Key)){
-			//String rFile = "./"+pl.getServer().getWorld(worldUUID).getName()+"/region/r."+rX+"."+rZ+".mca";
-			String logFile = "./"+pl.getServer().getWorld(worldUUID).getName()+"/region/r."+rX+"."+rZ+".visitlog";
+			World world = pl.getServer().getWorld(worldUUID);
+			//String rFile = "./"+world.getName()+"/region/r."+rX+"."+rZ+".mca";
+			String logFile = null;
+			switch(world.getEnvironment()){
+				case NORMAL:
+					logFile = "./"+world.getName()+"/region/r."+rX+"."+rZ+".visitlog";
+					break;
+				case NETHER:
+					logFile = "./"+world.getName()+"/DIM-1/region/r."+rX+"."+rZ+".visitlog";
+					break;
+				case THE_END:
+					logFile = "./"+world.getName()+"/DIM1/region/r."+rX+"."+rZ+".visitlog";
+					break;
+			}
 			updateRegionLog(logFile, playerUUID);
-			new BukkitRunnable(){@Override public void run(){queuedUpdates.remove(rXZ_Key);}}.runTaskLater(pl, 20*30);//30s
+			new BukkitRunnable(){@Override public void run(){queuedUpdates.remove(rXZ_Key);}}.runTaskLater(pl, 20*60*60*2);//2h
 		}
 	}
 
