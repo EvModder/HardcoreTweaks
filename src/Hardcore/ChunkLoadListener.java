@@ -94,7 +94,7 @@ public class ChunkLoadListener implements Listener{
 		Player player = null;
 		double dSqNearest = Double.MAX_VALUE;
 		Location chunkCenter = new Location(evt.getWorld(), evt.getChunk().getX()*16 + 7, 127, evt.getChunk().getZ()*16 + 7);
-		for(Player p : evt.getWorld().getPlayers()){
+		for(Player p : evt.getWorld().getPlayers()){//TODO: Consider optimizing performance here?
 			double dSq = p.getLocation().distanceSquared(chunkCenter);
 			if(dSq < dSqNearest && !p.isDead() && p.getGameMode() != GameMode.SPECTATOR){
 				dSqNearest = dSq;
