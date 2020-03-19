@@ -221,8 +221,7 @@ public class NewPlayerManager implements Listener{
 		player.setInvulnerable(true);
 
 		Location spawnLoc = spawnLocs.remove();
-		pl.getLogger().warning("Spawning in at: "
-			+Extras.locationToString(spawnLoc, ChatColor.GREEN, ChatColor.YELLOW));
+		pl.getLogger().warning("Spawning in at: "+TextUtils.locationToString(spawnLoc, ChatColor.GREEN, ChatColor.YELLOW, 0));
 		saveSpawnLocs();
 		new BukkitRunnable(){@Override public void run(){
 			Location spawnLoc = getRandomSpawnLoc();
