@@ -9,7 +9,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.scheduler.BukkitRunnable;
 import Hardcore.SpectatorManager.WatchMode;
 import Hardcore.commands.CommandTpa;
@@ -198,7 +197,7 @@ public class TeleportManager implements Listener{
 		timeout.runTaskLater(pl, 2*60*20);
 	}
 
-	public void acceptTeleport(Player accepter, Player from){
+	public boolean acceptTeleport(Player accepter, Player from){
 		pl.getLogger().info(accepter.getName()+" accepted "+from.getName()+"'s tp request");
 
 		final UUID fromUUID = from.getUniqueId(), accepterUUID = accepter.getUniqueId();
@@ -206,13 +205,18 @@ public class TeleportManager implements Listener{
 		boolean tpahere = pendingTpaheres.getOrDefault(accepterUUID, new HashSet<UUID>()).remove(fromUUID);
 		if(!tpa && !tpahere){
 			accepter.sendMessage(ChatColor.RED+"You do not have a pending teleport from "+ChatColor.GREEN+from.getDisplayName());
-			return;
+			return false;
+		}
+		if(tpa && tpahere){
+			accepter.sendMessage(ChatColor.RED+"Error: Found BOTH pending /tpa and /tpahere");
+			pl.getLogger().severe("/tpa and /tpahere both active simultaneously, teleport failed!");
+			return false;
 		}
 		cancelTimeout(new Pair<UUID, UUID>(fromUUID, accepterUUID));
 		if(check_tp_tags(from, accepter)){
 			accepter.sendMessage(ChatColor.RED+"You already have a teleport connected to "+from.getDisplayName());
 			from.sendMessage(ChatColor.RED+"You already have a teleport connected to "+accepter.getDisplayName());
-			return;
+			return false;
 		}
 		from.sendMessage(ChatColor.GREEN+accepter.getDisplayName()+
 				ChatColor.LIGHT_PURPLE+" accepted your "+(tpa ? "/tpa" : "/tpahere"));
@@ -226,7 +230,9 @@ public class TeleportManager implements Listener{
 				.map(tag -> ChatColor.GOLD+name_from_tp_tag(tag))
 				.sorted().collect(Collectors.joining(ChatColor.GRAY+", "))
 				+".");
-		if(tpa) from.teleport(accepter, TeleportCause.CHORUS_FRUIT);
-		if(tpahere) accepter.teleport(from, TeleportCause.CHORUS_FRUIT);
+		boolean success;
+		if(tpa) success = from.teleport(accepter/*, TeleportCause.CHORUS_FRUIT*/);
+		else/*if(tpahere)*/ success = accepter.teleport(from/*, TeleportCause.CHORUS_FRUIT*/);
+		return success;
 	}
 }

@@ -24,6 +24,7 @@ public class HCTweaks extends EvPlugin{
 
 	@Override public void onEvEnable(){
 		plugin = this;
+		new Extras();
 		getLogger().setLevel(Level.ALL);
 		WORLD_NAME = getConfig().getString("world-name", "Reliquist");
 		World hardcoreWorld = getServer().getWorld(WORLD_NAME);
