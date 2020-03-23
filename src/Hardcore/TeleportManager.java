@@ -104,6 +104,10 @@ public class TeleportManager implements Listener{
 	}
 
 	public void addPendingTpa(Player from, Player target){
+		if(isInArcheryEvt(from) || isInArcheryEvt(target)){
+			from.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
+			return;
+		}
 		pl.getLogger().info(from.getName()+" requesting /tpa to "+target.getName());
 		if(check_tp_tags(from, target)){
 			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
@@ -151,6 +155,10 @@ public class TeleportManager implements Listener{
 	}
 
 	public void addPendingTpahere(Player from, Player target){
+		if(isInArcheryEvt(from) || isInArcheryEvt(target)){
+			from.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
+			return;
+		}
 		pl.getLogger().info(from.getName()+" requesting /tpahere from "+target.getName());
 		if(check_tp_tags(from, target)){
 			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
@@ -197,7 +205,19 @@ public class TeleportManager implements Listener{
 		timeout.runTaskLater(pl, 2*60*20);
 	}
 
+	private boolean isInArcheryEvt(Player p){
+		if(p.getLocation().getX() < -29990000 && p.getLocation().getZ() < -29990000) return true;
+		for(String tag : p.getScoreboardTags()) if(tag.startsWith("old_loc=")) return true;
+		return false;
+	}
+
 	public boolean acceptTeleport(Player accepter, Player from){
+		//TODO: remove after archery event!
+		if(isInArcheryEvt(accepter) || isInArcheryEvt(from)){
+			accepter.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
+			from.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
+			return false;
+		}
 		pl.getLogger().info(accepter.getName()+" accepted "+from.getName()+"'s tp request");
 
 		final UUID fromUUID = from.getUniqueId(), accepterUUID = accepter.getUniqueId();
