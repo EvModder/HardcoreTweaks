@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 import org.bukkit.ChatColor;
+import org.bukkit.Statistic;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -19,6 +21,7 @@ public class PlayerDeathListener implements Listener{
 	public void onDeath(PlayerDeathEvent evt){
 		final UUID uuid = evt.getEntity().getUniqueId();
 		final String name = evt.getEntity().getName();
+		final boolean quickDeath = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)/20/60/60 < 5;//Less than 5 hours alive
 		evt.getEntity().saveData();
 		evt.getEntity().loadData();
 		ScoreboardManager.resetScores(evt.getEntity());
@@ -36,6 +39,15 @@ public class PlayerDeathListener implements Listener{
 			if(!new File(deathDir).exists()) new File(deathDir).mkdir();
 			deathDir += "/"+/*uuid*/name;
 			if(!new File(deathDir).exists()) new File(deathDir).mkdir();
+			{
+				if(!quickDeath) FileIO.deleteFile("deaths/name/quick-deaths.txt");
+				else{
+					int quickDeaths = Integer.parseInt(FileIO.loadFile("deaths/name/quick-deaths.txt", "0")) + 1;
+					FileIO.saveFile("deaths/name/quick-deaths.txt", ""+quickDeaths);
+					long respawnPenalty = (1 << (quickDeaths-1)) * (60*60*6/*6 hours*/);
+					evt.getEntity().addScoreboardTag("respawn_penalty="+respawnPenalty);
+				}
+			}
 			deathDir += "/"+dateStr;
 			if(new File(deathDir).exists()){
 				int i = 1;
@@ -47,11 +59,11 @@ public class PlayerDeathListener implements Listener{
 			if(!pl.copyPlayerdata(uuid, deathDir)) pl.getLogger().severe("Copy faied");
 		}}.runTaskLater(pl, 20 * 2);
 
-		// Kick after 2 minutes (to prevent item despawn) if they still haven't respawned
+		// Kick after 2 minutes (to prevent item despawn) if they still haven't pressed respawn
 		new BukkitRunnable(){@Override public void run(){
-			if(evt.getEntity().isDead())
-				evt.getEntity().kickPlayer(ChatColor.RED + "Died in hardcore:"
-									+ChatColor.RESET+"\n"+evt.getDeathMessage());
+			Player deadPlayer = pl.getServer().getPlayer(uuid);
+			if(deadPlayer != null && deadPlayer.isDead())
+				deadPlayer.kickPlayer(ChatColor.RED + "Died in hardcore:"+ChatColor.RESET+"\n"+evt.getDeathMessage());
 		}}.runTaskLater(pl, 20 * 120);
 	}
 }

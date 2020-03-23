@@ -97,6 +97,13 @@ public class SpectatorManager implements Listener{
 				!player.getScoreboardTags().contains("blacklist_mode");
 	}
 
+	public static long getFrequentDeathRespawnPenalty(Player spectator){
+		for(String tag : spectator.getScoreboardTags()){
+			if(tag.startsWith("respawn_penalty=")) return Long.parseLong(tag.substring(16));
+		}
+		return 0;
+	}
+
 	static Player getClosestGm0WithPerms(Location loc, Player spec){
 		double closestDistGm0 = Double.MAX_VALUE;
 		Player closestPlayer = null;
@@ -177,7 +184,8 @@ public class SpectatorManager implements Listener{
 				Player specP = pl.getServer().getPlayer(uuid).getPlayer();
 
 				int secondsSinceDeath = specP.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
-				long secondsLeft = SECONDS_UNTIL_RESPAWN - secondsSinceDeath;
+				long frequentDeathPenalty = getFrequentDeathRespawnPenalty(specP);
+				long secondsLeft = SECONDS_UNTIL_RESPAWN + frequentDeathPenalty - secondsSinceDeath;
 				if(secondsLeft <= 0) ActionBarUtils.sendToPlayer(
 						ChatColor.GREEN+"You may now respawn with "+ChatColor.AQUA+"/respawn", specP);
 				else ActionBarUtils.sendToPlayer(
