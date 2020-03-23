@@ -38,8 +38,8 @@ public class ScoreboardManager implements Listener{
 		ADV_WL_TRIGGER = pl.getConfig().getInt("set-whitelist-mode-when-has-x-advancements", 15);
 		LVL_WL_TRIGGER = pl.getConfig().getInt("set-whitelist-mode-when-has-x-levels", 50);
 
-		
-		Scoreboard mainBoard = pl.getServer().getScoreboardManager().getMainScoreboard();
+		//Scoreboard mainBoard = pl.getServer().getScoreboardManager().getMainScoreboard();
+
 		/*mainBoard.registerNewObjective("buildscore", "dummy", "§[■] Blocks Placed [■]");
 		mainBoard.registerNewObjective("advancements", "dummy ", "");
 		mainBoard.registerNewObjective("deaths", "deathCount", "");
@@ -47,7 +47,7 @@ public class ScoreboardManager implements Listener{
 		mainBoard.registerNewObjective("levels", "level", "§e- §bLevels §e-");
 		mainBoard.registerNewObjective("health", "health", "Health");
 		//*/
-		if(mainBoard.getObjective("horse-speed") == null){
+		/*if(mainBoard.getObjective("horse-speed") == null){
 			mainBoard.registerNewObjective("horse-speed", "dummy", "§9§m  §a Horse Speed §9§m  ");
 			mainBoard.registerNewObjective("horse-health", "dummy", "§9§m  §a Horse Health §9§m  ");
 			mainBoard.registerNewObjective("horse-jump", "dummy", "§9§m  §a Horse Jump §9§m  ");
@@ -62,10 +62,8 @@ public class ScoreboardManager implements Listener{
 			mainBoard.registerNewObjective("llama-jump", "dummy", "§9§m  §a Llama Jump §9§m  ");
 			mainBoard.registerNewObjective("trader_llama-h", "dummy", "§9§m  §a TraderLlama Health §9§m  ");
 			mainBoard.registerNewObjective("skeleton_horse-j", "dummy", "§9§m  §a SkeleHorse Jump §9§m  ");
-		}
-		//mainBoard.registerNewObjective("trader_llama-h", "dummy", "§9§m  §a TraderLlama Health §9§m  ");
-		//mainBoard.registerNewObjective("skeleton_horse-j", "dummy", "§9§m  §a SkeleHorse Jump §9§m  ");
-		new BukkitRunnable(){
+		}//*/
+		/*new BukkitRunnable(){
 			final Scoreboard sb = pl.getServer().getScoreboardManager().getMainScoreboard();
 			final String[] horseTypes = new String[]{"horse", "donkey", "mule", "llama"};
 			final String[] statTypes = new String[]{"speed", "jump", "health"};
@@ -79,7 +77,7 @@ public class ScoreboardManager implements Listener{
 				sb.getObjective(horseTypes[typeI]+"-"+statTypes[statI]).setDisplaySlot(DisplaySlot.SIDEBAR);
 				if((statI = ++statI % 3) == 0) typeI = ++typeI % 6;
 			}
-		}.runTaskTimer(pl, 20*5, 20*5);
+		}.runTaskTimer(pl, 20*5, 20*5);//*/
 	}
 
 	boolean isMainAdvancement(Advancement adv){
@@ -250,4 +248,6 @@ public class ScoreboardManager implements Listener{
 	@EventHandler public void onHorseDeath(HorseDeathEvent evt){
 		renameHorseScoreboard(evt.getEntity().getCustomName(), null);
 	}
+
+	// April 2020 event! (TODO)
 }
