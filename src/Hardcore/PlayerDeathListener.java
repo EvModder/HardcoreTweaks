@@ -22,7 +22,7 @@ public class PlayerDeathListener implements Listener{
 		final UUID uuid = evt.getEntity().getUniqueId();
 		final String name = evt.getEntity().getName();
 		final boolean quickDeath = evt.getEntity().getStatistic(Statistic.PLAY_ONE_MINUTE)/60 < 5;//Less than 5 hours alive
-		//final boolean quickDeath = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)/20/60/60 < 5;// Equivalent
+		//final boolean quickDeath = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)/20/60/60 < 5;// Equivalent to above line
 		evt.getEntity().saveData();
 		evt.getEntity().loadData();
 		ScoreboardManager.resetScores(evt.getEntity());
