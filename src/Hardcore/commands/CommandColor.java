@@ -12,6 +12,7 @@ import net.evmodder.EvLib.extras.TextUtils;
 
 public class CommandColor extends EvCommand{
 	public CommandColor(HCTweaks pl){super(pl);}
+	static final char COLOR_SYMBOL = ChatColor.WHITE.toString().charAt(0);
 
 	@Override public List<String> onTabComplete(CommandSender s, Command c, String a, String[] args){
 		if(args.length > 0){
@@ -28,34 +29,48 @@ public class CommandColor extends EvCommand{
 			sender.sendMessage(ChatColor.RED+"This command can only be run by in-game players!");
 			return true;
 		}
+		String displayName = ((Player)sender).getDisplayName();
+		int nameIdx = displayName.indexOf(sender.getName());
+		if(nameIdx == -1){
+			sender.sendMessage(ChatColor.RED+"You cannot use this command if you have a custom nickname set");
+			return true;
+		}
 		if(args.length == 0){
 			sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
 					"&00 &11 &22 &33 &44 &55 &66 &77 &88 &99 &aa &bb &cc &dd &ee &ff"));
 			sender.sendMessage(ChatColor.GRAY+"/color #");
+			return true;
 		}
-		else if(args.length > 1 || (args[0]=args[0].trim().replaceAll("&", "")).length() > 1){
+		if(args.length > 1 || (args[0]=args[0].trim().replaceAll("&", "")).length() > 1){
 			sender.sendMessage(ChatColor.GRAY+"Please provide just a single character");
+			return true;
+		}
+		char colorCh = Character.toLowerCase(args[0].charAt(0));
+		ChatColor color = ChatColor.getByChar(colorCh);
+		if(color == null){
+			sender.sendMessage(ChatColor.GRAY+"Unknown color '"+colorCh+"'");
+			return true;
+		}
+		if(TextUtils.isFormat(colorCh)){
+			sender.sendMessage(ChatColor.GRAY+"Please pick a color code");
+			return true;
+		}
+
+		// Got to here, update their nickname!
+		int cutBeforeIdx = nameIdx;
+		while(cutBeforeIdx > 1 && displayName.charAt(cutBeforeIdx-2) == COLOR_SYMBOL) cutBeforeIdx -= 2;
+		String textBeforeName = displayName.substring(0, cutBeforeIdx).replace(COLOR_SYMBOL, '&');
+		String textAfterName = displayName.substring(nameIdx+sender.getName().length()).replace(COLOR_SYMBOL, '&');
+
+		if(colorCh == 'f' || colorCh == 'r'){
+			if(textBeforeName.isEmpty() && textAfterName.isEmpty()) HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" off");
+			else HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" "+textBeforeName+sender.getName()+textAfterName);
+			((Player)sender).removeScoreboardTag("color_nick");
 		}
 		else{
-			char colorCh = Character.toLowerCase(args[0].charAt(0));
-			ChatColor color = ChatColor.getByChar(colorCh);
-			if(color == null){
-				sender.sendMessage(ChatColor.GRAY+"Unknown color '"+colorCh+"'");
-			}
-			else if(TextUtils.isFormat(colorCh)){
-				sender.sendMessage(ChatColor.GRAY+"Please pick a color code");
-			}
-			else if(colorCh == 'f' || colorCh == 'r'){
-				HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" off");
-				((Player)sender).removeScoreboardTag("color_nick");
-			}
-			else{
-				String name = sender.getName();
-				HCTweaks.getPlugin().runCommand("nick "+name+" &"+colorCh+name);
-				sender.sendMessage(color+"Color set!");
-				((Player)sender).addScoreboardTag("color_nick");
-				HCTweaks.getPlugin().getLogger().info("displayname: "+((Player)sender).getDisplayName());//TODO: temp debug, delete this
-			}
+			HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" "+textBeforeName+("&"+colorCh)+sender.getName()+textAfterName);
+			sender.sendMessage(color+"Color set!");
+			((Player)sender).addScoreboardTag("color_nick");
 		}
 		return true;
 	}
