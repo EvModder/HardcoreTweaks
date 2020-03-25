@@ -34,8 +34,11 @@ public class CommandAbout extends EvCommand{
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String args[]){
 		if(args.length == 0){
-			sender.sendMessage(ChatColor.RED+"Too few arguments");
-			return false;
+			if(sender instanceof Player == false){
+				sender.sendMessage(ChatColor.RED+"Too few arguments");
+				return false;
+			}
+			args = new String[]{sender.getName()};
 		}
 		String name = args[0].toLowerCase();
 		final String lastDeath;
