@@ -45,6 +45,10 @@ public class CommandColor extends EvCommand{
 			else if(TextUtils.isFormat(colorCh)){
 				sender.sendMessage(ChatColor.GRAY+"Please pick a color code");
 			}
+			else if(colorCh == 'f' || colorCh == 'r'){
+				HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" off");
+				((Player)sender).removeScoreboardTag("color_nick");
+			}
 			else{
 				String name = sender.getName();
 				HCTweaks.getPlugin().runCommand("nick "+name+" &"+colorCh+name);
