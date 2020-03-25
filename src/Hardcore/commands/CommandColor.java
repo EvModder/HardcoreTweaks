@@ -54,6 +54,7 @@ public class CommandColor extends EvCommand{
 				HCTweaks.getPlugin().runCommand("nick "+name+" &"+colorCh+name);
 				sender.sendMessage(color+"Color set!");
 				((Player)sender).addScoreboardTag("color_nick");
+				HCTweaks.getPlugin().getLogger().info("displayname: "+((Player)sender).getDisplayName());//TODO: temp debug, delete this
 			}
 		}
 		return true;

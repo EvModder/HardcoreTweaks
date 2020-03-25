@@ -3,7 +3,6 @@ package Hardcore.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import Hardcore.SpectatorManager;
 import Hardcore.TeleportManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,9 @@ public class CommandTpa extends EvCommand{
 		args[0] = args[0].toLowerCase();
 		ArrayList<String> tabCompletes = new ArrayList<String>();
 		for(Player p : pl.getServer().getOnlinePlayers()){
-			if(p.getName().toLowerCase().startsWith(args[0]) && !TeleportManager.check_tp_tags((Player)s, p))
+			if(tabCompletes.size() > 20) break;//Checking isValidReceiver might be expensive...
+			if(p.getName().toLowerCase().startsWith(args[0]) &&
+					tpMan.isValidReceiver(/*from=*/(Player)s, /*target=*/p, /*tellFromWhyNot=*/false, /*tellReceiverWhyNot=*/false))
 				tabCompletes.add(p.getName());
 		}
 		return tabCompletes;
@@ -30,19 +31,12 @@ public class CommandTpa extends EvCommand{
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String args[]){
-		if(sender instanceof Player == false){
-			sender.sendMessage(ChatColor.RED+"This command can only be run by in-game players!");
-			return true;
-		}
-		if(SpectatorManager.isSpectator((Player)sender)){
-			sender.sendMessage(ChatColor.RED+"This command can only be used by alive players");
-			return true;
-		}
+		if(tpMan.isValidRequester(sender, /*tellWhyNot=*/true) == false) return true;
+
 		if(args.length == 0){
 			sender.sendMessage(ChatColor.RED+"Please specify who you wish to teleport to");
 			return false;
 		}
-
 		Player target = pl.getServer().getPlayer(args[0]);
 		if(target == null){
 			@SuppressWarnings("deprecation")
@@ -54,10 +48,8 @@ public class CommandTpa extends EvCommand{
 			sender.sendMessage(ChatColor.RED+"Could not find player: "+args[0]);
 			return false;
 		}
-		if(SpectatorManager.isSpectator(target)){
-			sender.sendMessage(ChatColor.GRAY+target.getDisplayName()+ChatColor.RED+" is not alive and can't accept your tpa");
-			return true;
-		}
+
+		if(tpMan.isValidReceiver((Player)sender, target, /*tellFromWhyNot=*/true, /*tellReceiverWhyNot=*/false) == false) return true;
 		tpMan.addPendingTpa((Player)sender, target);
 		return true;
 	}

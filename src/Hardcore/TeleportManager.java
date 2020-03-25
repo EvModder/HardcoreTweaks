@@ -7,6 +7,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Statistic;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -20,12 +22,14 @@ public class TeleportManager implements Listener{
 	final HCTweaks pl;
 	final HashMap<UUID, HashSet<UUID>> pendingTpas, pendingTpaheres;//to -> from
 	final HashMap<Pair<UUID, UUID>, BukkitRunnable> tpTimeouts;
+	final long MAX_PLAYTIME_RATIO;
 
 	public TeleportManager(HCTweaks plugin){
 		pl = plugin;
 		pendingTpas = new HashMap<UUID, HashSet<UUID>>();
 		pendingTpaheres = new HashMap<UUID, HashSet<UUID>>();
 		tpTimeouts = new HashMap<Pair<UUID, UUID>, BukkitRunnable>();
+		MAX_PLAYTIME_RATIO = pl.getConfig().getLong("max-playtime-ratio-for-teleport", Long.MAX_VALUE);
 		new CommandTpaccept(pl, this);
 		new CommandTpa(pl, this);
 		new CommandTpahere(pl, this);
@@ -103,20 +107,83 @@ public class TeleportManager implements Listener{
 		if(timeout != null && !timeout.isCancelled()) timeout.cancel();
 	}
 
-	public void addPendingTpa(Player from, Player target){
-		if(isInArcheryEvt(from) || isInArcheryEvt(target)){
-			from.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
-			return;
+	private boolean isInArcheryEvt(Player p){
+		if(p.getLocation().getX() < -29990000 && p.getLocation().getZ() < -29990000) return true;
+		for(String tag : p.getScoreboardTags()) if(tag.startsWith("old_loc=")) return true;
+		return false;
+	}
+
+	public boolean isValidRequester(CommandSender from, boolean tellWhyNot){
+		if(from instanceof Player == false){
+			if(tellWhyNot) from.sendMessage(ChatColor.RED+"This command can only be run by in-game players!");
+			return false;
 		}
-		pl.getLogger().info(from.getName()+" requesting /tpa to "+target.getName());
+		if(isInArcheryEvt((Player)from)){
+			if(tellWhyNot) from.sendMessage(ChatColor.RED+"You can't send a teleport from the Archery Event area!");
+			return false;
+		}
+		if(SpectatorManager.isSpectator((Player)from)){
+			if(tellWhyNot) from.sendMessage(ChatColor.RED+"This command can only be used by alive players");
+			return false;
+		}
+		return true;
+	}
+	public boolean isValidReceiver(Player from, Player target, boolean tellFromWhyNot, boolean tellReceiverWhyNot){
+		if(from.getUniqueId().equals(target.getUniqueId())){
+			if(tellFromWhyNot || tellReceiverWhyNot) from.sendMessage(ChatColor.LIGHT_PURPLE+"Poof! teleported to yourself :)");
+			return false;//TODO: or true? Hmm
+		}
+		if(isInArcheryEvt(target)){
+			if(tellFromWhyNot) from.sendMessage(ChatColor.GRAY+target.getDisplayName()+
+					ChatColor.RED+" is in the Archery Event area and can't accept a teleport");
+			if(tellReceiverWhyNot) target.sendMessage("You can't accept teleports while in the Archery Event area");
+			return false;
+		}
+		if(SpectatorManager.isSpectator(target)){
+			if(tellFromWhyNot)  from.sendMessage(ChatColor.GRAY+target.getDisplayName()+
+					ChatColor.RED+" is not alive and can't accept a teleport");
+			if(tellReceiverWhyNot) target.sendMessage("You can't accept teleports when you are dead");
+			return false;
+		}
 		if(check_tp_tags(from, target)){
-			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
-					+target.getDisplayName());
-			return;
+			if(tellFromWhyNot) from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "+
+					ChatColor.GRAY+target.getDisplayName());
+			if(tellReceiverWhyNot) target.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "+
+					ChatColor.GRAY+from.getDisplayName());
+			return false;
 		}
+		int fromTimePlayed = from.getStatistic(Statistic.TIME_SINCE_DEATH);
+		int targetTimePlayed = from.getStatistic(Statistic.TIME_SINCE_DEATH);
+		if(targetTimePlayed/fromTimePlayed > MAX_PLAYTIME_RATIO){
+			if(tellFromWhyNot) from.sendMessage(ChatColor.RED+"You can't teleport someone with >"+
+					ChatColor.GOLD+MAX_PLAYTIME_RATIO+ChatColor.YELLOW+"x"+ChatColor.RED+" more playtime than you");
+			if(tellReceiverWhyNot) target.sendMessage(ChatColor.RED+"You can't teleport someone with "+
+					ChatColor.GOLD+MAX_PLAYTIME_RATIO+ChatColor.YELLOW+"x"+ChatColor.RED+" less playtime than you");
+		}
+		if(fromTimePlayed/targetTimePlayed > MAX_PLAYTIME_RATIO){
+			if(tellFromWhyNot) from.sendMessage(ChatColor.RED+"You can't teleport someone with "+
+					ChatColor.GOLD+MAX_PLAYTIME_RATIO+ChatColor.YELLOW+"x"+ChatColor.RED+" less playtime than you");
+			if(tellReceiverWhyNot) target.sendMessage(ChatColor.RED+"You can't teleport someone with >"+
+					ChatColor.GOLD+MAX_PLAYTIME_RATIO+ChatColor.YELLOW+"x"+ChatColor.RED+" more playtime than you");
+		}
+		return true;
+	}
+
+	public void addPendingTpa(Player from, Player target){
+		pl.getLogger().info(from.getName()+" requesting /tpa to "+target.getName());
+		//if(!isValidRequester(from, tellWhyNot)) return false;
+		//if(!isValidReceiver(from, target, tellWhyNot)) return false;
 		final UUID fromUUID = from.getUniqueId(), targetUUID = target.getUniqueId();
-		if(fromUUID.equals(targetUUID)){
-			from.sendMessage(ChatColor.LIGHT_PURPLE+"Poof! teleported to yourself :)");
+		//Commented out because it is fine to have multiple pending teleports; tp_tags are checked again in tpaccept
+		/*int num_tpaheres = pendingTpaheresFromTo.getOrDefault(fromUUID, new HashSet<UUID>()).size();
+		if(num_tpaheres != 0){
+			from.sendMessage(ChatColor.RED+"You cannot send a tpa to "+ ChatColor.GREEN+target.getDisplayName()+
+					" until your tpahere request"+(num_tpaheres > 1 ? "s" : "")+" expire"+(num_tpaheres > 1 ? "" : "s"));
+			return;
+		}*/
+		if(pendingTpaheres.getOrDefault(fromUUID, new HashSet<UUID>()).contains(targetUUID)){
+			from.sendMessage(ChatColor.RED+"You cannot send a tpa to "+ChatColor.GREEN+target.getDisplayName());
+			from.sendMessage(ChatColor.GRAY+"They already sent you a tpahere ("+ChatColor.AQUA+"/tpaccept "+from.getName()+ChatColor.GRAY+")");
 			return;
 		}
 		HashSet<UUID> tpasToTarget = pendingTpas.getOrDefault(targetUUID, new HashSet<UUID>());
@@ -125,11 +192,6 @@ public class TeleportManager implements Listener{
 			return;
 		}
 		pendingTpas.put(targetUUID, tpasToTarget);//TODO: Not sure if necessary. Better safe than sorry.
-		if(pendingTpaheres.getOrDefault(targetUUID, new HashSet<UUID>()).contains(fromUUID)){
-			from.sendMessage(ChatColor.RED+"You cannot send a tpa to "+
-					ChatColor.GREEN+target.getDisplayName()+" until your tpahere request expires");
-			return;
-		}
 		target.sendMessage(ChatColor.GREEN+from.getDisplayName()+ChatColor.LIGHT_PURPLE+" requests to teleport to you");
 		target.sendMessage(ChatColor.LIGHT_PURPLE+"To accept, type "+ChatColor.AQUA+"/tpaccept "+from.getName());
 		List<String> new_tags = get_tp_tags_diff(from, target);
@@ -155,19 +217,13 @@ public class TeleportManager implements Listener{
 	}
 
 	public void addPendingTpahere(Player from, Player target){
-		if(isInArcheryEvt(from) || isInArcheryEvt(target)){
-			from.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
-			return;
-		}
-		pl.getLogger().info(from.getName()+" requesting /tpahere from "+target.getName());
-		if(check_tp_tags(from, target)){
-			from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "
-					+target.getDisplayName());
-			return;
-		}
+		pl.getLogger().info(from.getName()+" requesting /tpahere to "+target.getName());
+		//if(!isValidRequester(from, tellWhyNot)) return false;
+		//if(!isValidReceiver(from, target, tellWhyNot)) return false;
 		final UUID fromUUID = from.getUniqueId(), targetUUID = target.getUniqueId();
-		if(fromUUID.equals(targetUUID)){
-			from.sendMessage(ChatColor.LIGHT_PURPLE+"Poof! teleported to yourself :)");
+		if(pendingTpas.getOrDefault(fromUUID, new HashSet<UUID>()).contains(targetUUID)){
+			from.sendMessage(ChatColor.RED+"You cannot send a tpahere to "+ChatColor.GREEN+target.getDisplayName());
+			from.sendMessage(ChatColor.GRAY+"They already sent you a tpa ("+ChatColor.AQUA+"/tpaccept "+from.getName()+ChatColor.GRAY+")");
 			return;
 		}
 		HashSet<UUID> tpaheresToTarget = pendingTpaheres.getOrDefault(targetUUID, new HashSet<UUID>());
@@ -175,12 +231,8 @@ public class TeleportManager implements Listener{
 			from.sendMessage(ChatColor.RED+"You already have a pending tpahere for "+ChatColor.GREEN+target.getDisplayName());
 			return;
 		}
-		pendingTpaheres.put(targetUUID, tpaheresToTarget);//TODO: Not sure if necessary. Better safe than sorry.
-		if(pendingTpas.getOrDefault(targetUUID, new HashSet<UUID>()).contains(fromUUID)){
-			from.sendMessage(ChatColor.RED+"You cannot send a tpahere to "+
-					ChatColor.GREEN+target.getDisplayName()+" until your tpa request expires");
-			return;
-		}
+		pendingTpaheres.put(targetUUID, tpaheresToTarget);
+		
 		target.sendMessage(ChatColor.GREEN+from.getDisplayName()+ChatColor.LIGHT_PURPLE+" requests that you teleport to them");
 		target.sendMessage(ChatColor.LIGHT_PURPLE+"To accept, type "+ChatColor.AQUA+"/tpaccept "+from.getName());
 		List<String> new_tags = get_tp_tags_diff(from, target);
@@ -205,19 +257,7 @@ public class TeleportManager implements Listener{
 		timeout.runTaskLater(pl, 2*60*20);
 	}
 
-	private boolean isInArcheryEvt(Player p){
-		if(p.getLocation().getX() < -29990000 && p.getLocation().getZ() < -29990000) return true;
-		for(String tag : p.getScoreboardTags()) if(tag.startsWith("old_loc=")) return true;
-		return false;
-	}
-
 	public boolean acceptTeleport(Player accepter, Player from){
-		//TODO: remove after archery event!
-		if(isInArcheryEvt(accepter) || isInArcheryEvt(from)){
-			accepter.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
-			from.sendMessage(ChatColor.RED+"You cannot teleport to/from the Archery Event area!");
-			return false;
-		}
 		pl.getLogger().info(accepter.getName()+" accepted "+from.getName()+"'s tp request");
 
 		final UUID fromUUID = from.getUniqueId(), accepterUUID = accepter.getUniqueId();
@@ -227,17 +267,18 @@ public class TeleportManager implements Listener{
 			accepter.sendMessage(ChatColor.RED+"You do not have a pending teleport from "+ChatColor.GREEN+from.getDisplayName());
 			return false;
 		}
-		if(tpa && tpahere){
+		if(tpa && tpahere){//Should never happen, in theory
 			accepter.sendMessage(ChatColor.RED+"Error: Found BOTH pending /tpa and /tpahere");
 			pl.getLogger().severe("/tpa and /tpahere both active simultaneously, teleport failed!");
 			return false;
 		}
 		cancelTimeout(new Pair<UUID, UUID>(fromUUID, accepterUUID));
-		if(check_tp_tags(from, accepter)){
-			accepter.sendMessage(ChatColor.RED+"You already have a teleport connected to "+from.getDisplayName());
-			from.sendMessage(ChatColor.RED+"You already have a teleport connected to "+accepter.getDisplayName());
-			return false;
-		}
+
+		//This can update while a teleport is still pending, so check again here
+		if(!isValidRequester(from, /*tellWhyNot=*/true)) return false;
+		if(!isValidReceiver(from, accepter, /*tellFromWhyNot=*/true, /*tellReceiverWhyNot=*/true)) return false;
+
+		//Success! Update tp_tags and complete the teleport
 		from.sendMessage(ChatColor.GREEN+accepter.getDisplayName()+
 				ChatColor.LIGHT_PURPLE+" accepted your "+(tpa ? "/tpa" : "/tpahere"));
 		accepter.sendMessage(ChatColor.LIGHT_PURPLE+"Accepted "+ChatColor.GREEN+from.getDisplayName()+

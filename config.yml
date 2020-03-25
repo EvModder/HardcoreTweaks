@@ -27,8 +27,11 @@ spectator-mode: blacklist
 
 enable-teleports: true #TODO
 teleports-per-life: 100 #TODO
-can-teleport-person-twice: false #TODO
-can-teleport-person-twice-indirectly: false #TODO
+can-teleport-same-person-twice: false #TODO
+can-teleport-same-person-twice-indirectly: false #TODO
+
+# 1:x, where if p1t is > x*pt2 teleport isn't allowed
+max-playtime-ratio-for-teleport: 100
 
 set-whitelist-mode-when-has-x-advancements: 15
 set-whitelist-mode-when-has-x-levels: 50
