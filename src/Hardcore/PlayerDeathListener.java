@@ -14,6 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import net.evmodder.EvLib.FileIO;
 
 public class PlayerDeathListener implements Listener{
+	final String SPEC_PREFIX = ChatColor.translateAlternateColorCodes('&', "&7[&9Dead&7]&3 ");
 	final HCTweaks pl;
 	public PlayerDeathListener(HCTweaks plugin){ pl = plugin; }
 
@@ -27,6 +28,7 @@ public class PlayerDeathListener implements Listener{
 		evt.getEntity().loadData();
 		ScoreboardManager.resetScores(evt.getEntity());
 		evt.getEntity().addScoreboardTag("dead");
+		evt.getEntity().setDisplayName(SPEC_PREFIX+evt.getEntity().getDisplayName());
 		pl.getLogger().warning("Death of "+name+": "+evt.getDeathMessage());
 
 		String deathLog = FileIO.loadFile("death-log.txt", "");
