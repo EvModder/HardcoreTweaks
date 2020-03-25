@@ -110,22 +110,25 @@ public class CommandSpectate extends EvCommand{
 			return true;
 		}
 		if(args.length == 0 || (args[0]=args[0].toLowerCase().replaceAll("-", "")).equals("list")){
-			if(SpectatorManager.isSpectator(player)) return false;
-			ArrayList<String> specs = new ArrayList<String>();
-			for(Player p : player.getWorld().getPlayers()){
-				if(SpectatorManager.isSpectator(p) && p.getLocation().distanceSquared(player.getLocation()) < 60*60){
-					specs.add(p.getDisplayName());
+			if(!SpectatorManager.isSpectator(player)){
+				ArrayList<String> specs = new ArrayList<String>();
+				for(Player p : player.getWorld().getPlayers()){
+					if(SpectatorManager.isSpectator(p) && p.getLocation().distanceSquared(player.getLocation()) < 60*60){
+						specs.add(p.getDisplayName());
+					}
+				}
+				if(specs.isEmpty()) sender.sendMessage(ChatColor.GRAY+"No nearby spectators detected.");
+				else if(specs.size() == 1) sender.sendMessage(
+						ChatColor.GRAY+"You are currently being spectated by "+ChatColor.WHITE+specs.get(0));
+				else{
+					Collections.sort(specs);
+					sender.sendMessage(ChatColor.GRAY+"You are currently being spectated by "
+							+ChatColor.AQUA+specs.size()+ChatColor.GRAY+" players:");
+					sender.sendMessage(String.join(ChatColor.GRAY+", "+ChatColor.WHITE, specs)+ChatColor.GRAY+".");
 				}
 			}
-			if(specs.isEmpty()) sender.sendMessage(ChatColor.GRAY+"No nearby spectators detected.");
-			else if(specs.size() == 1) sender.sendMessage(
-					ChatColor.GRAY+"You are currently being spectated by "+ChatColor.WHITE+specs.get(0));
-			else{
-				Collections.sort(specs);
-				sender.sendMessage(ChatColor.GRAY+"You are currently being spectated by "
-						+ChatColor.AQUA+specs.size()+ChatColor.GRAY+" players:");
-				sender.sendMessage(String.join(ChatColor.GRAY+", "+ChatColor.WHITE, specs)+ChatColor.GRAY+".");
-			}
+			if(SpectatorManager.getSpectateMode(player) == WatchMode.WHITELIST) displayWhitelist(player, player);
+			else displayBlacklist(player, player);
 			return true;
 		}
 		if(args.length == 1){
@@ -178,14 +181,14 @@ public class CommandSpectate extends EvCommand{
 				}
 				else{
 					if(player.addScoreboardTag("spectator_whitelist_"+spectator.getUniqueId())){
-						sender.sendMessage(ChatColor.AQUA+spectator.getName()
-							+ChatColor.GRAY+" has been added to your whitelist");
+						sender.sendMessage(ChatColor.AQUA+spectator.getName()+ChatColor.GRAY+" has been added to your whitelist");
 						player.removeScoreboardTag("spectator_blacklist_"+spectator.getUniqueId());
+						if(spectator.isOnline()) spectator.getPlayer().sendMessage(
+								ChatColor.GRAY+player.getName()+ChatColor.AQUA+" added your to their whitelist");
 					}
 					else{
 						player.removeScoreboardTag("spectator_whitelist_"+spectator.getUniqueId());
-						sender.sendMessage(ChatColor.AQUA+spectator.getName()
-							+ChatColor.GRAY+" has been removed from your whitelist");
+						sender.sendMessage(ChatColor.AQUA+spectator.getName()+ChatColor.GRAY+" has been removed from your whitelist");
 					}
 				}
 			}
