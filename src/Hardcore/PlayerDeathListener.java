@@ -17,14 +17,15 @@ public class PlayerDeathListener implements Listener{
 	final String SPEC_PREFIX = /*ChatColor.translateAlternateColorCodes('&', */"&9[&7Dead&9]&f·"/*)*/;
 	final HCTweaks pl;
 	public PlayerDeathListener(HCTweaks plugin){ pl = plugin; }
+	final long QD_HRS = 5;
 
 	@EventHandler
 	public void onDeath(PlayerDeathEvent evt){
 		final UUID uuid = evt.getEntity().getUniqueId();
 		final String name = evt.getEntity().getName();
 		//TODO: "PLAY_ONE_MINUTE" actually seems to track ticks lived??
-		//final boolean quickDeath = evt.getEntity().getStatistic(Statistic.PLAY_ONE_MINUTE)/60 < 5;//Less than 5 hours alive
-		final boolean quickDeath = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)/20/60/60 < 5;// Equivalent to above line
+		//final boolean quickDeath = evt.getEntity().getStatistic(Statistic.PLAY_ONE_MINUTE)/60 < QD_HRS;//Less than 5 hours alive
+		final boolean quickDeath = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)/20/60/60 < QD_HRS;// Equivalent to above line
 		evt.getEntity().saveData();
 		evt.getEntity().loadData();
 		ScoreboardManager.resetScores(evt.getEntity());
