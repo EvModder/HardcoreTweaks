@@ -14,7 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import net.evmodder.EvLib.FileIO;
 
 public class PlayerDeathListener implements Listener{
-	final String SPEC_PREFIX = ChatColor.translateAlternateColorCodes('&', "&7[&9Dead&7]&3 ");
+	final String SPEC_PREFIX = ChatColor.translateAlternateColorCodes('&', "&7[&9Dead&7]&3");
 	final HCTweaks pl;
 	public PlayerDeathListener(HCTweaks plugin){ pl = plugin; }
 
@@ -28,8 +28,10 @@ public class PlayerDeathListener implements Listener{
 		evt.getEntity().loadData();
 		ScoreboardManager.resetScores(evt.getEntity());
 		evt.getEntity().addScoreboardTag("dead");
-		evt.getEntity().setDisplayName(SPEC_PREFIX+evt.getEntity().getDisplayName());
+		//evt.getEntity().setDisplayName(SPEC_PREFIX+" "+evt.getEntity().getDisplayName());
+		pl.runCommand("essentials:nick "+name+" "+SPEC_PREFIX+evt.getEntity().getDisplayName());
 		pl.getLogger().warning("Death of "+name+": "+evt.getDeathMessage());
+		pl.getLogger().info("Was quick-death: "+quickDeath);
 
 		String deathLog = FileIO.loadFile("death-log.txt", "");
 		if(!deathLog.isEmpty()) deathLog += "\n";
@@ -43,12 +45,13 @@ public class PlayerDeathListener implements Listener{
 			deathDir += "/"+/*uuid*/name;
 			if(!new File(deathDir).exists()) new File(deathDir).mkdir();
 			{
-				if(!quickDeath) FileIO.deleteFile("deaths/name/quick-deaths.txt");
+				if(!quickDeath) new File(deathDir+"/quick-deaths.txt").delete();
 				else{
-					int quickDeaths = Integer.parseInt(FileIO.loadFile("deaths/name/quick-deaths.txt", "0")) + 1;
-					FileIO.saveFile("deaths/name/quick-deaths.txt", ""+quickDeaths);
+					int quickDeaths = Integer.parseInt(FileIO.loadFile("deaths/"+name+"/quick-deaths.txt", "0")) + 1;
+					FileIO.saveFile("deaths/"+name+"/quick-deaths.txt", ""+quickDeaths);
 					long respawnPenalty = (1 << (quickDeaths-1)) * (60*60*6/*6 hours*/);
 					evt.getEntity().addScoreboardTag("respawn_penalty="+respawnPenalty);
+					pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
 				}
 			}
 			deathDir += "/"+dateStr;

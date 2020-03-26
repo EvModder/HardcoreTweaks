@@ -10,6 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -169,18 +170,29 @@ public class SpectatorManager implements Listener{
 		spectator.sendMessage(ChatColor.GRAY+"You are now spectating "+ChatColor.AQUA+target.getDisplayName());
 		if(!spectator.hasPermission("hardcore.spectator.bypass.notify")
 				&& target != null
+				&& !target.getScoreboardTags().contains("mute_spectate_notify")
 				&& (cameFrom == null || !target.getWorld().getUID().equals(cameFrom.getWorld().getUID())
 					|| target.getLocation().distanceSquared(cameFrom) > 100*100))
-			target.sendMessage("§7>> §b"+spectator.getDisplayName()+"§7 is now spectating you");
+			target.sendMessage("§7§l+ §b"+spectator.getDisplayName()+"§7 is now spectating you");
 	}
 	private void sendSpectateEndNotice(Player spectator, Player target, Location leftTo){
 		//if(target != null) pl.getLogger().info(spectator.getName()+" is no longer spectating "+target.getName());
 		//specP.sendMessage(ChatColor.GRAY+"You are no longer spectating "+ChatColor.AQUA+target.getDisplayName());
 		if(!spectator.hasPermission("hardcore.spectator.bypass.notify")
 				&& target != null
+				&& !target.getScoreboardTags().contains("mute_spectate_notify")
 				&& (leftTo == null || !target.getWorld().getUID().equals(leftTo.getWorld().getUID())
 					|| target.getLocation().distanceSquared(leftTo) > 100*100))
-			target.sendMessage("§7>> §b"+spectator.getDisplayName()+"§7 is no longer spectating you");
+			target.sendMessage("§7§l- §b"+spectator.getDisplayName()+"§7 is no longer spectating you");
+	}
+
+	private boolean canSeeThroughBlocks(Location eyeLoc){
+		Block b = eyeLoc.getBlock();
+		if(!b.getType().isOccluding()) return false;
+		final BlockFace[] snoopDirs = new BlockFace[]{BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
+		int snoopScore = 0;
+		for(BlockFace face : snoopDirs) if(b.getRelative(face).getType().isOccluding()) ++snoopScore;
+		return snoopScore >= 3;
 	}
 
 	boolean loopActive = false;
@@ -279,13 +291,13 @@ public class SpectatorManager implements Listener{
 								bounceBackV.multiply(new Vector(.8, 10, .8));
 								specP.setVelocity(bounceBackV);
 							}
-							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray")
-									&& specP.getEyeLocation().getBlock().getType().isOccluding()){
+							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray") && canSeeThroughBlocks(specP.getEyeLocation())){
 								Location closestAir = EvUtils.getClosestBlock(specP.getEyeLocation(), 10,
 										(Block b) -> {return !b.getType().isOccluding();});
 								if(closestAir != null){
-									closestAir.add(0, -1, 0);
+									closestAir.add(.5, -1, .5);
 									specP.teleport(closestAir, TeleportCause.CHORUS_FRUIT);
+									specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 10, 0, true));
 								}
 								else specP.teleport(newTarget, TeleportCause.CHORUS_FRUIT);
 							}
@@ -362,16 +374,15 @@ public class SpectatorManager implements Listener{
 //			pl.setPermission(player, "essentials.tpahere", false);
 //			pl.setPermission(player, "essentials.tpaccept", false);
 //			player.getScoreboard().resetScores(player.getName());
-			if(!player.hasPermission("hardcore.spectator.bypass.notify")){
+			/*if(!player.hasPermission("hardcore.spectator.bypass.notify")){//Already handled by onJoin, onQuit, and onTeleport
 				Player newTarget = getClosestGm0WithPerms(player.getLocation(), player);
 				if(newTarget != null) newTarget.sendMessage("§7>> §b"+player.getDisplayName()+"§7 is now spectating you");
-			}
+			}*/
 			runSpecatorLoop();
 		}
 	}
 	public boolean removeSpectator(Player player){
-		pl.getServer().getScoreboardManager().getMainScoreboard()
-					.getTeam("Spectators").removeEntry(player.getName());
+		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators").removeEntry(player.getName());
 		//player.getPlayer().setFlySpeed(0.2f);
 		if(spectators.remove(player.getUniqueId())){
 			pl.getLogger().info("Removed spectator: "+player.getName());
@@ -384,8 +395,10 @@ public class SpectatorManager implements Listener{
 	public void onQuit(PlayerQuitEvent evt){
 		if(removeSpectator(evt.getPlayer()) && evt.getPlayer().getScoreboardTags().contains("dead")){
 			Player oldTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
-			if(oldTarget != null) sendSpectatorNotices(
-					/*spectator=*/evt.getPlayer(), /*newTarget=*/null, /*from=*/evt.getPlayer().getLocation(), /*to=*/null);
+			if(oldTarget != null){
+				if(oldTarget != null) sendSpectateEndNotice(/*spectator=*/evt.getPlayer(), oldTarget, /*leftTo=*/null);
+				sendSpectatorNotices(/*spectator=*/evt.getPlayer(), /*newTarget=*/null, /*from=*/evt.getPlayer().getLocation(), /*to=*/null);
+			}
 			evt.getPlayer().getScoreboard().resetScores(evt.getPlayer().getName());
 			int ticksSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH);
 			long secondsSinceDeath = ticksSinceDeath/20;
@@ -432,8 +445,9 @@ public class SpectatorManager implements Listener{
 			.getTeam("Spectators").addEntry(evt.getPlayer().getName());
 		if(isSpectator(evt.getPlayer())){
 			addSpectator(evt.getPlayer());
-			Player newTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
-			if(newTarget != null) sendSpectatorNotices(/*spectator=*/evt.getPlayer(), newTarget, /*from=*/null, /*to=*/evt.getPlayer().getLocation());
+			// Already done by runSpectatorLoop()
+			//Player newTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
+			//if(newTarget != null) sendSpectatorNotices(/*spectator=*/evt.getPlayer(), newTarget, /*from=*/null, /*to=*/evt.getPlayer().getLocation());
 		}
 	}
 

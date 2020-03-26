@@ -349,6 +349,7 @@ public class NewPlayerManager implements Listener{
 						formatTimeUntilRespawn(SECONDS_UNTIL_RESPAWN - secondsSinceDeath, ChatColor.GOLD, ChatColor.GRAY));
 				return;
 			}
+			pl.runCommand("essentials:nick "+evt.getPlayer().getName()+" off");
 			evt.getPlayer().resetTitle();
 			evt.getPlayer().kickPlayer(ChatColor.GOLD+"Resetting playerdata...\n"+
 					ChatColor.GRAY+"When you rejoin, you will respawn as a fresh start!");
