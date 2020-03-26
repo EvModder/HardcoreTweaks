@@ -297,7 +297,7 @@ public class SpectatorManager implements Listener{
 								if(closestAir != null){
 									closestAir.add(.5, -1, .5);
 									specP.teleport(closestAir, TeleportCause.CHORUS_FRUIT);
-									specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 10, 0, true));
+									specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20*5, 0, true));
 								}
 								else specP.teleport(newTarget, TeleportCause.CHORUS_FRUIT);
 							}
