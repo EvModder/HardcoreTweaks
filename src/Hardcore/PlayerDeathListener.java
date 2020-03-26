@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.scheduler.BukkitRunnable;
+import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.FileIO;
 
 public class PlayerDeathListener implements Listener{
@@ -19,27 +20,35 @@ public class PlayerDeathListener implements Listener{
 	public PlayerDeathListener(HCTweaks plugin){ pl = plugin; }
 	final long QD_HRS = 5;
 
+
 	@EventHandler
 	public void onDeath(PlayerDeathEvent evt){
 		final UUID uuid = evt.getEntity().getUniqueId();
 		final String name = evt.getEntity().getName();
 		//TODO: "PLAY_ONE_MINUTE" actually seems to track ticks lived??
 		//final boolean quickDeath = evt.getEntity().getStatistic(Statistic.PLAY_ONE_MINUTE)/60 < QD_HRS;//Less than 5 hours alive
-		final boolean quickDeath = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)/20/60/60 < QD_HRS;// Equivalent to above line
+		long millis_alive = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)*50;
+		final boolean quickDeath = millis_alive/1000/60/60 < QD_HRS;// Equivalent to line 2 above
+		pl.getLogger().warning("Death of "+name+": "+evt.getDeathMessage());
+		pl.getLogger().info("Was quick-death: "+quickDeath+" ("+EvUtils.formatTime(millis_alive, ChatColor.GOLD, ChatColor.RED)+")");
+
 		evt.getEntity().saveData();
 		evt.getEntity().loadData();
+
+		// Initialize dead-person things
 		ScoreboardManager.resetScores(evt.getEntity());
 		evt.getEntity().addScoreboardTag("dead");
-		//evt.getEntity().setDisplayName(SPEC_PREFIX+" "+evt.getEntity().getDisplayName());
-		pl.runCommand("essentials:nick "+name+" "+SPEC_PREFIX+evt.getEntity().getDisplayName());
-		pl.getLogger().warning("Death of "+name+": "+evt.getDeathMessage());
-		pl.getLogger().info("Was quick-death: "+quickDeath);
+		//evt.getEntity().setDisplayName(SPEC_PREFIX+" "+evt.getEntity().getDisplayName());//TODO: dead prefix in chat
+		//pl.runCommand("essentials:nick "+name+" "+SPEC_PREFIX+evt.getEntity().getDisplayName());
+		Extras.grantLocationBasedAdvancements(evt.getEntity(), /*silently=*/true);
 
+		// Write to death-log.txt
 		String deathLog = FileIO.loadFile("death-log.txt", "");
 		if(!deathLog.isEmpty()) deathLog += "\n";
 		deathLog += evt.getDeathMessage();
 		FileIO.saveFile("death-log.txt", deathLog);
 
+		// Save playerdata files & update quick-deaths.txt
 		new BukkitRunnable(){@Override public void run(){
 			String dateStr = new SimpleDateFormat("yyy-MM-dd").format(new Date());
 			String deathDir = "./plugins/EvFolder/deaths";

@@ -1,10 +1,12 @@
 package Hardcore;
 
 import org.bukkit.GameMode;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.World.Environment;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -24,6 +26,26 @@ class Extras implements Listener{
 		// By this point, we have overworld & nether
 		if(a.getWorld().getEnvironment() == Environment.NETHER) return new Location(b.getWorld(), a.getX()*8, a.getY(), a.getZ()*8).distanceSquared(b);
 		else return new Location(a.getWorld(), b.getX()*8, b.getY(), b.getZ()*8).distanceSquared(a);
+	}
+
+	public static void grantLocationBasedAdvancements(Player player, boolean silently){
+		boolean announceAdvDefault = player.getWorld().getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS);
+		if(silently) player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+		HCTweaks pl = HCTweaks.getPlugin();
+		//pl.runCommand("minecraft:advancement grant "+player.getName()+" everything");
+		String[] advancementsToGrant = new String[]{
+				"minecraft:adventure/adventuring_time",
+				"minecraft:end/enter_end_gateway",
+				"minecraft:end/find_end_city",
+				"minecraft:nether/fast_travel",
+				"minecraft:nether/find_fortress",
+				"minecraft:story/enter_the_nether",
+				"minecraft:story/enter_the_end",
+		};
+		for(String advancement : advancementsToGrant){
+			pl.runCommand("minecraft:advancement grant "+player.getName()+" only "+advancement);
+		}
+		if(silently) player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);
 	}
 
 	@EventHandler

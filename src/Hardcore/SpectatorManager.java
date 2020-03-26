@@ -335,9 +335,12 @@ public class SpectatorManager implements Listener{
 			}}.runTaskLater(pl, 20*5)//Must leave and stay gone for 5 seconds to send a "no longer spectating" notice.
 		);
 		// Cannot send a "is now spectating" notice if already sent (and hasn't sent "no longer spectating")
-		if(oldTimeout == null) sendSpectateBeginNotice(spectator, newTarget, /*cameFrom=*/from);
+		if(oldTimeout == null){
+			if(newTarget != null) sendSpectateBeginNotice(spectator, newTarget, /*cameFrom=*/from);
+		}
 		else oldTimeout.cancel();
 	}
+
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSpectateTeleport(PlayerTeleportEvent evt){
 		if(!isSpectatorFavorYes(evt.getPlayer()) || evt.getPlayer().hasPermission("hardcore.spectator.bypass.tpcheck")) return;

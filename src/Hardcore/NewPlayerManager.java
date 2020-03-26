@@ -171,7 +171,7 @@ public class NewPlayerManager implements Listener{
 		loc.getBlock().getRelative(BlockFace.SOUTH).setType(Material.BEDROCK);
 		loc.getBlock().getRelative(BlockFace.EAST).setType(Material.BEDROCK);
 		loc.getBlock().getRelative(BlockFace.WEST).setType(Material.BEDROCK);
-		for(int x=-3; x<=3; ++x) for(int y=-3; y<=3; ++y) for(int z=-3; z<=3; ++z){
+		for(int x=-2; x<=2; ++x) for(int y=-2; y<=2; ++y) for(int z=-2; z<=2; ++z){
 			Block block = loc.clone().add(x, y, z).getBlock();
 			if(block.isEmpty()) block.setType(Material.BEDROCK);
 		}
@@ -179,17 +179,31 @@ public class NewPlayerManager implements Listener{
 	}
 
 	void sendSpawnBoxAtmosphere(Player player){
+		player.sendBlockChange(player.getLocation().add(0, 1, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, -1, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(1, 0, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, 0, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, 1), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, -1), Material.BARRIER.createBlockData());
+
+		player.sendBlockChange(player.getLocation().add(0, 2, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, -2, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(2, 0, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-2, 0, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, 2), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, -2), Material.END_GATEWAY.createBlockData());
 		player.sendBlockChange(player.getLocation().add(1, 1, 0), Material.END_GATEWAY.createBlockData());
 		player.sendBlockChange(player.getLocation().add(-1, 1, 0), Material.END_GATEWAY.createBlockData());
 		player.sendBlockChange(player.getLocation().add(0, 1, 1), Material.END_GATEWAY.createBlockData());
 		player.sendBlockChange(player.getLocation().add(0, 1, -1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(1, 2, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-1, 2, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 2, 1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 2, -1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 0, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 1, 0), Material.AIR.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 2, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(1, -1, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, -1, 0), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, -1, 1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, -1, -1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(1, 0, 1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, 0, 1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(1, 0, -1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, 0, -1), Material.END_GATEWAY.createBlockData());
 	}
 
 	public void giveGuideBook(Player player){
