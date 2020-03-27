@@ -18,6 +18,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -186,24 +187,27 @@ public class NewPlayerManager implements Listener{
 		player.sendBlockChange(player.getLocation().add(0, 0, 1), Material.BARRIER.createBlockData());
 		player.sendBlockChange(player.getLocation().add(0, 0, -1), Material.BARRIER.createBlockData());
 
-		player.sendBlockChange(player.getLocation().add(0, 2, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, -2, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(2, 0, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-2, 0, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 0, 2), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 0, -2), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(1, 1, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-1, 1, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 1, 1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 1, -1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(1, -1, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-1, -1, 0), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, -1, 1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, -1, -1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(1, 0, 1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-1, 0, 1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(1, 0, -1), Material.END_GATEWAY.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-1, 0, -1), Material.END_GATEWAY.createBlockData());
+		player.sendBlockChange(player.getLocation(), Material.END_GATEWAY.createBlockData());
+		/*BlockData blockData = Material.END_GATEWAY.createBlockData();
+		//blockData.setAge(-1000000000);
+		player.sendBlockChange(player.getLocation().add(0, 2, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(0, -2, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(2, 0, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(-2, 0, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(0, 0, 2), blockData);
+		player.sendBlockChange(player.getLocation().add(0, 0, -2), blockData);
+		player.sendBlockChange(player.getLocation().add(1, 1, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(-1, 1, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(0, 1, 1), blockData);
+		player.sendBlockChange(player.getLocation().add(0, 1, -1), blockData);
+		player.sendBlockChange(player.getLocation().add(1, -1, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(-1, -1, 0), blockData);
+		player.sendBlockChange(player.getLocation().add(0, -1, 1), blockData);
+		player.sendBlockChange(player.getLocation().add(0, -1, -1), blockData);
+		player.sendBlockChange(player.getLocation().add(1, 0, 1), blockData);
+		player.sendBlockChange(player.getLocation().add(-1, 0, 1), blockData);
+		player.sendBlockChange(player.getLocation().add(1, 0, -1), blockData);
+		player.sendBlockChange(player.getLocation().add(-1, 0, -1), blockData);*/
 	}
 
 	public void giveGuideBook(Player player){
@@ -265,6 +269,15 @@ public class NewPlayerManager implements Listener{
 			int numDeaths = deathDir.listFiles().length;
 			pl.getLogger().info(player.getName()+" has "+numDeaths+" deaths");
 			player.setStatistic(Statistic.DEATHS, numDeaths);
+			String deathStats = FileIO.loadFile("deaths/"+player.getName()+"/death-stats.txt", "");
+			for(String line : deathStats.split("\n")){
+				int i = line.indexOf(',');
+				if(i != -1){
+					EntityType killedByEntity = EntityType.valueOf(line.substring(0, i).trim());
+					int numTimesKilled = Integer.parseInt(line.substring(i+1).trim());
+					player.setStatistic(Statistic.ENTITY_KILLED_BY, killedByEntity, numTimesKilled);
+				}
+			}
 			new BukkitRunnable(){@Override public void run(){
 				//player.setStatistic(Statistic.DEATHS, numDeaths);//TODO: is this line needed?
 				ScoreboardManager.setNumDeaths(player, numDeaths);

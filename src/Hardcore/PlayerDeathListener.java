@@ -3,9 +3,12 @@ package Hardcore;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.bukkit.ChatColor;
 import org.bukkit.Statistic;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -55,16 +58,28 @@ public class PlayerDeathListener implements Listener{
 			if(!new File(deathDir).exists()) new File(deathDir).mkdir();
 			deathDir += "/"+/*uuid*/name;
 			if(!new File(deathDir).exists()) new File(deathDir).mkdir();
-			{
-				if(!quickDeath) new File(deathDir+"/quick-deaths.txt").delete();
-				else{
-					int quickDeaths = Integer.parseInt(FileIO.loadFile("deaths/"+name+"/quick-deaths.txt", "0")) + 1;
-					FileIO.saveFile("deaths/"+name+"/quick-deaths.txt", ""+quickDeaths);
-					long respawnPenalty = (1 << (quickDeaths-1)) * (60*60*6/*6 hours*/);
-					evt.getEntity().addScoreboardTag("respawn_penalty="+respawnPenalty);
-					pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
-				}
+
+			// Update quick-deaths:
+			if(!quickDeath) new File(deathDir+"/quick-deaths.txt").delete();
+			else{
+				int quickDeaths = Integer.parseInt(FileIO.loadFile("deaths/"+name+"/quick-deaths.txt", "0")) + 1;
+				FileIO.saveFile("deaths/"+name+"/quick-deaths.txt", ""+quickDeaths);
+				long respawnPenalty = (1 << (quickDeaths-1)) * (60*60*6/*6 hours*/);
+				evt.getEntity().addScoreboardTag("respawn_penalty="+respawnPenalty);
+				pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
 			}
+			// Update death-stats
+			HashMap<EntityType, Integer> killedByStats = new HashMap<>();
+			for(EntityType entity : EntityType.values()){
+				int killedByEntity = evt.getEntity().getStatistic(Statistic.ENTITY_KILLED_BY, entity);
+				if(killedByEntity > 0) killedByStats.put(entity, killedByEntity);
+			}
+			if(!killedByStats.isEmpty()){
+				String text = killedByStats.entrySet().stream().map(entry -> entry.getKey()+","+entry.getValue())
+						.sorted().collect(Collectors.joining("\n"));
+				FileIO.saveFile("deaths/"+name+"/death-stats.txt", text);
+			}
+
 			deathDir += "/"+dateStr;
 			if(new File(deathDir).exists()){
 				int i = 1;

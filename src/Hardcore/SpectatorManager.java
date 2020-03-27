@@ -16,8 +16,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -506,7 +504,12 @@ public class SpectatorManager implements Listener{
 		}
 	}
 
-	@EventHandler //TODO: isn't triggered by spectators opening their inventory???
+	/*@EventHandler(priority = EventPriority.MONITOR)
+	public void onChat(AsyncPlayerChatEvent evt){// &9[&7Dead&9] prefix?
+		if(!SpectatorManager.isSpectator(evt.getPlayer()) || evt.isCancelled()) return;
+	}*/
+
+	/*@EventHandler //TODO: isn't triggered by spectators opening their inventory???
 	public void onInventoryOpen(InventoryOpenEvent evt){
 		if(evt.getPlayer() instanceof Player == false) return;
 		Player player = (Player)evt.getPlayer();
