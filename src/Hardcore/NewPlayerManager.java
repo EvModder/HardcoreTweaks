@@ -180,12 +180,12 @@ public class NewPlayerManager implements Listener{
 	}
 
 	void sendSpawnBoxAtmosphere(Player player){
-		player.sendBlockChange(player.getLocation().add(0, 1, 0), Material.BARRIER.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, -1, 0), Material.BARRIER.createBlockData());
-		player.sendBlockChange(player.getLocation().add(1, 0, 0), Material.BARRIER.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-1, 0, 0), Material.BARRIER.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 0, 1), Material.BARRIER.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 0, -1), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 1, 0), Material.BEDROCK.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, -1, 0), Material.BEDROCK.createBlockData());
+		player.sendBlockChange(player.getLocation().add(1, 0, 0), Material.BEDROCK.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, 0, 0), Material.BEDROCK.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, 1), Material.BEDROCK.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, -1), Material.BEDROCK.createBlockData());
 
 		player.sendBlockChange(player.getLocation(), Material.END_GATEWAY.createBlockData());
 		/*BlockData blockData = Material.END_GATEWAY.createBlockData();
