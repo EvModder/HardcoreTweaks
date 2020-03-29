@@ -71,8 +71,11 @@ public class PlayerDeathListener implements Listener{
 			// Update death-stats
 			HashMap<EntityType, Integer> killedByStats = new HashMap<>();
 			for(EntityType entity : EntityType.values()){
-				int killedByEntity = evt.getEntity().getStatistic(Statistic.ENTITY_KILLED_BY, entity);
-				if(killedByEntity > 0) killedByStats.put(entity, killedByEntity);
+				try{
+					int killedByEntity = evt.getEntity().getStatistic(Statistic.ENTITY_KILLED_BY, entity);
+					if(killedByEntity > 0) killedByStats.put(entity, killedByEntity);
+				}
+				catch(IllegalArgumentException ex){};
 			}
 			if(!killedByStats.isEmpty()){
 				String text = killedByStats.entrySet().stream().map(entry -> entry.getKey()+","+entry.getValue())
