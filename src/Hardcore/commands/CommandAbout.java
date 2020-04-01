@@ -3,6 +3,7 @@ package Hardcore.commands;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import Hardcore.Extras;
 import Hardcore.HCTweaks;
 import Hardcore.SpectatorManager;
 import Hardcore.TeleportManager;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
@@ -40,41 +42,40 @@ public class CommandAbout extends EvCommand{
 			}
 			args = new String[]{sender.getName()};
 		}
-		String name = args[0].toLowerCase();
-		final String lastDeath;
-		final int numDeaths;
-		final int augEvtParticip;
-
-		Player onlineTarget = pl.getServer().getPlayer(name);
+		args[0] = args[0].toLowerCase();
+		final String name;;
+		final UUID uuid;
+		Player onlineTarget = pl.getServer().getPlayer(args[0]);
 		if(onlineTarget == null) for(Player p : pl.getServer().getOnlinePlayers())
-			if(p.getName().toLowerCase().startsWith(name)) onlineTarget = p;
+			if(p.getName().toLowerCase().startsWith(args[0])) onlineTarget = p;
 		if(onlineTarget == null){
 			@SuppressWarnings("deprecation")
-			OfflinePlayer offlineTarget = pl.getServer().getOfflinePlayer(name);
+			OfflinePlayer offlineTarget = pl.getServer().getOfflinePlayer(args[0]);
 			if(offlineTarget == null){
-				pl.getLogger().info("Unknown player: '"+args[0]+"'");
 				sender.sendMessage(ChatColor.RED+"Could not find player by name: "+args[0]);
+				return true;
 			}
-			pl.getLogger().info("Target player: "+offlineTarget.getName());
-			lastDeath = HCTweaks.getLastDeath(offlineTarget.getName());
-			numDeaths = HCTweaks.getNumDeaths(offlineTarget.getName());
-			augEvtParticip = HCTweaks.augEventParicipant(offlineTarget.getUniqueId());
+			name = offlineTarget.getName();
+			uuid = offlineTarget.getUniqueId();
 		}
 		else{
-			pl.getLogger().info("Target player: "+onlineTarget.getName());
-			lastDeath = HCTweaks.getLastDeath(onlineTarget.getName());
-			numDeaths = HCTweaks.getNumDeaths(onlineTarget.getName());
-			augEvtParticip = HCTweaks.augEventParicipant(onlineTarget.getUniqueId());
+			name = onlineTarget.getName();
+			uuid = onlineTarget.getUniqueId();
 		}
-		// Call essentials:seen
+
+		// Call /essentials:seen using CustomPerms wrapper
 		pl.getServer().getPluginCommand("essentials:seen").execute(
 				new CustomPerms(sender, Arrays.asList("essentials.seen"), Arrays.asList()).getProxy(),
 				"essentials:seen", args);
 
-		sender.sendMessage(ChatColor.GOLD+" - Last Death: "+ChatColor.RED+lastDeath);
-		sender.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+numDeaths);
-		if(augEvtParticip > 0) sender.sendMessage(ChatColor.GOLD+" - Aug'19 Event"+
-				(augEvtParticip == 1 ? " participant" : ": "+ChatColor.RED+"champion"));
+
+		// Send data sourced from server files
+		sender.sendMessage(ChatColor.GOLD+" - Last Death: "+ChatColor.RED+HCTweaks.getLastDeath(name));
+		sender.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+HCTweaks.getNumDeaths(name));
+		final String aug19Evt = Extras.eventStatusAug19Build(uuid); if(aug19Evt != null) sender.sendMessage(aug19Evt);
+		final String feb20Evt = Extras.eventStatusFeb20Equine(uuid); if(feb20Evt != null) sender.sendMessage(feb20Evt);
+
+		// Send online-player-only data (tag checking)
 		if(onlineTarget != null){
 			List<String> tps = TeleportManager.get_tp_tags(onlineTarget);
 			if(tps.isEmpty()) sender.sendMessage(ChatColor.GOLD+" - No teleport history");

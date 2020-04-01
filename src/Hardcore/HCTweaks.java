@@ -8,7 +8,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import org.bukkit.GameRule;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import Hardcore.commands.*;
 import net.evmodder.EvLib.EvPlugin;
 import net.evmodder.HorseOwners.HorseManager;
@@ -86,35 +85,6 @@ public class HCTweaks extends EvPlugin{
 		catch(IOException e){return false;}
 	}
 
-	public boolean setPermissionX(Player player, String permission, boolean value){
-		if(player.hasPermission(permission) == value) return false;
-		runCommand("perms player setperm "+player.getName()+" "+permission+" "+(""+value).toLowerCase());
-		/*final PermissionsPlugin permsPlugin = (PermissionsPlugin)
-				pl.getServer().getPluginManager().getPlugin("PermissionsBukkit");
-		if(permsPlugin == null) return false;
-		PermissionInfo playerInfo = permsPlugin.getPlayerInfo(player.getUniqueId());
-		String uuid = player.getUniqueId().toString();
-		if(playerInfo == null){
-			permsPlugin.getConfig().set("users."+uuid, new YamlConfiguration());
-			permsPlugin.getConfig().set("users."+uuid+".name", player.getName());
-			permsPlugin.getConfig().set("users."+uuid+".permissions", new YamlConfiguration());
-		}
-		permsPlugin.getConfig().set("users."+uuid+".permissions."+permission, value);
-		java.lang.reflect.Method methodRegisterPlayer;
-		try{methodRegisterPlayer = permsPlugin.getClass().getDeclaredMethod("registerPlayer", Player.class);}
-		catch(SecurityException | NoSuchMethodException ex){
-			pl.getLogger().warning("Failed to access registerPlayer(): " + ex.getMessage());
-			return false;
-		}
-		methodRegisterPlayer.setAccessible(true);
-		try{methodRegisterPlayer.invoke(permsPlugin, player);}
-		catch(IllegalAccessException | IllegalArgumentException | InvocationTargetException ex){
-			pl.getLogger().warning("Failed to invoke registerPlayer(): " + ex.getMessage());
-			return false;
-		}*/
-		return true;
-	}
-
 	public static int getNumDeaths(String name){
 		File deathDir = new File("./plugins/EvFolder/deaths/"+name);
 		return deathDir.exists() ? deathDir.listFiles().length : 0;
@@ -131,11 +101,5 @@ public class HCTweaks extends EvPlugin{
 
 	public void runCommand(String command){
 		getServer().dispatchCommand(getServer().getConsoleSender(), command);
-	}
-
-	public static int augEventParicipant(UUID uniqueId){
-		return new File("./plugins/EvFolder/aug_evt/"+uniqueId+".txt").exists()
-				? (new File("./plugins/EvFolder/aug_evt/"+uniqueId+".txt").length() > 10 ? 2 : 1)
-				: 0;
 	}
 }
