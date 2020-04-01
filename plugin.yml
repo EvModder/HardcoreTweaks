@@ -137,6 +137,10 @@ permissions:
       description: Permission to use /tpaccept <name>
       default: true
 
+   hardcore.novisitlog:
+      description: Do not add this player to .visitlog files
+      default: false
+
    hardcore.spectator.bypass.tpcheck:
       description: Bypass check for valid target at destination when teleporting as a spectator
       default: op

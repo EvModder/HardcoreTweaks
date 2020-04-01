@@ -91,19 +91,18 @@ public class ChunkLoadListener implements Listener{
 
 	@EventHandler
 	public void onChunkLoad(ChunkLoadEvent evt){
-		Player player = null;
-		double dSqNearest = Double.MAX_VALUE;
-		Location chunkCenter = new Location(evt.getWorld(), evt.getChunk().getX()*16 + 7, 127, evt.getChunk().getZ()*16 + 7);
-		for(Player p : evt.getWorld().getPlayers()){//TODO: Consider optimizing performance here?
-			double dSq = p.getLocation().distanceSquared(chunkCenter);
-			if(dSq < dSqNearest && !p.isDead() && p.getGameMode() != GameMode.SPECTATOR){
-				dSqNearest = dSq;
-				player = p;
+		new BukkitRunnable(){@Override public void run(){
+			Player player = null;
+			double dSqNearest = 200*200;
+			Location chunkCenter = new Location(evt.getWorld(), evt.getChunk().getX()*16 + 7, 127, evt.getChunk().getZ()*16 + 7);
+			for(Player p : evt.getWorld().getPlayers()){//TODO: Consider optimizing performance here?
+				double dSq = p.getLocation().distanceSquared(chunkCenter);
+				if(dSq < dSqNearest && !p.isDead() && p.getGameMode() != GameMode.SPECTATOR && !p.hasPermission("hardcore.novisitlog")){
+					dSqNearest = dSq;
+					player = p;
+				}
 			}
-		}
-		if(dSqNearest < 200*200){
-			queueVisitorUpdate(evt.getChunk().getX()/32, evt.getChunk().getZ()/32,
-					evt.getChunk().getWorld().getUID(), player.getUniqueId());
-		}
+			queueVisitorUpdate(evt.getChunk().getX()/32, evt.getChunk().getZ()/32, evt.getChunk().getWorld().getUID(), player.getUniqueId());
+		}}.runTaskAsynchronously(pl);
 	}
 }
