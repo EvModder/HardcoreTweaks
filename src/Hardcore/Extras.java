@@ -63,7 +63,7 @@ public class Extras implements Listener{
 		if(!evtFile.exists()) return null;
 		// LittlePigenz=12, Elizzar=8, Xigo=6, Foofy=5, EvModder=2, Crah=1
 		final int pointsEarned = Integer.parseInt(FileIO.loadFile("events/feb20/"+uniqueId+".txt", "0"));
-		if(pointsEarned > 3) return "§6 - Feb'20 Equine Event:§c Magister Equitum";
+		if(pointsEarned > 3) return "§6 - Feb'20 Event:§c Magister Equitum";
 		else return "§6 - Feb'20 Event participant";
 	}
 
