@@ -398,7 +398,7 @@ public class SpectatorManager implements Listener{
 			Player oldTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
 			if(oldTarget != null){
 				if(oldTarget != null) sendSpectateEndNotice(/*spectator=*/evt.getPlayer(), oldTarget, /*leftTo=*/null);
-				sendSpectatorNotices(/*spectator=*/evt.getPlayer(), /*newTarget=*/null, /*from=*/evt.getPlayer().getLocation(), /*to=*/null);
+				//sendSpectatorNotices(/*spectator=*/evt.getPlayer(), /*newTarget=*/null, /*from=*/evt.getPlayer().getLocation(), /*to=*/null);
 			}
 			evt.getPlayer().getScoreboard().resetScores(evt.getPlayer().getName());
 			int ticksSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH);

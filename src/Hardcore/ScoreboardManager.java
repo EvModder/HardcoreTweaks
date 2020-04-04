@@ -169,7 +169,7 @@ public class ScoreboardManager implements Listener{
 			Player player = pl.getServer().getPlayer(uuid);
 			if(player != null && !SpectatorManager.isSpectatorFavorYes(player)){
 				int advancements = EvUtils.getVanillaAdvancements(player, included).size();
-				pl.getLogger().info(player.getName()+" has "+advancements+" advancements");
+				//DEBUG: pl.getLogger().info(player.getName()+" has "+advancements+" advancements");
 				addObjectiveAndTeam(player, advancements);
 			}
 		}}.runTaskLater(pl, 20*5); //5s

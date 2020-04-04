@@ -91,7 +91,7 @@ public class ChunkLoadListener implements Listener{
 
 	@EventHandler
 	public void onChunkLoad(ChunkLoadEvent evt){
-		new BukkitRunnable(){@Override public void run(){
+		//new BukkitRunnable(){@Override public void run(){
 			Player player = null;
 			double dSqNearest = 200*200;
 			Location chunkCenter = new Location(evt.getWorld(), evt.getChunk().getX()*16 + 7, 127, evt.getChunk().getZ()*16 + 7);
@@ -103,6 +103,6 @@ public class ChunkLoadListener implements Listener{
 				}
 			}
 			queueVisitorUpdate(evt.getChunk().getX()/32, evt.getChunk().getZ()/32, evt.getChunk().getWorld().getUID(), player.getUniqueId());
-		}}.runTaskAsynchronously(pl);
+		//}}.runTaskAsynchronously(pl);
 	}
 }
