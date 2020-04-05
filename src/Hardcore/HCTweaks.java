@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.bukkit.GameRule;
 import org.bukkit.World;
 import Hardcore.commands.*;
@@ -89,13 +91,19 @@ public class HCTweaks extends EvPlugin{
 		File deathDir = new File("./plugins/EvFolder/deaths/"+name);
 		return deathDir.exists() ? deathDir.listFiles().length : 0;
 	}
+	static boolean isDateStr(String filename){
+		final String regex = "^[0-9]{4}-(1[0-2]|0[1-9])-(3[01]|[12][0-9]|0[1-9])$";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(filename);
+		return matcher.matches();
+	}
 	public static String getLastDeath(String name){
 		File deathDir = new File("./plugins/EvFolder/deaths/"+name);
 		if(!deathDir.exists()) return "N/A";
 		File[] files = deathDir.listFiles();
 		if(files.length == 0) return "Unknown";
 		String lastDeath = files[0].getName();
-		for(File file : files) if(file.getName().compareTo(lastDeath) > 0) lastDeath = file.getName();
+		for(File file : files) if(isDateStr(file.getName()) && file.getName().compareTo(lastDeath) > 0) lastDeath = file.getName();
 		return lastDeath;
 	}
 

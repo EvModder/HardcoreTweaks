@@ -102,7 +102,9 @@ public class ChunkLoadListener implements Listener{
 					player = p;
 				}
 			}
-			queueVisitorUpdate(evt.getChunk().getX()/32, evt.getChunk().getZ()/32, evt.getChunk().getWorld().getUID(), player.getUniqueId());
+			if(player != null){
+				queueVisitorUpdate(evt.getChunk().getX()/32, evt.getChunk().getZ()/32, evt.getChunk().getWorld().getUID(), player.getUniqueId());
+			}
 		//}}.runTaskAsynchronously(pl);
 	}
 }
