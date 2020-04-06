@@ -2,7 +2,7 @@ name: HardcoreTweaks
 main: Hardcore.HCTweaks
 author: EvModder/EvDoc/Evil_Witchdoctor
 version: 1.1 #1.1=new spectator system
-softdepend: [Essentials]
+softdepend: [Essentials, HorseOwners] # Horse(ClaimEvent,RenameEvent) used in ScoreboardManager
 api-version: 1.13
 
 commands:
