@@ -388,7 +388,7 @@ public class SpectatorManager implements Listener{
 		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators").removeEntry(player.getName());
 		//player.getPlayer().setFlySpeed(0.2f);
 		if(spectators.remove(player.getUniqueId())){
-			pl.getLogger().info("Removed spectator: "+player.getName());
+			pl.getLogger().fine("Removed spectator: "+player.getName());
 			return true;
 		}
 		return false;
@@ -405,7 +405,7 @@ public class SpectatorManager implements Listener{
 			evt.getPlayer().getScoreboard().resetScores(evt.getPlayer().getName());
 			int ticksSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH);
 			long secondsSinceDeath = ticksSinceDeath/20;
-			pl.getLogger().info("Ticks since death: "+ticksSinceDeath);
+//			pl.getLogger().info("Ticks since death: "+ticksSinceDeath);
 			pl.getLogger().info("Hours since death: "+(secondsSinceDeath/(60*60)));
 			/*if(secondsSinceDeath >= SECONDS_UNTIL_RESPAWN){
 				//Reset playerdata & stats so next time they log in they will respawn :)
