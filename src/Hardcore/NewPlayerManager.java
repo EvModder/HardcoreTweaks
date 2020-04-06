@@ -18,6 +18,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -180,15 +181,15 @@ public class NewPlayerManager implements Listener{
 	}
 
 	void sendSpawnBoxAtmosphere(Player player){
-		player.sendBlockChange(player.getLocation().add(0, 1, 0), Material.BEDROCK.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, -1, 0), Material.BEDROCK.createBlockData());
-		player.sendBlockChange(player.getLocation().add(1, 0, 0), Material.BEDROCK.createBlockData());
-		player.sendBlockChange(player.getLocation().add(-1, 0, 0), Material.BEDROCK.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 0, 1), Material.BEDROCK.createBlockData());
-		player.sendBlockChange(player.getLocation().add(0, 0, -1), Material.BEDROCK.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 1, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, -1, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(1, 0, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(-1, 0, 0), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, 1), Material.BARRIER.createBlockData());
+		player.sendBlockChange(player.getLocation().add(0, 0, -1), Material.BARRIER.createBlockData());
 
 		player.sendBlockChange(player.getLocation(), Material.END_GATEWAY.createBlockData());
-		/*BlockData blockData = Material.END_GATEWAY.createBlockData();
+		BlockData blockData = Material.END_GATEWAY.createBlockData();
 		//blockData.setAge(-1000000000);
 		player.sendBlockChange(player.getLocation().add(0, 2, 0), blockData);
 		player.sendBlockChange(player.getLocation().add(0, -2, 0), blockData);
@@ -207,7 +208,7 @@ public class NewPlayerManager implements Listener{
 		player.sendBlockChange(player.getLocation().add(1, 0, 1), blockData);
 		player.sendBlockChange(player.getLocation().add(-1, 0, 1), blockData);
 		player.sendBlockChange(player.getLocation().add(1, 0, -1), blockData);
-		player.sendBlockChange(player.getLocation().add(-1, 0, -1), blockData);*/
+		player.sendBlockChange(player.getLocation().add(-1, 0, -1), blockData);
 	}
 
 	public void giveGuideBook(Player player){

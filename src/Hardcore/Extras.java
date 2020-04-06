@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.HorseOwners.HorseLibrary;
 
@@ -32,23 +33,30 @@ public class Extras implements Listener{
 	}
 
 	public static void grantLocationBasedAdvancements(Player player, boolean silently){
-		boolean announceAdvDefault = player.getWorld().getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS);
-		if(silently) player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
 		HCTweaks pl = HCTweaks.getPlugin();
-		//pl.runCommand("minecraft:advancement grant "+player.getName()+" everything");
-		String[] advancementsToGrant = new String[]{
-				"minecraft:adventure/adventuring_time",
-				"minecraft:end/enter_end_gateway",
-				"minecraft:end/find_end_city",
-				"minecraft:nether/fast_travel",
-				"minecraft:nether/find_fortress",
-				"minecraft:story/enter_the_nether",
-				"minecraft:story/enter_the_end",
-		};
-		for(String advancement : advancementsToGrant){
-			pl.runCommand("minecraft:advancement grant "+player.getName()+" only "+advancement);
+		if(!silently){
+			//pl.runCommand("minecraft:advancement grant "+player.getName()+" everything");
+			String[] advancementsToGrant = new String[]{
+					"minecraft:adventure/adventuring_time",
+					"minecraft:end/enter_end_gateway",
+					"minecraft:end/find_end_city",
+					"minecraft:nether/fast_travel",
+					"minecraft:nether/find_fortress",
+					"minecraft:story/enter_the_nether",
+					"minecraft:story/enter_the_end",
+			};
+			for(String advancement : advancementsToGrant){
+				pl.runCommand("minecraft:advancement grant "+player.getName()+" only "+advancement);
+			}
 		}
-		if(silently) player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);
+		else{
+			final boolean announceAdvDefault = player.getWorld().getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS);
+			player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+			new BukkitRunnable(){@Override public void run(){
+				grantLocationBasedAdvancements(player, false);}}.runTaskLater(pl, 2);
+			new BukkitRunnable(){@Override public void run(){
+				player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);}}.runTaskLater(pl, 4);
+		}
 	}
 
 	public static String eventStatusAug19Build(UUID uniqueId){

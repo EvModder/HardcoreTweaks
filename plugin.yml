@@ -165,6 +165,10 @@ permissions:
       description: Prevents a spectator from being forced stay in an air block
       default: op
 
+   hardcore.spectator.bypass.antixray.ifclose:
+      description: Prevents a spectator from being forced stay in an air block IF they are close to the target player
+      default: op
+
    hardcore.spectator.bypass.notify:
       description: Hides notifications to players that you are spectating them
       default: op

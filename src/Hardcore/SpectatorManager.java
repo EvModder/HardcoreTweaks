@@ -243,6 +243,8 @@ public class SpectatorManager implements Listener{
 						}
 					}
 					else{
+						double distSqToTarget = newTarget.getWorld().getUID().equals(specP.getWorld().getUID())
+								? newTarget.getLocation().distanceSquared(specP.getLocation()) : Double.MAX_VALUE;
 						if(!specP.hasPermission("hardcore.spectator.bypass.slowness"))
 							specP.setFlySpeed(FLY_SPEED);
 						
@@ -277,19 +279,19 @@ public class SpectatorManager implements Listener{
 							}
 						}
 						else if(!specP.hasPermission("hardcore.spectator.bypass.maxrange")){
-							if(newTarget.getWorld().getUID().equals(specP.getWorld().getUID()) == false
-									|| newTarget.getLocation().distanceSquared(specP.getLocation()) > 50*50){
+							if(distSqToTarget > 50*50){
 								//sendSpectateNotice(specP, newTarget, specP.getLocation());//Done by TeleportListener below
 								specP.teleport(newTarget, TeleportCause.SPECTATE);
 							}
-							else if(newTarget.getLocation().distanceSquared(specP.getLocation()) > 20*20){
+							else if(distSqToTarget > 20*20){
 								Vector fromSpecToTarget = newTarget.getLocation().toVector()
 											.subtract(specP.getLocation().toVector());
 								Vector bounceBackV = fromSpecToTarget.normalize();
 								bounceBackV.multiply(new Vector(.8, 10, .8));
 								specP.setVelocity(bounceBackV);
 							}
-							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray") && canSeeThroughBlocks(specP.getEyeLocation())){
+							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray") && canSeeThroughBlocks(specP.getEyeLocation())
+								&& (!specP.hasPermission("hardcore.spectator.bypass.antixray.ifclose") || distSqToTarget > 2*2)){
 								Location closestAir = EvUtils.getClosestBlock(specP.getEyeLocation(), 10,
 										(Block b) -> {return !b.getType().isOccluding();});
 								if(closestAir != null){
