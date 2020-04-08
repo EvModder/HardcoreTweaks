@@ -97,7 +97,7 @@ public class ChunkLoadListener implements Listener{
 			Location chunkCenter = new Location(evt.getWorld(), evt.getChunk().getX()*16 + 7, 127, evt.getChunk().getZ()*16 + 7);
 			for(Player p : evt.getWorld().getPlayers()){//TODO: Consider optimizing performance here?
 				double dSq = p.getLocation().distanceSquared(chunkCenter);
-				if(dSq < dSqNearest && !p.isDead() && p.getGameMode() != GameMode.SPECTATOR && !p.hasPermission("hardcore.novisitlog")){
+				if(dSq < dSqNearest && !p.isDead() && p.getGameMode() == GameMode.SURVIVAL && !p.hasPermission("hardcore.novisitlog")){
 					dSqNearest = dSq;
 					player = p;
 				}
