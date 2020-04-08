@@ -291,7 +291,7 @@ public class SpectatorManager implements Listener{
 								specP.setVelocity(bounceBackV);
 							}
 							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray") && canSeeThroughBlocks(specP.getEyeLocation())
-								&& (!specP.hasPermission("hardcore.spectator.bypass.antixray.ifclose") || distSqToTarget > 2*2)){
+								&& (!specP.hasPermission("hardcore.spectator.bypass.antixray.ifclose") || distSqToTarget > 3*3)){
 								Location closestAir = EvUtils.getClosestBlock(specP.getEyeLocation(), 10,
 										(Block b) -> {return !b.getType().isOccluding();});
 								if(closestAir != null){
