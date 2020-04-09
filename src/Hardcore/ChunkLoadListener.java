@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.UUID;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,8 +23,16 @@ public class ChunkLoadListener implements Listener{
 	final HCTweaks pl;
 	public ChunkLoadListener(HCTweaks plugin){ pl = plugin; }
 
+	String getPlayerName(UUID uuid){
+		Player p = pl.getServer().getPlayer(uuid);
+		if(p != null) return p.getName();
+		OfflinePlayer offP = pl.getServer().getOfflinePlayer(uuid);
+		if(offP != null) return offP.getName();
+		return null;
+	}
+
 	void updateRegionLog(String filename, UUID newVisitor){
-		pl.getLogger().info("Writing to: "+filename+" (triggered by: "+newVisitor+")");
+		pl.getLogger().info("Writing to: "+filename+" (triggered by: "+getPlayerName(newVisitor)+")");
 		StringBuilder builder = new StringBuilder();
 		builder.append(System.currentTimeMillis()).append(',').append(newVisitor);
 		boolean isNew = false;

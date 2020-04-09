@@ -102,7 +102,7 @@ public class HCTweaks extends EvPlugin{
 		if(!deathDir.exists()) return "N/A";
 		File[] files = deathDir.listFiles();
 		if(files.length == 0) return "Unknown";
-		String lastDeath = files[0].getName();
+		String lastDeath = "9999-99-99";
 		for(File file : files) if(isDateStr(file.getName()) && file.getName().compareTo(lastDeath) > 0) lastDeath = file.getName();
 		return lastDeath;
 	}
