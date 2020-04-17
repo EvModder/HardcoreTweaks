@@ -139,8 +139,7 @@ public class ScoreboardManager implements Listener{
 		if(!isMainAdvancement(evt.getAdvancement()) || SpectatorManager.isSpectatorFavorYes(evt.getPlayer())) return;
 		int advancements = EvUtils.getVanillaAdvancements(evt.getPlayer(), included).size();
 		pl.getLogger().info(evt.getPlayer()+" now has "+advancements+" advancements");
-		if(advancements == ADV_WL_TRIGGER &&
-				!evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
+		if(advancements == ADV_WL_TRIGGER && !evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
 			evt.getPlayer().addScoreboardTag("whitelist_mode");
 		}
 		addObjectiveAndTeam(evt.getPlayer(), advancements);

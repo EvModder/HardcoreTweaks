@@ -59,18 +59,16 @@ public class SpectatorManager implements Listener{
 	}
 
 	public static boolean isSpectator(Player player){
-		return (player.getGameMode() == GameMode.SPECTATOR || player.isDead())
-				&& player.getScoreboardTags().contains("dead");
+		return (player.getGameMode() == GameMode.SPECTATOR || player.isDead()) && player.getScoreboardTags().contains("dead");
 	}
 
 	static boolean isSpectatorFavorYes(Player player){
-		return player.getGameMode() != GameMode.SURVIVAL &&
-				(player.isDead() || player.getScoreboardTags().contains("dead") ||
-				(spectators != null && spectators.contains(player.getUniqueId())));
+		return player.getGameMode() == GameMode.SPECTATOR || player.isDead() || player.getScoreboardTags().contains("dead")
+				|| (spectators != null && spectators.contains(player.getUniqueId()));
 	}
 
 	public static boolean canSpectate(UUID spectator, Player target){
-		//TODO: TEMP, remove after archery event
+		// TODO: TEMP, remove after archery event
 		if(target.getLocation().getX() < -29990000 && target.getLocation().getZ() < -29990000) return false;
 		if(spectator.equals(target.getUniqueId())) return false;
 		String bl_tag = "spectator_blacklist_"+spectator;
