@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import net.evmodder.EvLib.EvCommand;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.extras.TextUtils;
+import net.md_5.bungee.api.ChatColor;
 
 public class CommandDeathlog extends EvCommand{
 	public CommandDeathlog(HCTweaks pl){super(pl);}
@@ -18,14 +19,14 @@ public class CommandDeathlog extends EvCommand{
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String args[]){
 		if(args.length == 1 && args[0].toLowerCase().replace("@a", "all").contains("all")){
-			String deathLog = FileIO.loadFile("death-log.txt", "");
+			String deathLog = ChatColor.stripColor(FileIO.loadFile("death-log.txt", ""));
 			sender.sendMessage(TextUtils.translateAlternateColorCodes('&', "&8&m     &7 Recent Deaths &8&m     "));
 			sender.sendMessage(deathLog);
 		}
 		else{
 			String[] deathLog = FileIO.loadFile("death-log.txt", "").split("\n");
 			String log10 = StringUtils.join(
-					Arrays.copyOfRange(deathLog, Math.max(deathLog.length-10, 0), deathLog.length), '\n');
+					Arrays.copyOfRange(deathLog, Math.max(deathLog.length-10, 0), deathLog.length), "\n"+ChatColor.RESET);
 			sender.sendMessage(TextUtils.translateAlternateColorCodes('&', "&8&m     &7 Recent Deaths &8&m     "));
 			sender.sendMessage(log10);
 		}
