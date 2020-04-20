@@ -34,7 +34,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
-import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.extras.TextUtils;
 
@@ -68,7 +67,7 @@ public class NewPlayerManager implements Listener{
 		if(GUIDE_BOOK == null) pl.getLogger().warning("Unable to find starter book");
 		spawnLocs = new ArrayDeque<Location>();
 		for(String str : FileIO.loadFile("pre-gen-spawns.txt", "0.5,75,0.5").split("\n")){
-			Location loc = EvUtils.getLocationFromString(hardcoreWorld, str);
+			Location loc = TextUtils.getLocationFromString(hardcoreWorld, str);
 			if(loc != null) spawnLocs.add(loc);
 		}
 		PRE_GEN_SPAWNS = pl.getConfig().getInt("prepared-spawn-locations", 5);

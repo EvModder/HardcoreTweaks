@@ -15,8 +15,8 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.extras.TextUtils;
 
 public class CompassManager implements Listener{
 	final HashMap<UUID, Location> bedLocs;
@@ -29,7 +29,7 @@ public class CompassManager implements Listener{
 		for(String str : FileIO.loadFile("bed-locations.txt", "").split("\n")){
 			int i = str.indexOf('|');
 			if(i != -1){
-				Location loc = EvUtils.getLocationFromString(hardcoreWorld, str.substring(i+1));
+				Location loc = TextUtils.getLocationFromString(hardcoreWorld, str.substring(i+1));
 				UUID uuid = null;
 				try{uuid = UUID.fromString(str.substring(0, i));}
 				catch(IllegalArgumentException ex){}

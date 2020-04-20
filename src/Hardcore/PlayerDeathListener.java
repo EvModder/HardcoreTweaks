@@ -14,8 +14,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.scheduler.BukkitRunnable;
-import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.extras.TextUtils;
 
 public class PlayerDeathListener implements Listener{
 	final String SPEC_PREFIX = /*ChatColor.translateAlternateColorCodes('&', */"&9[&7Dead&9]&f·"/*)*/;
@@ -33,7 +33,7 @@ public class PlayerDeathListener implements Listener{
 		long millis_alive = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)*50;
 		final boolean quickDeath = millis_alive/1000/60/60 < QD_HRS;// Equivalent to line 2 above
 		pl.getLogger().warning("Death of "+name+": "+evt.getDeathMessage());
-		pl.getLogger().info("Was quick-death: "+quickDeath+" ("+EvUtils.formatTime(millis_alive, ChatColor.GOLD, ChatColor.RED)+")");
+		pl.getLogger().info("Was quick-death: "+quickDeath+" ("+TextUtils.formatTime(millis_alive, ChatColor.GOLD, ChatColor.RED)+")");
 
 		evt.getEntity().saveData();
 		evt.getEntity().loadData();
