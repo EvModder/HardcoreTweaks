@@ -91,8 +91,9 @@ public class CommandAbout extends EvCommand{
 			}
 			if(SpectatorManager.isSpectator(onlineTarget)){
 				long SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
+				long frequentDeathPenalty = SpectatorManager.getFrequentDeathRespawnPenalty(onlineTarget);
 				long sinceDeath = onlineTarget.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
-				long secondsLeft = SECONDS_UNTIL_RESPAWN - sinceDeath;
+				long secondsLeft = SECONDS_UNTIL_RESPAWN + frequentDeathPenalty - sinceDeath;
 				sender.sendMessage(ChatColor.GOLD+" - "+
 						SpectatorManager.formatTimeUntilRespawn(
 						secondsLeft, ChatColor.RED, ChatColor.GOLD));

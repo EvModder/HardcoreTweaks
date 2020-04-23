@@ -65,7 +65,7 @@ public class PlayerDeathListener implements Listener{
 				int quickDeaths = Integer.parseInt(FileIO.loadFile("deaths/"+name+"/quick-deaths.txt", "0")) + 1;
 				FileIO.saveFile("deaths/"+name+"/quick-deaths.txt", ""+quickDeaths);
 				long respawnPenalty = (1 << (quickDeaths-1)) * (60*60*6/*6 hours*/);
-				evt.getEntity().addScoreboardTag("respawn_penalty="+respawnPenalty);
+				evt.getEntity().addScoreboardTag("respawn_penalty_"+respawnPenalty);
 				pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
 			}
 			// Update death-stats

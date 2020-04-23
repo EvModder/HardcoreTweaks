@@ -103,7 +103,7 @@ public class SpectatorManager implements Listener{
 
 	public static long getFrequentDeathRespawnPenalty(Player spectator){
 		for(String tag : spectator.getScoreboardTags()){
-			if(tag.startsWith("respawn_penalty=")) return Long.parseLong(tag.substring(16));
+			if(tag.startsWith("respawn_penalty_")) return Long.parseLong(tag.substring(16));
 		}
 		return 0;
 	}
