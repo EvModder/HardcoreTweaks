@@ -19,7 +19,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.block.EndGateway;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -160,14 +159,26 @@ public class NewPlayerManager implements Listener{
 		}
 	}
 
-	static void removeSpawnBox(Location loc){
+	static void removeSpawnBox(Location loc, Player player){
+		if(loc == null && player != null) loc = player.getLocation();
 		for(int x=-6; x<=6; ++x) for(int y=-6; y<=6; ++y) for(int z=-6; z<=6; ++z){
 			Block block = loc.clone().add(x, y, z).getBlock();
-			if(block != null && block.getType() == Material.BARRIER || block.getType() == Material.END_GATEWAY) block.setType(Material.AIR);
+			if(block == null) continue;
+			switch(block.getType()){
+				case BARRIER:
+				case BEDROCK:
+				case END_GATEWAY:
+					block.setType(Material.AIR);
+					break;
+				default:
+					// Remove any "fake" blocks
+					player.sendBlockChange(block.getLocation(), block.getBlockData());
+			}
 		}
 	}
 
 	void createSpawnBox(Location loc, Player player){
+		if(loc == null && player != null) loc = player.getLocation();
 		// Always set the 6 faces
 		loc.getBlock().getRelative(BlockFace.UP).setType(Material.BARRIER);
 		loc.getBlock().getRelative(BlockFace.DOWN).setType(Material.BARRIER);
@@ -175,27 +186,40 @@ public class NewPlayerManager implements Listener{
 		loc.getBlock().getRelative(BlockFace.SOUTH).setType(Material.BARRIER);
 		loc.getBlock().getRelative(BlockFace.EAST).setType(Material.BARRIER);
 		loc.getBlock().getRelative(BlockFace.WEST).setType(Material.BARRIER);
-		for(int x=-2; x<=2; ++x) for(int y=-2; y<=2; ++y) for(int z=-2; z<=2; ++z){
-			Block block = loc.clone().add(x, y, z).getBlock();
-			if(block.isEmpty()) block.setType(Material.BARRIER);
-		}
-		loc.getBlock().setType(Material.AIR);
 
+		// EndGateways
 		int[] xs = new int[]{2,0,0, -2,-0,-0,  1,1,0, -1,-1,-0,  +1,-1,+1,-1,+0,+0};
 		int[] ys = new int[]{0,2,0, -0,-2,-0,  1,0,1, -1,-0,-1,  -1,+1,+0,+0,+1,-1};
 		int[] zs = new int[]{0,0,2, -0,-0,-2,  0,1,1, -0,-1,-1,  +0,+0,-1,+1,-1,+1};
 		for(int i=0; i<xs.length; ++i){
-			Block block = loc.clone().add(xs[i], ys[i], zs[i]).getBlock();
+			Block block = loc.getBlock().getRelative(xs[i], ys[i], zs[i]);
 			if(block.isEmpty()){
 				block.setType(Material.END_GATEWAY);
 				EndGateway gatewayState = (EndGateway)block.getState();
 				gatewayState.setAge(-1000000000);
+				gatewayState.update(true);
 			}
 			else if(player != null){
-				BlockData blockData = Material.END_GATEWAY.createBlockData();
-				player.sendBlockChange(player.getLocation().add(0, 2, 0), blockData);
+				player.sendBlockChange(player.getLocation().add(xs[i], ys[i], zs[i]), Material.END_GATEWAY.createBlockData());
 			}
 		}
+
+		// Fill around the sides with bedrock
+		for(int x=-3; x<=3; ++x) for(int y=-3; y<=3; ++y) for(int z=-3; z<=3; ++z){
+			Block block = loc.getBlock().getRelative(x, y, z);
+			if(block.isEmpty()) block.setType(Material.BEDROCK);
+			/*else if(player != null){
+				switch(block.getType()){
+					case BARRIER:
+					case BEDROCK:
+					case END_GATEWAY:
+						break;
+					default:
+						player.sendBlockChange(block.getLocation(), Material.BEDROCK.createBlockData());
+				}
+			}*/
+		}
+		loc.getBlock().setType(Material.AIR);
 	}
 
 	public void giveGuideBook(Player player){
@@ -324,7 +348,7 @@ public class NewPlayerManager implements Listener{
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent evt){
 		if(evt.getPlayer().getScoreboardTags().contains("unconfirmed")){
-			removeSpawnBox(evt.getPlayer().getLocation());
+			removeSpawnBox(evt.getPlayer().getLocation(), evt.getPlayer());
 		}
 	}
 
@@ -334,7 +358,7 @@ public class NewPlayerManager implements Listener{
 			Player player = evt.getPlayer();
 			evt.setCancelled(true);
 			player.setWalkSpeed(0.2f);
-			removeSpawnBox(player.getLocation());
+			removeSpawnBox(player.getLocation(), player);
 			player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10, 3), true);
 			player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10, 3), true);
 			player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 2, 0), true);
