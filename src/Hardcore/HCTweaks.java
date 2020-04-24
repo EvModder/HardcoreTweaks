@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.GameRule;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import Hardcore.commands.*;
 import net.evmodder.EvLib.EvPlugin;
 import net.evmodder.HorseOwners.HorseManager;
@@ -52,7 +53,13 @@ public class HCTweaks extends EvPlugin{
 		getServer().getPluginManager().registerEvents(new SpectatorManager(this), this);
 		getServer().getPluginManager().registerEvents(new TeleportManager(this), this);
 	}
-	@Override public void onEvDisable(){}
+	@Override public void onEvDisable(){
+		for(Player player : getServer().getOnlinePlayers()){
+			if(player.getScoreboardTags().contains("unconfirmed")){
+				NewPlayerManager.removeSpawnBox(player.getLocation(), player);
+			}
+		}
+	}
 
 	boolean deletePlayerdata(UUID uuid){
 		try{

@@ -111,9 +111,6 @@ public class NewPlayerManager implements Listener{
 				.iterator(), '\n'));
 	}
 
-	boolean isOnChunkBoundary(long x, long z){
-		return Math.abs(x) % 16 < 2 || Math.abs(z) % 16 < 2;
-	}
 	boolean hasNearbyLava(Location loc){
 		for(int x=-15; x<=15; ++x) for(int y=-10; y<=10; ++y) for(int z=-15; z<=15; ++z){
 			Block block = loc.clone().add(x, y, z).getBlock();
@@ -155,11 +152,13 @@ public class NewPlayerManager implements Listener{
 			double z = getRandomCoord(maxOffset, 500, rand.nextDouble());
 			while(Math.abs(x) > maxOffset) x = rand.nextGaussian() * stdDev;
 			while(Math.abs(z) > maxOffset) z = rand.nextGaussian() * stdDev;
+			x = ((long)x/16)*16l - 8l;// Make sure we are in the center of a chunk
+			z = ((long)z/16)*16l - 8l;
 			x = Math.floor(origin.getX() + x) + 0.5d;
 			z = Math.floor(origin.getZ() + z) + 0.5d;
-			if(isOnChunkBoundary((long)x, (long)z)) continue;
-			if(rand.nextBoolean()) x = (-x)-1;//-1 to preserve isOnChunkBoundary=true
-			if(rand.nextBoolean()) z = (-z)-1;
+//			if(isOnChunkBoundary((long)x, (long)z)) continue;
+			if(rand.nextBoolean()) x = -x;
+			if(rand.nextBoolean()) z = -z;
 
 			Location loc = new Location(world, x, 250, z);
 			if(!loc.getChunk().load(true)){
@@ -227,14 +226,18 @@ public class NewPlayerManager implements Listener{
 		int[] zs = new int[]{0,0,2, -0,-0,-2,  0,1,1, -0,-1,-1,  +0,+0,-1,+1,-1,+1};
 		for(int i=0; i<xs.length; ++i){
 			Block block = loc.getBlock().getRelative(xs[i], ys[i], zs[i]);
-			if(block.isEmpty()){
-				block.setType(Material.END_GATEWAY);
-				EndGateway gatewayState = (EndGateway)block.getState();
-				gatewayState.setAge(-1000000000);
-				gatewayState.update(true);
-			}
-			else if(player != null){
-				player.sendBlockChange(player.getLocation().add(xs[i], ys[i], zs[i]), Material.END_GATEWAY.createBlockData());
+			switch(block.getType()){
+				case AIR:
+				case BEDROCK:
+				case BARRIER:
+				case END_GATEWAY:
+					block.setType(Material.END_GATEWAY);
+					EndGateway gatewayState = (EndGateway)block.getState();
+					gatewayState.setAge(-1000000000);
+					gatewayState.update(true);
+					break;
+				default:
+					if(player != null) player.sendBlockChange(player.getLocation().add(xs[i], ys[i], zs[i]), Material.END_GATEWAY.createBlockData());
 			}
 		}
 
@@ -353,12 +356,16 @@ public class NewPlayerManager implements Listener{
 
 		// Unconfirmed new player
 		if(player.getScoreboardTags().contains("unconfirmed")){
-			putQuickBedrock(player.getLocation());
+			Location spawnLoc = player.getLocation();
+			while(spawnLoc.getBlock().isEmpty()) spawnLoc.setY(spawnLoc.getY() - 1); spawnLoc.setY(spawnLoc.getY() + 3);
+			player.teleport(spawnLoc);
+			putQuickBedrock(spawnLoc);
+			player.teleport(spawnLoc);
 			player.sendMessage(ChatColor.GREEN+">> "+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
-			createSpawnBox(player.getLocation(), player);
-			new BukkitRunnable(){@Override public void run(){createSpawnBox(player.getLocation(), player);}}.runTaskLater(pl, 1*20);
-			new BukkitRunnable(){@Override public void run(){createSpawnBox(player.getLocation(), player);}}.runTaskLater(pl, 2*20);
-			new BukkitRunnable(){@Override public void run(){createSpawnBox(player.getLocation(), player);}}.runTaskLater(pl, 4*20);
+			createSpawnBox(spawnLoc, player);
+			new BukkitRunnable(){@Override public void run(){createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 1*20);
+			new BukkitRunnable(){@Override public void run(){createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 2*20);
+			new BukkitRunnable(){@Override public void run(){createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 4*20);
 			player.getInventory().clear();
 			giveGuideBook(player);
 			HostileMobPreventer spawnPreventer = new HostileMobPreventer(player.getLocation(), 200);
