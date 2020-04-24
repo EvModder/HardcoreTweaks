@@ -286,9 +286,9 @@ public class NewPlayerManager implements Listener{
 		if(newTeam == null) newTeam = player.getScoreboard().registerNewTeam(Adv0TeamName);
 		newTeam.addEntry(player.getName());
 
-		player.setInvulnerable(true);
-
 		Location spawnLoc = spawnLocs.remove();
+		spawnLoc.setX(spawnLoc.getBlockX() + 0.5);
+		spawnLoc.setZ(spawnLoc.getBlockZ() + 0.5);
 		pl.getLogger().warning("Spawning in at: "+TextUtils.locationToString(spawnLoc, ChatColor.GREEN, ChatColor.YELLOW, 0));
 		saveSpawnLocs();
 		new BukkitRunnable(){@Override public void run(){
@@ -300,9 +300,6 @@ public class NewPlayerManager implements Listener{
 		final boolean announceAdvDefault = player.getWorld().getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS);
 		player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
 		createSpawnBox(spawnLoc, player);
-
-		spawnLoc.setX(spawnLoc.getBlockX() + 0.5);
-		spawnLoc.setZ(spawnLoc.getBlockZ() + 0.5);
 		player.teleport(spawnLoc);
 		new BukkitRunnable(){@Override public void run(){
 			Player player = pl.getServer().getPlayer(uuid);
@@ -344,9 +341,6 @@ public class NewPlayerManager implements Listener{
 					/*subtitle=*/"§9Read the book to be set free and spawn in the world",
 					/*fadeIn=*/10, /*stay=*/20*15, /*fadeOut=*/20);
 		}
-		if(new File("./plugins/EvFolder/aug_evt/"+player.getUniqueId()+".txt").exists()){
-			player.addScoreboardTag("event_participant");
-		}
 
 		//TODO: new permissions plugin. This is garbage.
 		//pl.runCommand("perms player addgroup "+player.getName()+" default");
@@ -370,14 +364,15 @@ public class NewPlayerManager implements Listener{
 
 		// Unconfirmed new player
 		if(player.getScoreboardTags().contains("unconfirmed")){
+			player.setInvulnerable(true);
+			player.setGravity(false);
 			Location spawnLoc = player.getLocation();
-			while(spawnLoc.getBlock().isEmpty()) spawnLoc.setY(spawnLoc.getY() - 1); spawnLoc.setY(spawnLoc.getY() + 3);
-			spawnLoc.setX(spawnLoc.getBlockX()+.5);
-			spawnLoc.setY(spawnLoc.getBlockZ()+.02);
-			spawnLoc.setZ(spawnLoc.getBlockZ()+.5);
-			player.teleport(spawnLoc);
+//			while(spawnLoc.getBlock().isEmpty()) spawnLoc.setY(spawnLoc.getY() - 1); spawnLoc.setY(spawnLoc.getY() + 3.02);
+//			spawnLoc.setX((int)(Math.round(spawnLoc.getX()*2)/2));
+//			spawnLoc.setZ((int)(Math.round(spawnLoc.getZ()*2)/2));
+//			player.teleport(spawnLoc);
 			putQuickBedrock(spawnLoc);
-			player.teleport(spawnLoc);
+//			player.teleport(spawnLoc);
 			player.sendMessage(ChatColor.GREEN+">> "+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
 			createSpawnBox(spawnLoc, player);
 			new BukkitRunnable(){@Override public void run(){createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 1*20);
@@ -423,6 +418,7 @@ public class NewPlayerManager implements Listener{
 			pl.runCommand("minecraft:advancement revoke "+evt.getPlayer().getName()+" only minecraft:end/enter_end_gateway");
 			Player player = evt.getPlayer();
 			evt.setCancelled(true);
+			player.setGravity(true);
 			player.setWalkSpeed(0.2f);
 			removeSpawnBox(player.getLocation(), player);
 			player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10, 3), true);
