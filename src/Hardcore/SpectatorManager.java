@@ -50,6 +50,9 @@ public class SpectatorManager implements Listener{
 		if(pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators") == null){
 			pl.getServer().getScoreboardManager().getMainScoreboard().registerNewTeam("Spectators");
 		}
+		if(pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Dead") == null){
+			pl.getServer().getScoreboardManager().getMainScoreboard().registerNewTeam("Dead");
+		}
 		DEFAULT_MODE = pl.getConfig().getString("spectator-mode", "blacklist").equals("blacklist") ?
 				WatchMode.BLACKLIST : WatchMode.WHITELIST;
 		spectators = new HashSet<UUID>();
@@ -222,7 +225,7 @@ public class SpectatorManager implements Listener{
 				else ActionBarUtils.sendToPlayer(
 						formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY), specP);
 
-				if(specP.isDead() || specP.isOp()) continue;
+				if(specP.isDead() || specP.isOp()) continue; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 				Entity target = specP.getSpectatorTarget();
 				if(target == null || !(target instanceof Player) || isSpectatorFavorYes((Player)target)){
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
@@ -234,7 +237,7 @@ public class SpectatorManager implements Listener{
 							specP.teleport(WORLD_SPAWN, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
 							specP.sendTitle("", "There is nobody who you can spectate", 10, 20*60, 20);
 							new BukkitRunnable(){@Override public void run(){
-								if(!specP.getScoreboardTags().contains("spectating")){
+								if(!specP.getScoreboardTags().contains("spectating") && isSpectator(specP)){
 									specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
 								}
 							}}.runTaskLater(pl, 20*60);
@@ -456,14 +459,15 @@ public class SpectatorManager implements Listener{
 	public void onGameModeChange(PlayerGameModeChangeEvent evt){
 		if(evt.getNewGameMode() == GameMode.SPECTATOR){
 			if(isSpectator(evt.getPlayer())) addSpectator(evt.getPlayer());
-			pl.getServer().getScoreboardManager().getMainScoreboard()
-				.getTeam("Spectators").addEntry(evt.getPlayer().getName());
+			pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators").addEntry(evt.getPlayer().getName());
 		}
 		else removeSpectator(evt.getPlayer());
 	}
 
 	@EventHandler
 	public void onRespawn(PlayerRespawnEvent evt){
+		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Dead").removeEntry(evt.getPlayer().getName());
+		Extras.grantLocationBasedAdvancements(evt.getPlayer(), /*silently=*/true);
 		final UUID uuid = evt.getPlayer().getUniqueId();
 		new BukkitRunnable(){@Override public void run(){
 			Player p = pl.getServer().getPlayer(uuid);

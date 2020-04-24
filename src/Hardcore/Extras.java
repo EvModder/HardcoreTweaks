@@ -52,10 +52,21 @@ public class Extras implements Listener{
 		else{
 			final boolean announceAdvDefault = player.getWorld().getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS);
 			player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+			// TODO: prevent advancement poppup on player screen
+			/*Listener hideAdvancementPacket = new Listener(){
+				@EventHandler
+				public void stopAdvancement(PlayerPlayOutPacketEvent evt){
+					
+				}
+			};
+			pl.getServer().getPluginManager().registerEvents(hideAdvancementPacket, pl);*/
 			new BukkitRunnable(){@Override public void run(){
-				grantLocationBasedAdvancements(player, false);}}.runTaskLater(pl, 2);
+				grantLocationBasedAdvancements(player, false);
+			}}.runTaskLater(pl, 2);
 			new BukkitRunnable(){@Override public void run(){
-				player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);}}.runTaskLater(pl, 4);
+				player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);
+//				HandlerList.unregisterAll(hideAdvancementPacket);
+			}}.runTaskLater(pl, 4);
 		}
 	}
 

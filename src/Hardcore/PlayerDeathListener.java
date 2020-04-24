@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.bukkit.ChatColor;
 import org.bukkit.Statistic;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -41,9 +40,9 @@ public class PlayerDeathListener implements Listener{
 		// Initialize dead-person things
 		ScoreboardManager.resetScores(evt.getEntity());
 		evt.getEntity().addScoreboardTag("dead");
+		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Dead").addEntry(name);
 		//evt.getEntity().setDisplayName(SPEC_PREFIX+" "+evt.getEntity().getDisplayName());//TODO: dead prefix in chat
 		//pl.runCommand("essentials:nick "+name+" "+SPEC_PREFIX+evt.getEntity().getDisplayName());
-		Extras.grantLocationBasedAdvancements(evt.getEntity(), /*silently=*/true);
 
 		// Write to death-log.txt
 		String deathLog = FileIO.loadFile("death-log.txt", "");
@@ -94,11 +93,13 @@ public class PlayerDeathListener implements Listener{
 			if(!pl.copyPlayerdata(uuid, deathDir)) pl.getLogger().severe("Copy faied");
 		}}.runTaskLater(pl, 20 * 2);
 
+		/*
 		// Kick after 2 minutes (to prevent item despawn) if they still haven't pressed respawn
+		// NOTE: not necessary if gamerule spectatorsGenerateChunks if false (i think)
 		new BukkitRunnable(){@Override public void run(){
 			Player deadPlayer = pl.getServer().getPlayer(uuid);
 			if(deadPlayer != null && deadPlayer.isDead())
 				deadPlayer.kickPlayer(ChatColor.RED + "Died in hardcore:"+ChatColor.RESET+"\n"+evt.getDeathMessage());
-		}}.runTaskLater(pl, 20 * 120);
+		}}.runTaskLater(pl, 20 * 120);*/
 	}
 }

@@ -11,6 +11,7 @@ import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
@@ -152,8 +153,8 @@ public class NewPlayerManager implements Listener{
 			double z = getRandomCoord(maxOffset, 500, rand.nextDouble());
 			while(Math.abs(x) > maxOffset) x = rand.nextGaussian() * stdDev;
 			while(Math.abs(z) > maxOffset) z = rand.nextGaussian() * stdDev;
-			x = ((long)x/16)*16l - 8l;// Make sure we are in the center of a chunk
-			z = ((long)z/16)*16l - 8l;
+			x = ((long)x/16)*16 - 8;// Make sure we are in the center of a chunk
+			z = ((long)z/16)*16 - 8;
 			x = Math.floor(origin.getX() + x) + 0.5d;
 			z = Math.floor(origin.getZ() + z) + 0.5d;
 //			if(isOnChunkBoundary((long)x, (long)z)) continue;
@@ -174,7 +175,7 @@ public class NewPlayerManager implements Listener{
 			else if(hasNearbyLava(loc)) pl.getLogger().info(debugStr+" >> Near to lava");
 			else{
 				pl.getLogger().info(debugStr+" >> SUCCESS");
-				loc.setY(loc.getY() + 3); // Two blocks above the ground
+				loc.setY(loc.getY() + 3.02); // Two blocks above the ground
 				return loc;
 			}
 		}
@@ -296,6 +297,8 @@ public class NewPlayerManager implements Listener{
 			saveSpawnLocs();
 		}}.runTaskLater/*Asynchronously*/(pl, 20*60);//60s
 
+		final boolean announceAdvDefault = player.getWorld().getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS);
+		player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
 		createSpawnBox(spawnLoc, player);
 
 		spawnLoc.setX(spawnLoc.getBlockX() + 0.5);
@@ -306,6 +309,7 @@ public class NewPlayerManager implements Listener{
 			if(player != null){
 				player.teleport(spawnLoc);
 				createSpawnBox(spawnLoc, player);
+				player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);
 			}
 		}}.runTaskLater(pl, 20);
 		player.setBedSpawnLocation(spawnLoc);
@@ -348,6 +352,16 @@ public class NewPlayerManager implements Listener{
 		//pl.runCommand("perms player addgroup "+player.getName()+" default");
 	}
 
+	// Prevent broadcasting "Remote Getaway" advancement for players that lag when they join
+	/*@EventHandler
+	public void blockAdvancement(final PlayerAdvancementDoneEvent evt){
+		if(evt.getPlayer().getScoreboardTags().contains("unconfirmed")){
+			for(String criteria : evt.getAdvancement().getCriteria()){
+				evt.getPlayer().getAdvancementProgress(evt.getAdvancement()).revokeCriteria(criteria);
+			}
+		}
+	}*/
+
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent evt){
 		final Player player = evt.getPlayer();
@@ -358,6 +372,9 @@ public class NewPlayerManager implements Listener{
 		if(player.getScoreboardTags().contains("unconfirmed")){
 			Location spawnLoc = player.getLocation();
 			while(spawnLoc.getBlock().isEmpty()) spawnLoc.setY(spawnLoc.getY() - 1); spawnLoc.setY(spawnLoc.getY() + 3);
+			spawnLoc.setX(spawnLoc.getBlockX()+.5);
+			spawnLoc.setY(spawnLoc.getBlockZ()+.02);
+			spawnLoc.setZ(spawnLoc.getBlockZ()+.5);
 			player.teleport(spawnLoc);
 			putQuickBedrock(spawnLoc);
 			player.teleport(spawnLoc);
@@ -403,6 +420,7 @@ public class NewPlayerManager implements Listener{
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		final String command = evt.getMessage().trim().toLowerCase();
 		if(command.equals("/accept-terms") && evt.getPlayer().removeScoreboardTag("unconfirmed")){
+			pl.runCommand("minecraft:advancement revoke "+evt.getPlayer().getName()+" only minecraft:end/enter_end_gateway");
 			Player player = evt.getPlayer();
 			evt.setCancelled(true);
 			player.setWalkSpeed(0.2f);

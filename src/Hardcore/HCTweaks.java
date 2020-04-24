@@ -8,7 +8,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import Hardcore.commands.*;
@@ -31,7 +30,7 @@ public class HCTweaks extends EvPlugin{
 		WORLD_NAME = getConfig().getString("world-name", "Reliquist");
 		World hardcoreWorld = getServer().getWorld(WORLD_NAME);
 		hardcoreWorld.setKeepSpawnInMemory(false);
-		hardcoreWorld.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, true);
+//		hardcoreWorld.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, true); // Is nice for spectators, but has non-vanilla side effects
 
 		getServer().getPluginManager().registerEvents(new PlayerDeathListener(this), this);
 		getServer().getPluginManager().registerEvents(new TEMP_CmdPing(this), this);
