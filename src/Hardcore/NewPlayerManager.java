@@ -3,7 +3,9 @@ package Hardcore;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -20,10 +22,13 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.block.EndGateway;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -45,9 +50,26 @@ public class NewPlayerManager implements Listener{
 	final ArrayDeque<Location> spawnLocs;
 	final String WORLD_NAME, SPAWN_MSG, RESPAWN_MSG;
 	final long SECONDS_UNTIL_RESPAWN;
+	final HashMap<UUID, Listener> mobSpawnListeners;
+
+	// Prevent new players from being greated by a swarm of hostile mobs when they exit the bedrock box
+	class HostileMobPreventer implements Listener{
+		final Location location;
+		final double radiusSquared;
+		HostileMobPreventer(Location loc, double r){location = loc; radiusSquared = r*r;}
+		@EventHandler public void onHostileMobSpawn(CreatureSpawnEvent evt){
+			if(!evt.isCancelled() && evt.getEntity() instanceof Monster && evt.getSpawnReason() == SpawnReason.NATURAL){
+				Location entityLoc = evt.getEntity().getLocation();
+				if(entityLoc.getWorld().getUID().equals(location.getWorld().getUID()) && entityLoc.distanceSquared(location) < radiusSquared){
+					evt.setCancelled(true);
+				}
+			}
+		}
+	}
 
 	public NewPlayerManager(HCTweaks plugin){
 		pl = plugin;
+		mobSpawnListeners = new HashMap<>();
 		SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
 		WORLD_NAME = pl.getConfig().getString("world-name", "Reliquist");
 		World hardcoreWorld = pl.getServer().getWorld(WORLD_NAME);
@@ -177,6 +199,18 @@ public class NewPlayerManager implements Listener{
 		}
 	}
 
+	void putQuickBedrock(Location loc){
+		loc.getBlock().getRelative(BlockFace.UP).setType(Material.BEDROCK);
+		loc.getBlock().getRelative(BlockFace.DOWN).setType(Material.BEDROCK);
+		loc.getBlock().getRelative(BlockFace.NORTH).setType(Material.BEDROCK);
+		loc.getBlock().getRelative(BlockFace.SOUTH).setType(Material.BEDROCK);
+		loc.getBlock().getRelative(BlockFace.EAST).setType(Material.BEDROCK);
+		loc.getBlock().getRelative(BlockFace.WEST).setType(Material.BEDROCK);
+		for(int x=-3; x<=3; ++x) for(int y=-3; y<=3; ++y) for(int z=-3; z<=3; ++z){
+			Block block = loc.getBlock().getRelative(x, y, z);
+			if(block.isEmpty()) block.setType(Material.BEDROCK);
+		}
+	}
 	void createSpawnBox(Location loc, Player player){
 		if(loc == null && player != null) loc = player.getLocation();
 		// Always set the 6 faces
@@ -319,17 +353,22 @@ public class NewPlayerManager implements Listener{
 
 		// Unconfirmed new player
 		if(player.getScoreboardTags().contains("unconfirmed")){
-			player.sendMessage(ChatColor.GREEN+">> "
-					+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
+			putQuickBedrock(player.getLocation());
+			player.sendMessage(ChatColor.GREEN+">> "+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
 			createSpawnBox(player.getLocation(), player);
 			new BukkitRunnable(){@Override public void run(){createSpawnBox(player.getLocation(), player);}}.runTaskLater(pl, 1*20);
 			new BukkitRunnable(){@Override public void run(){createSpawnBox(player.getLocation(), player);}}.runTaskLater(pl, 2*20);
 			new BukkitRunnable(){@Override public void run(){createSpawnBox(player.getLocation(), player);}}.runTaskLater(pl, 4*20);
 			player.getInventory().clear();
 			giveGuideBook(player);
+			HostileMobPreventer spawnPreventer = new HostileMobPreventer(player.getLocation(), 200);
+			pl.getServer().getPluginManager().registerEvents(spawnPreventer, pl);
+			mobSpawnListeners.put(evt.getPlayer().getUniqueId(), spawnPreventer);
+			
 		}
 
 		// Update tags
+		// TODO: should color nick be saved?
 		if(player.getScoreboardTags().contains("color_nick")){
 			ChatColor color = TextUtils.getCurrentColor(player.getDisplayName());
 			if(color != null){
@@ -349,12 +388,14 @@ public class NewPlayerManager implements Listener{
 	public void onPlayerQuit(PlayerQuitEvent evt){
 		if(evt.getPlayer().getScoreboardTags().contains("unconfirmed")){
 			removeSpawnBox(evt.getPlayer().getLocation(), evt.getPlayer());
+			mobSpawnListeners.remove(evt.getPlayer().getUniqueId());
 		}
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
-		if(evt.getMessage().trim().equals("/accept-terms") && evt.getPlayer().removeScoreboardTag("unconfirmed")){
+		final String command = evt.getMessage().trim().toLowerCase();
+		if(command.equals("/accept-terms") && evt.getPlayer().removeScoreboardTag("unconfirmed")){
 			Player player = evt.getPlayer();
 			evt.setCancelled(true);
 			player.setWalkSpeed(0.2f);
@@ -373,12 +414,15 @@ public class NewPlayerManager implements Listener{
 //			pl.setPermission(player, "essentials.tpa", true);
 //			pl.setPermission(player, "essentials.tpahere", true);
 //			pl.setPermission(player, "essentials.tpaccept", true);
+			mobSpawnListeners.remove(evt.getPlayer().getUniqueId());
 		}
 		else if(evt.getPlayer().getScoreboardTags().contains("unconfirmed")){
-			evt.getPlayer().sendMessage(ChatColor.RED+"You need to read the book first");
+			List<String> whitelistedCommands = Arrays.asList("/help", "/rules", "/ping", "/gc", "/ignore");
+			if(whitelistedCommands.contains(command)) return;
+			evt.getPlayer().sendMessage(ChatColor.RED+"You must read the book before you can do that");
 			evt.setCancelled(true);
 		}
-		else if(evt.getPlayer().getScoreboardTags().contains("dead") && evt.getMessage().trim().equals("/respawn")){
+		else if(evt.getPlayer().getScoreboardTags().contains("dead") && command.equals("/respawn")){
 			int secondsSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
 			if(secondsSinceDeath < SECONDS_UNTIL_RESPAWN){
 				evt.getPlayer().sendMessage(ChatColor.RED+"You cannot use that command yet");
