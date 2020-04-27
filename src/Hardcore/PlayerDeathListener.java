@@ -69,7 +69,7 @@ public class PlayerDeathListener implements Listener{
 			}
 			pl.getLogger().info("Was quick-death: "+quickDeath
 					+" ("+TextUtils.formatTime(millis_alive, false, "§6", "§c", " ")
-					+ChatColor.RESET+(quickDeath ? " | §6streak=§c"+quickDeaths : "")+"§r)");
+					+ChatColor.RESET+(quickDeath ? "§r | §6streak=§c"+quickDeaths : "")+"§r)");
 			// Update death-stats
 			HashMap<EntityType, Integer> killedByStats = new HashMap<>();
 			for(EntityType entity : EntityType.values()){

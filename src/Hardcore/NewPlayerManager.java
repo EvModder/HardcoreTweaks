@@ -14,9 +14,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
+import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -278,7 +280,7 @@ public class NewPlayerManager implements Listener{
 	}
 
 	public void spawnNewPlayer(Player player){
-		pl.getLogger().warning("Spawning new player: "+player.getName());
+//		pl.getLogger().warning("Spawning new player: "+player.getName());
 		final UUID uuid = player.getUniqueId();
 		player.addScoreboardTag("unconfirmed");
 		String Adv0TeamName = ScoreboardManager.getAdvancementTeamName(0);
@@ -289,7 +291,8 @@ public class NewPlayerManager implements Listener{
 		Location spawnLoc = spawnLocs.remove();
 		spawnLoc.setX(spawnLoc.getBlockX() + 0.5);
 		spawnLoc.setZ(spawnLoc.getBlockZ() + 0.5);
-		pl.getLogger().warning("Spawning in at: "+TextUtils.locationToString(spawnLoc, ChatColor.GREEN, ChatColor.YELLOW, 0));
+		pl.getLogger().warning("Spawning new player '"+player.getName()+"' at: "
+				+ TextUtils.locationToString(spawnLoc, ChatColor.GREEN, ChatColor.YELLOW, 0));
 		saveSpawnLocs();
 		new BukkitRunnable(){@Override public void run(){
 			Location spawnLoc = getRandomSpawnLoc();
@@ -415,7 +418,12 @@ public class NewPlayerManager implements Listener{
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		final String command = evt.getMessage().trim().toLowerCase();
 		if(command.equals("/accept-terms") && evt.getPlayer().removeScoreboardTag("unconfirmed")){
-			pl.runCommand("minecraft:advancement revoke "+evt.getPlayer().getName()+" only minecraft:end/enter_end_gateway");
+			// This is the silent way to remove this advancement (in case it was erroneously given)
+			NamespacedKey key = NamespacedKey.minecraft("end/enter_end_gateway");
+			AdvancementProgress progress = evt.getPlayer().getAdvancementProgress(pl.getServer().getAdvancement(key));
+			for(String criteria : progress.getRemainingCriteria()) progress.revokeCriteria(criteria);
+			// Alternative, but considered extra console spam
+			//pl.runCommand("minecraft:advancement revoke "+evt.getPlayer().getName()+" only minecraft:end/enter_end_gateway");
 			Player player = evt.getPlayer();
 			evt.setCancelled(true);
 			player.setGravity(true);
