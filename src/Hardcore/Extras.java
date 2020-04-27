@@ -5,7 +5,9 @@ import java.util.UUID;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World.Environment;
+import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -37,16 +39,20 @@ public class Extras implements Listener{
 		if(!silently){
 			//pl.runCommand("minecraft:advancement grant "+player.getName()+" everything");
 			String[] advancementsToGrant = new String[]{
-					"minecraft:adventure/adventuring_time",
-					"minecraft:end/enter_end_gateway",
-					"minecraft:end/find_end_city",
-					"minecraft:nether/fast_travel",
-					"minecraft:nether/find_fortress",
-					"minecraft:story/enter_the_nether",
-					"minecraft:story/enter_the_end",
+					/*"minecraft:*/"adventure/adventuring_time",
+					/*"minecraft:*/"end/enter_end_gateway",
+					/*"minecraft:*/"end/find_end_city",
+					/*"minecraft:*/"nether/fast_travel",
+					/*"minecraft:*/"nether/find_fortress",
+					/*"minecraft:*/"story/enter_the_nether",
+					/*"minecraft:*/"story/enter_the_end",
 			};
 			for(String advancement : advancementsToGrant){
-				pl.runCommand("minecraft:advancement grant "+player.getName()+" only "+advancement);
+				NamespacedKey key = NamespacedKey.minecraft(advancement);
+				AdvancementProgress progress = player.getAdvancementProgress(pl.getServer().getAdvancement(key));
+				for(String criteria : progress.getRemainingCriteria()) progress.awardCriteria(criteria);
+				// Alternative way (downside: outputs to console)
+//				pl.runCommand("minecraft:advancement grant "+player.getName()+" only "+advancement);
 			}
 		}
 		else{

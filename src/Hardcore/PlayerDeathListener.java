@@ -31,8 +31,7 @@ public class PlayerDeathListener implements Listener{
 		//final boolean quickDeath = evt.getEntity().getStatistic(Statistic.PLAY_ONE_MINUTE)/60 < QD_HRS;//Less than 5 hours alive
 		long millis_alive = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)*50;
 		final boolean quickDeath = millis_alive/1000/60/60 < QD_HRS;// Equivalent to line 2 above
-		pl.getLogger().warning("Death of "+name+": "+evt.getDeathMessage());
-		pl.getLogger().info("Was quick-death: "+quickDeath+" ("+TextUtils.formatTime(millis_alive, ChatColor.GOLD, ChatColor.RED)+")");
+//		pl.getLogger().warning("Death of "+name+": \""+evt.getDeathMessage()+'"');
 
 		evt.getEntity().saveData();
 		evt.getEntity().loadData();
@@ -59,14 +58,18 @@ public class PlayerDeathListener implements Listener{
 			if(!new File(deathDir).exists()) new File(deathDir).mkdir();
 
 			// Update quick-deaths:
+			int quickDeaths = 1;
 			if(!quickDeath) new File(deathDir+"/quick-deaths.txt").delete();
 			else{
-				int quickDeaths = Integer.parseInt(FileIO.loadFile("deaths/"+name+"/quick-deaths.txt", "0")) + 1;
+				quickDeaths += Integer.parseInt(FileIO.loadFile("deaths/"+name+"/quick-deaths.txt", "0"));
 				FileIO.saveFile("deaths/"+name+"/quick-deaths.txt", ""+quickDeaths);
 				long respawnPenalty = (1 << (quickDeaths-1)) * (60*60*6/*6 hours*/);
 				evt.getEntity().addScoreboardTag("respawn_penalty_"+respawnPenalty);
-				pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
+//				pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
 			}
+			pl.getLogger().info("Was quick-death: "+quickDeath
+					+" ("+TextUtils.formatTime(millis_alive, false, "§6", "§c", " ")
+					+ChatColor.RESET+(quickDeath ? " | §6streak=§c"+quickDeaths : "")+"§r)");
 			// Update death-stats
 			HashMap<EntityType, Integer> killedByStats = new HashMap<>();
 			for(EntityType entity : EntityType.values()){

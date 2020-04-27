@@ -466,6 +466,7 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler
 	public void onRespawn(PlayerRespawnEvent evt){
+		pl.getLogger().warning(evt.getPlayer().getName()+" pressed respawn/spectate world");
 		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Dead").removeEntry(evt.getPlayer().getName());
 		Extras.grantLocationBasedAdvancements(evt.getPlayer(), /*silently=*/true);
 		final UUID uuid = evt.getPlayer().getUniqueId();
