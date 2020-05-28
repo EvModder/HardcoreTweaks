@@ -29,7 +29,8 @@ public class Extras implements Listener{
 		if(a == null || b == null) return Double.MAX_VALUE;
 		if(a.getWorld().getUID().equals(b.getWorld().getUID())) return a.distanceSquared(b);
 		if(a.getWorld().getEnvironment() == Environment.THE_END || b.getWorld().getEnvironment() == Environment.THE_END) return Double.MAX_VALUE;
-		// By this point, we have overworld & nether
+		if(!a.getWorld().getName().startsWith(b.getWorld().getName()) && !b.getWorld().getName().startsWith(a.getWorld().getName())) return Double.MAX_VALUE;
+		// By this point, we have overworld & nether (for the same world)
 		if(a.getWorld().getEnvironment() == Environment.NETHER) return new Location(b.getWorld(), a.getX()*8, a.getY(), a.getZ()*8).distanceSquared(b);
 		else return new Location(a.getWorld(), b.getX()*8, b.getY(), b.getZ()*8).distanceSquared(a);
 	}

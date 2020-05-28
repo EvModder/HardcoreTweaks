@@ -37,9 +37,9 @@ public class SpectatorManager implements Listener{
 	final HCTweaks pl;
 	public enum WatchMode {BLACKLIST, WHITELIST};
 	static WatchMode DEFAULT_MODE;
-	final int MAX_DIST_SQ = 20*20;
-	final long SECONDS_UNTIL_RESPAWN;
+	final int BOUNCE_DIST_SQ = 20*20, TP_DIST_SQ = 50*50, SEND_NOTICE_DIST_SQ = 50*50;
 	final float FLY_SPEED = 0.08f;
+	final long SECONDS_UNTIL_RESPAWN;
 	static HashSet<UUID> spectators;
 	final Location WORLD_SPAWN;
 	static final boolean CLOSEST_ACROSS_DIMENSIONS = true;
@@ -58,7 +58,7 @@ public class SpectatorManager implements Listener{
 		spectators = new HashSet<UUID>();
 		WORLD_SPAWN = new Location(pl.getServer().getWorlds().get(0), 0, 90, 0);
 		loopActive = false;
-		runSpecatorLoop();
+		runSpectatorLoop();
 	}
 
 	public static boolean isSpectator(Player player){
@@ -195,7 +195,7 @@ public class SpectatorManager implements Listener{
 	}
 
 	boolean loopActive = false;
-	void runSpecatorLoop(){
+	void runSpectatorLoop(){
 		if(loopActive) return;
 		loopActive = true;
 		new BukkitRunnable(){@Override public void run(){
@@ -244,8 +244,7 @@ public class SpectatorManager implements Listener{
 						}
 					}
 					else{
-						double distSqToTarget = newTarget.getWorld().getUID().equals(specP.getWorld().getUID())
-								? newTarget.getLocation().distanceSquared(specP.getLocation()) : Double.MAX_VALUE;
+						double distSqToTarget = Extras.crossDimensionalDistanceSquared(specP.getLocation(), newTarget.getLocation());
 						if(!specP.hasPermission("hardcore.spectator.bypass.slowness"))
 							specP.setFlySpeed(FLY_SPEED);
 						
@@ -280,11 +279,11 @@ public class SpectatorManager implements Listener{
 							}
 						}
 						else if(!specP.hasPermission("hardcore.spectator.bypass.maxrange")){
-							if(distSqToTarget > 50*50){
+							if(distSqToTarget >= TP_DIST_SQ || !specP.getWorld().getUID().equals(newTarget.getWorld().getUID())){
 								//sendSpectateNotice(specP, newTarget, specP.getLocation());//Done by TeleportListener below
 								specP.teleport(newTarget, TeleportCause.SPECTATE);
 							}
-							else if(distSqToTarget > 20*20){
+							else if(distSqToTarget >= BOUNCE_DIST_SQ){
 								Vector fromSpecToTarget = newTarget.getLocation().toVector()
 											.subtract(specP.getLocation().toVector());
 								Vector bounceBackV = fromSpecToTarget.normalize();
@@ -307,10 +306,6 @@ public class SpectatorManager implements Listener{
 				}
 			}
 		}}.runTaskTimer(pl, 20, 20);//delay, freq
-	}
-
-	boolean notFar(Location a, Location b){
-		return a.getWorld().getUID().equals(b.getWorld().getUID()) && a.distanceSquared(b) < 50*50;
 	}
 
 	/*@EventHandler
@@ -344,13 +339,14 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSpectateTeleport(PlayerTeleportEvent evt){
+		//TODO: TEMP CODE FOR ARCHERY EVT //////////////////////////////////////////////
 		if(!isSpectatorFavorYes(evt.getPlayer()) || evt.getPlayer().hasPermission("hardcore.spectator.bypass.tpcheck")) return;
 		if(evt.getTo().getX() < -29990000 && evt.getTo().getZ() < -29990000){
 			evt.getPlayer().sendMessage(ChatColor.RED+"You cannot join the archery event while in specator mode");
 			evt.setCancelled(true);
 			return;
-		}
-		if(evt.getCause() == TeleportCause.CHORUS_FRUIT || notFar(evt.getFrom(), evt.getTo())) return;
+		}///////////////////////////////////////////////////////////////////////////////
+		if(evt.getCause() == TeleportCause.CHORUS_FRUIT) return;
 		Player newTarget = getClosestGm0WithPerms(evt.getTo(), /*spectator=*/evt.getPlayer());
 		if(!isSpectating(evt.getTo(), newTarget)){
 			evt.getPlayer().sendMessage(ChatColor.RED+"No valid/permitted target found at teleport destination");
@@ -360,8 +356,9 @@ public class SpectatorManager implements Listener{
 			evt.setCancelled(true);
 			return;
 		}
-		sendSpectatorNotices(evt.getPlayer(), newTarget, evt.getFrom(), evt.getTo());
-
+		if(Extras.crossDimensionalDistanceSquared(evt.getFrom(), evt.getTo()) >= SEND_NOTICE_DIST_SQ){
+			sendSpectatorNotices(evt.getPlayer(), newTarget, evt.getFrom(), evt.getTo());
+		}
 		//evt.getPlayer().setSpectatorTarget(p);
 		//pl.getLogger().info(evt.getPlayer().getName()+" is now spectating "+target.getName());
 	}
@@ -382,7 +379,7 @@ public class SpectatorManager implements Listener{
 				Player newTarget = getClosestGm0WithPerms(player.getLocation(), player);
 				if(newTarget != null) newTarget.sendMessage("§7>> §b"+player.getDisplayName()+"§7 is now spectating you");
 			}*/
-			runSpecatorLoop();
+			runSpectatorLoop();
 		}
 	}
 	public boolean removeSpectator(Player player){
@@ -398,11 +395,12 @@ public class SpectatorManager implements Listener{
 	@EventHandler
 	public void onQuit(PlayerQuitEvent evt){
 		if(removeSpectator(evt.getPlayer()) && evt.getPlayer().getScoreboardTags().contains("dead")){
-			Player oldTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
-			if(oldTarget != null){
-				if(oldTarget != null) sendSpectateEndNotice(/*spectator=*/evt.getPlayer(), oldTarget, /*leftTo=*/null);
-				//sendSpectatorNotices(/*spectator=*/evt.getPlayer(), /*newTarget=*/null, /*from=*/evt.getPlayer().getLocation(), /*to=*/null);
-			}
+			// Eh, if they logged out people can deduce that they are no longer spectating
+			//Player oldTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
+			//if(oldTarget != null){
+			//	if(oldTarget != null) sendSpectateEndNotice(/*spectator=*/evt.getPlayer(), oldTarget, /*leftTo=*/null);
+			//	//sendSpectatorNotices(/*spectator=*/evt.getPlayer(), /*newTarget=*/null, /*from=*/evt.getPlayer().getLocation(), /*to=*/null);
+			//}
 			evt.getPlayer().getScoreboard().resetScores(evt.getPlayer().getName());
 			int ticksSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH);
 			long secondsSinceDeath = ticksSinceDeath/20;
@@ -449,9 +447,11 @@ public class SpectatorManager implements Listener{
 			.getTeam("Spectators").addEntry(evt.getPlayer().getName());
 		if(isSpectator(evt.getPlayer())){
 			addSpectator(evt.getPlayer());
-			// Already done by runSpectatorLoop()
-			//Player newTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
-			//if(newTarget != null) sendSpectatorNotices(/*spectator=*/evt.getPlayer(), newTarget, /*from=*/null, /*to=*/evt.getPlayer().getLocation());
+			Player newTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
+			// Already done in onSpectatorTeleport() by runSpectatorLoop() if dist >= TP_DIST_SQ
+			if(newTarget != null && Extras.crossDimensionalDistanceSquared(evt.getPlayer().getLocation(), newTarget.getLocation()) < TP_DIST_SQ){
+				sendSpectatorNotices(/*spectator=*/evt.getPlayer(), newTarget, /*from=*/null, /*to=*/evt.getPlayer().getLocation());
+			}
 		}
 	}
 
@@ -466,6 +466,9 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler
 	public void onRespawn(PlayerRespawnEvent evt){
+		// NOTE: This can also be called when a player exists the end!
+		if(!evt.getPlayer().getScoreboardTags().contains("dead")) return;
+
 		pl.getLogger().warning(evt.getPlayer().getName()+" pressed respawn/spectate world");
 		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Dead").removeEntry(evt.getPlayer().getName());
 		Extras.grantLocationBasedAdvancements(evt.getPlayer(), /*silently=*/true);
