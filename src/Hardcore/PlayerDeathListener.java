@@ -22,7 +22,6 @@ public class PlayerDeathListener implements Listener{
 	public PlayerDeathListener(HCTweaks plugin){ pl = plugin; }
 	final long QD_HRS = 5;
 
-
 	@EventHandler
 	public void onDeath(PlayerDeathEvent evt){
 		final UUID uuid = evt.getEntity().getUniqueId();
@@ -44,10 +43,10 @@ public class PlayerDeathListener implements Listener{
 		//pl.runCommand("essentials:nick "+name+" "+SPEC_PREFIX+evt.getEntity().getDisplayName());
 
 		// Write to death-log.txt
-		String deathLog = FileIO.loadFile("death-log.txt", "");
+		String deathLog = FileIO.loadFile(HCTweaks.DEATH_LOG_FILENAME, "");
 		if(!deathLog.isEmpty()) deathLog += "\n";
 		deathLog += evt.getDeathMessage();
-		FileIO.saveFile("death-log.txt", deathLog);
+		FileIO.saveFile(HCTweaks.DEATH_LOG_FILENAME, deathLog);
 
 		// Save playerdata files & update quick-deaths.txt
 		new BukkitRunnable(){@Override public void run(){
@@ -67,6 +66,7 @@ public class PlayerDeathListener implements Listener{
 				evt.getEntity().addScoreboardTag("respawn_penalty_"+respawnPenalty);
 //				pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
 			}
+			pl.getLogger().info("Time alive: "+millis_alive);//TODO: temp, delete this debug
 			pl.getLogger().info("Was quick-death: "+quickDeath
 					+" ("+TextUtils.formatTime(millis_alive, false, "§6", "§c", " ")
 					+ChatColor.RESET+(quickDeath ? "§r | §6streak=§c"+quickDeaths : "")+"§r)");

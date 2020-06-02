@@ -43,9 +43,11 @@ public class SpectatorManager implements Listener{
 	static HashSet<UUID> spectators;
 	final Location WORLD_SPAWN;
 	static final boolean CLOSEST_ACROSS_DIMENSIONS = true;
+	final boolean ALLOW_SPECTATORS;
 
 	public SpectatorManager(HCTweaks plugin){
 		pl = plugin;
+		ALLOW_SPECTATORS = pl.getConfig().getBoolean("enable-spectating", true);
 		SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
 		if(pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators") == null){
 			pl.getServer().getScoreboardManager().getMainScoreboard().registerNewTeam("Spectators");
@@ -104,13 +106,6 @@ public class SpectatorManager implements Listener{
 				!player.getScoreboardTags().contains("blacklist_mode");
 	}
 
-	public static long getFrequentDeathRespawnPenalty(Player spectator){
-		for(String tag : spectator.getScoreboardTags()){
-			if(tag.startsWith("respawn_penalty_")) return Long.parseLong(tag.substring(16));
-		}
-		return 0;
-	}
-
 	static Player getClosestGm0WithPerms(Location loc, Player spec){
 		double closestDistGm0 = Double.MAX_VALUE;
 		Player closestPlayer = null;
@@ -136,30 +131,24 @@ public class SpectatorManager implements Listener{
 		return closestPlayer;
 	}
 
-	public static String formatTimeUntilRespawn(long SECONDS_LEFT, ChatColor numC, ChatColor textC){
-		long secondsLeft = SECONDS_LEFT;
+	public static String formatTimeUntilRespawn(long secondsLeft, ChatColor numC, ChatColor textC){
 		long minutesLeft = secondsLeft / 60, hoursLeft = minutesLeft / 60, daysLeft = hoursLeft / 24;
-		secondsLeft %= 60; minutesLeft %= 60; hoursLeft %= 24;
-		//Too spammy
-		/*String respawnDisplayCmd
-				= "title "+specP.getName()+" actionbar [\"\","
-				+ "{\"text\":\"Respawn in: \",\"color\":\"gray\"},"
-				+ "{\"text\":\""+hoursLeft+"\",\"color\":\"yellow\"},"
-				+ "{\"text\":\":\",\"color\":\"gray\"},"
-				+ "{\"text\":\""+minutesLeft+"\",\"color\":\"yellow\"},"
-				+ "{\"text\":\":\",\"color\":\"gray\"},"
-				+ "{\"text\":\""+secondsLeft+"\",\"color\":\"yellow\"}]";
-		pl.runCommand(respawnDisplayCmd);*/
-		StringBuilder builder = new StringBuilder("")
-				.append(textC).append("Respawn in: ").append(numC);
-		if(daysLeft > 0) builder.append(daysLeft)
-				.append(textC).append('d').append(numC);
-		if(hoursLeft > 0) builder.append(hoursLeft < 10 ? "0"+hoursLeft : hoursLeft)
-				.append(textC).append('h').append(numC);
-		if(minutesLeft > 0) builder.append(minutesLeft < 10 ? "0"+minutesLeft : minutesLeft)
-				.append(textC).append('m').append(numC);
-		if(SECONDS_LEFT > 0) builder.append(secondsLeft < 10 ? "0"+secondsLeft : secondsLeft)
-				.append(textC).append('s');
+		long remSeconds = secondsLeft % 60, remMinutes = minutesLeft % 60, remHours = hoursLeft % 24;
+
+		StringBuilder builder = new StringBuilder("").append(textC).append("Respawn in: ").append(numC);
+		if(daysLeft > 0) builder.append(daysLeft).append(textC).append('d').append(numC);
+		if(hoursLeft > 0){
+			if(remHours < 10 && daysLeft > 0) builder.append("0");
+			builder.append(remHours).append(textC).append('h').append(numC);
+		}
+		if(minutesLeft > 0){
+			if(remMinutes < 10 && hoursLeft > 0) builder.append("0");
+			builder.append(remMinutes).append(textC).append('m').append(numC);
+		}
+		if(secondsLeft > 0){
+			if(remSeconds < 10 && minutesLeft > 0) builder.append("0");
+			builder.append(remSeconds).append(textC).append('s');
+		}
 		else builder.append("now");
 		return builder.toString();
 	}
@@ -199,7 +188,6 @@ public class SpectatorManager implements Listener{
 		if(loopActive) return;
 		loopActive = true;
 		new BukkitRunnable(){@Override public void run(){
-			//TODO: if(!"enable-spectating") for spectator p.kickPlayer()
 			for(Player p : pl.getServer().getOnlinePlayers()) if(isSpectator(p)) addSpectator(p);
 			//p.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
 			Iterator<UUID> it = spectators.iterator();
@@ -218,7 +206,7 @@ public class SpectatorManager implements Listener{
 				Player specP = pl.getServer().getPlayer(uuid).getPlayer();
 
 				int secondsSinceDeath = specP.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
-				long frequentDeathPenalty = getFrequentDeathRespawnPenalty(specP);
+				long frequentDeathPenalty = HCTweaks.getFrequentDeathRespawnPenalty(specP);
 				long secondsLeft = SECONDS_UNTIL_RESPAWN + frequentDeathPenalty - secondsSinceDeath;
 				if(secondsLeft <= 0) ActionBarUtils.sendToPlayer(
 						ChatColor.GREEN+"You may now respawn with "+ChatColor.AQUA+"/respawn", specP);
@@ -406,20 +394,6 @@ public class SpectatorManager implements Listener{
 			long secondsSinceDeath = ticksSinceDeath/20;
 //			pl.getLogger().info("Ticks since death: "+ticksSinceDeath);
 			pl.getLogger().info("Hours since death: "+(secondsSinceDeath/(60*60)));
-			/*if(secondsSinceDeath >= SECONDS_UNTIL_RESPAWN){
-				//Reset playerdata & stats so next time they log in they will respawn :)
-				final UUID uuid = evt.getPlayer().getUniqueId();
-				new BukkitRunnable(){@Override public void run(){
-					//Make sure they're offline
-					Player p = pl.getServer().getPlayer(uuid);
-					if(p == null) pl.deletePlayerdata(uuid);
-				}}.runTaskLater(pl, 5);
-				new BukkitRunnable(){@Override public void run(){
-					//Make sure they're offline
-					Player p = pl.getServer().getPlayer(uuid);
-					if(p == null) pl.deletePlayerdata(uuid);
-				}}.runTaskLater(pl, 20);
-			}*/
 		}
 	}
 
@@ -452,6 +426,12 @@ public class SpectatorManager implements Listener{
 			if(newTarget != null && Extras.crossDimensionalDistanceSquared(evt.getPlayer().getLocation(), newTarget.getLocation()) < TP_DIST_SQ){
 				sendSpectatorNotices(/*spectator=*/evt.getPlayer(), newTarget, /*from=*/null, /*to=*/evt.getPlayer().getLocation());
 			}
+		}
+		if(!ALLOW_SPECTATORS){
+			long secondsLeft = HCTweaks.secondsLeftUntilRespawn(evt.getPlayer());
+			if(secondsLeft <= 0) pl.resetPlayer(evt.getPlayer());
+			else evt.getPlayer().kickPlayer(ChatColor.RED+"Spectating is currently disabled\n"
+					+ChatColor.GRAY+"You can respawn in "+formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY));
 		}
 	}
 

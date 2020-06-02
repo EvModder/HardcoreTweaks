@@ -70,8 +70,9 @@ public class CommandAbout extends EvCommand{
 
 
 		// Send data sourced from server files
-		sender.sendMessage(ChatColor.GOLD+" - Last Death: "+ChatColor.RED+HCTweaks.getLastDeath(name));
-		sender.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+HCTweaks.getNumDeaths(name));
+		String lastDeath = HCTweaks.getLastDeath(name);
+		sender.sendMessage(ChatColor.GOLD+" - Last Death: "+ChatColor.RED+lastDeath);
+		if(!lastDeath.equals("None")) sender.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+HCTweaks.getNumDeaths(name));
 		final String aug19Evt = Extras.eventStatusAug19Build(uuid); if(aug19Evt != null) sender.sendMessage(aug19Evt);
 		final String feb20Evt = Extras.eventStatusFeb20Equine(uuid); if(feb20Evt != null) sender.sendMessage(feb20Evt);
 
@@ -91,7 +92,7 @@ public class CommandAbout extends EvCommand{
 			}
 			if(SpectatorManager.isSpectator(onlineTarget)){
 				long SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
-				long frequentDeathPenalty = SpectatorManager.getFrequentDeathRespawnPenalty(onlineTarget);
+				long frequentDeathPenalty = HCTweaks.getFrequentDeathRespawnPenalty(onlineTarget);
 				long sinceDeath = onlineTarget.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
 				long secondsLeft = SECONDS_UNTIL_RESPAWN + frequentDeathPenalty - sinceDeath;
 				sender.sendMessage(ChatColor.GOLD+" - "+

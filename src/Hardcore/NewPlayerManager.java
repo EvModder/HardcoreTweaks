@@ -52,7 +52,6 @@ public class NewPlayerManager implements Listener{
 	final ItemStack GUIDE_BOOK;
 	final ArrayDeque<Location> spawnLocs;
 	final String WORLD_NAME, SPAWN_MSG, RESPAWN_MSG;
-	final long SECONDS_UNTIL_RESPAWN;
 	final HashMap<UUID, Listener> mobSpawnListeners;
 
 	// Prevent new players from being greated by a swarm of hostile mobs when they exit the bedrock box
@@ -73,7 +72,6 @@ public class NewPlayerManager implements Listener{
 	public NewPlayerManager(HCTweaks plugin){
 		pl = plugin;
 		mobSpawnListeners = new HashMap<>();
-		SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
 		WORLD_NAME = pl.getConfig().getString("world-name", "Reliquist");
 		World hardcoreWorld = pl.getServer().getWorld(WORLD_NAME);
 		Block chestBlock = hardcoreWorld.getBlockAt(0, 1, 0);
@@ -306,7 +304,7 @@ public class NewPlayerManager implements Listener{
 		player.teleport(spawnLoc);
 		new BukkitRunnable(){@Override public void run(){
 			Player player = pl.getServer().getPlayer(uuid);
-			if(player != null){
+			if(player != null && player.getScoreboardTags().contains("unconfirmed")){
 				player.teleport(spawnLoc);
 				createSpawnBox(spawnLoc, player);
 				player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);
@@ -378,9 +376,12 @@ public class NewPlayerManager implements Listener{
 //			player.teleport(spawnLoc);
 			player.sendMessage(ChatColor.GREEN+">> "+ChatColor.GOLD+ChatColor.BOLD+"Read the book to get started");
 			createSpawnBox(spawnLoc, player);
-			new BukkitRunnable(){@Override public void run(){createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 1*20);
-			new BukkitRunnable(){@Override public void run(){createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 2*20);
-			new BukkitRunnable(){@Override public void run(){createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 4*20);
+			new BukkitRunnable(){@Override public void run(){
+				if(player.getScoreboardTags().contains("unconfirmed")) createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 1*20);
+			new BukkitRunnable(){@Override public void run(){
+				if(player.getScoreboardTags().contains("unconfirmed")) createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 2*20);
+			new BukkitRunnable(){@Override public void run(){
+				if(player.getScoreboardTags().contains("unconfirmed")) createSpawnBox(spawnLoc, player);}}.runTaskLater(pl, 4*20);
 			player.getInventory().clear();
 			giveGuideBook(player);
 			HostileMobPreventer spawnPreventer = new HostileMobPreventer(player.getLocation(), 200);
@@ -452,27 +453,13 @@ public class NewPlayerManager implements Listener{
 			evt.setCancelled(true);
 		}
 		else if(evt.getPlayer().getScoreboardTags().contains("dead") && command.equals("/respawn")){
-			int secondsSinceDeath = evt.getPlayer().getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
-			if(secondsSinceDeath < SECONDS_UNTIL_RESPAWN){
+			long secondsLeft = HCTweaks.secondsLeftUntilRespawn(evt.getPlayer());
+			if(secondsLeft > 0){
 				evt.getPlayer().sendMessage(ChatColor.RED+"You cannot use that command yet");
-				evt.getPlayer().sendMessage(SpectatorManager.
-						formatTimeUntilRespawn(SECONDS_UNTIL_RESPAWN - secondsSinceDeath, ChatColor.GOLD, ChatColor.GRAY));
+				evt.getPlayer().sendMessage(SpectatorManager.formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY));
 				return;
 			}
-			pl.runCommand("essentials:nick "+evt.getPlayer().getName()+" off");
-			evt.getPlayer().resetTitle();
-			evt.getPlayer().kickPlayer(ChatColor.GOLD+"Resetting playerdata...\n"+
-					ChatColor.GRAY+"When you rejoin, you will respawn as a fresh start!");
-
-			UUID uuid = evt.getPlayer().getUniqueId();
-			new BukkitRunnable(){
-				int attempts = 0;
-				@Override public void run(){
-					//Make sure they're offline
-					Player p = pl.getServer().getPlayer(uuid);
-					if((p == null && pl.deletePlayerdata(uuid)) || ++attempts == 10) cancel();
-				}
-			}.runTaskTimer(pl, 5, 20);
+			pl.resetPlayer(evt.getPlayer());
 		}
 	}
 }
