@@ -23,6 +23,7 @@ import net.evmodder.HorseOwners.HorseManager;
 //TODO: (ChatManager) [-] -> *, no filter for self chat, toggle filtering with tag
 //TODO: visible spectators
 //TODO: nobody who you can spectate infinity box
+//TODO: /spectate whitelist/blacklist add/remove <name> //uses add/remove instead of toggle
 //NewY0rkServer1
 public class HCTweaks extends EvPlugin{
 	private static HCTweaks plugin; public static HCTweaks getPlugin(){return plugin;}
@@ -44,6 +45,7 @@ public class HCTweaks extends EvPlugin{
 		new CommandAutoQuit(this);
 		new CommandColor(this);
 		new CommandDeathlog(this);
+		new CommandRegionCleanup(this);
 		new CommandShowScores(this, false/* TODO: enable when an event is ongoing */);
 		new CommandSpectate(this);
 		new CommandWhitelist(this);

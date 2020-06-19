@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.block.Block;
@@ -37,17 +38,19 @@ public class SpectatorManager implements Listener{
 	final HCTweaks pl;
 	public enum WatchMode {BLACKLIST, WHITELIST};
 	static WatchMode DEFAULT_MODE;
-	final int BOUNCE_DIST_SQ = 20*20, TP_DIST_SQ = 50*50, SEND_NOTICE_DIST_SQ = 50*50;
+	final int BELOW_SEA_LVL_BOUNCE_DIST_SQ = 10*10, BOUNCE_DIST_SQ = 20*20, TP_DIST_SQ = 50*50, SEND_NOTICE_DIST_SQ = 50*50;
+	final double SPEC_SEE_THRU_RADIUS = 2, SPEC_SEE_THRU_CLEANUP_RADIUS = 7;//, SPEC_INV_SYNC_RATE = 2;
 	final float FLY_SPEED = 0.08f;
 	final long SECONDS_UNTIL_RESPAWN;
 	static HashSet<UUID> spectators;
 	final Location WORLD_SPAWN;
-	static final boolean CLOSEST_ACROSS_DIMENSIONS = true;
-	final boolean ALLOW_SPECTATORS;
+	static boolean CLOSEST_ACROSS_DIMENSIONS = true, ANTI_XRAY_SEE_THRU = false;
+	final boolean ALLOW_SPECTATORS, SYNC_SPECTATOR_INVS;
 
 	public SpectatorManager(HCTweaks plugin){
 		pl = plugin;
 		ALLOW_SPECTATORS = pl.getConfig().getBoolean("enable-spectating", true);
+		SYNC_SPECTATOR_INVS = pl.getConfig().getBoolean("spectators-sync-inv", true);
 		SECONDS_UNTIL_RESPAWN = pl.getConfig().getInt("respawn-wait", 24)*60*60;
 		if(pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators") == null){
 			pl.getServer().getScoreboardManager().getMainScoreboard().registerNewTeam("Spectators");
@@ -106,7 +109,7 @@ public class SpectatorManager implements Listener{
 				!player.getScoreboardTags().contains("blacklist_mode");
 	}
 
-	static Player getClosestGm0WithPerms(Location loc, Player spec){
+	static Player getClosestGm0WithPerms/*NonDead*/(Location loc, Player spec){
 		double closestDistGm0 = Double.MAX_VALUE;
 		Player closestPlayer = null;
 		if(!CLOSEST_ACROSS_DIMENSIONS) for(Player p : loc.getWorld().getPlayers()){
@@ -120,7 +123,7 @@ public class SpectatorManager implements Listener{
 		if(closestPlayer == null){
 			double dist;
 			for(Player p : org.bukkit.Bukkit.getServer().getOnlinePlayers()){
-				if(p.getGameMode() == GameMode.SURVIVAL && (spec == null || canSpectate(spec.getUniqueId(), p))){
+				if(p.getGameMode() == GameMode.SURVIVAL/* && !p.isDead()*/ && (spec == null || canSpectate(spec.getUniqueId(), p))){
 					if((dist=Extras.crossDimensionalDistanceSquared(loc, p.getLocation())) <= closestDistGm0){
 						closestDistGm0 = dist;
 						closestPlayer = p;
@@ -183,12 +186,67 @@ public class SpectatorManager implements Listener{
 		return snoopScore >= 3;
 	}
 
+	private Material seeThruReplacement(Material type){
+		switch(type){
+			case DIRT:
+				return Material.BROWN_STAINED_GLASS;
+			case GRASS_BLOCK:
+				return Material.GREEN_STAINED_GLASS;
+			case STONE:
+			case COAL_ORE:
+			case IRON_ORE:
+			case GOLD_ORE:
+			case EMERALD_ORE:
+			case DIAMOND_ORE:
+			case REDSTONE_ORE:
+				return Material.LIGHT_GRAY_STAINED_GLASS;
+			case ANDESITE:
+			case GRAVEL:
+				return Material.GRAY_STAINED_GLASS;
+			case GRANITE:
+				return Material.ORANGE_STAINED_GLASS;
+			case DIORITE:
+				return Material.WHITE_STAINED_GLASS;
+			//case COAL_ORE:
+			//	return Material.BLACK_STAINED_GLASS;
+			default:
+				return null;
+		}
+	}
+	private boolean makeSeeThru(Player specP, Location eyeLoc){
+		final double SPEC_SEE_THRU_RADIUS_SQ = SPEC_SEE_THRU_RADIUS*SPEC_SEE_THRU_RADIUS;
+		for(int x=eyeLoc.getBlockX()-(int)(1+SPEC_SEE_THRU_RADIUS); x<=eyeLoc.getBlockX()+SPEC_SEE_THRU_RADIUS+1; ++x)
+		for(int y=eyeLoc.getBlockY()-(int)(1+SPEC_SEE_THRU_RADIUS); y<=eyeLoc.getBlockY()+SPEC_SEE_THRU_RADIUS+1; ++y)
+		for(int z=eyeLoc.getBlockZ()-(int)(1+SPEC_SEE_THRU_RADIUS); z<=eyeLoc.getBlockZ()+SPEC_SEE_THRU_RADIUS+1; ++z){
+			Block block = eyeLoc.getWorld().getBlockAt(x, y, z);
+			if(block.getLocation().distanceSquared(eyeLoc) <= SPEC_SEE_THRU_RADIUS_SQ){
+				if(!block.getType().isOccluding()) continue;
+				Material seeThruType = seeThruReplacement(block.getType());
+				if(seeThruType == null) return false;
+				specP.sendBlockChange(block.getLocation(), seeThruType.createBlockData());
+			}
+		}
+		return true;
+	}
+	private void cleanupSeeThru(Player specP, Location eyeLoc, double SEE_THRU_RADIUS){
+		final double SPEC_SEE_THRU_RADIUS_SQ = SEE_THRU_RADIUS*SEE_THRU_RADIUS;
+		for(int x=eyeLoc.getBlockX()-(int)SPEC_SEE_THRU_CLEANUP_RADIUS; x<=eyeLoc.getBlockX()+SPEC_SEE_THRU_CLEANUP_RADIUS; ++x)
+		for(int y=eyeLoc.getBlockY()-(int)SPEC_SEE_THRU_CLEANUP_RADIUS; y<=eyeLoc.getBlockY()+SPEC_SEE_THRU_CLEANUP_RADIUS; ++y)
+		for(int z=eyeLoc.getBlockZ()-(int)SPEC_SEE_THRU_CLEANUP_RADIUS; z<=eyeLoc.getBlockZ()+SPEC_SEE_THRU_CLEANUP_RADIUS; ++z){
+			Block block = eyeLoc.getWorld().getBlockAt(x, y, z);
+			if(block.getLocation().distanceSquared(eyeLoc) > SPEC_SEE_THRU_RADIUS_SQ){
+				if(!block.getType().isOccluding()) continue;
+				specP.sendBlockChange(block.getLocation(), block.getBlockData());
+			}
+		}
+	}
+
 	boolean loopActive = false;
 	void runSpectatorLoop(){
 		if(loopActive) return;
 		loopActive = true;
 		new BukkitRunnable(){@Override public void run(){
-			for(Player p : pl.getServer().getOnlinePlayers()) if(isSpectator(p)) addSpectator(p);
+			for(Player p : pl.getServer().getOnlinePlayers()) addSpectator(p);
 			//p.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
 			Iterator<UUID> it = spectators.iterator();
 			while(it.hasNext()){
@@ -214,8 +272,21 @@ public class SpectatorManager implements Listener{
 						formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY), specP);
 
 				if(specP.isDead() || specP.isOp()) continue; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+				if(!specP.hasPermission("hardcore.spectator.bypass.slowness")) specP.setFlySpeed(FLY_SPEED);
+				boolean needSeeThruCleanup = specP.removeScoreboardTag("cleanup_see_thru");
+
 				Entity target = specP.getSpectatorTarget();
-				if(target == null || !(target instanceof Player) || isSpectatorFavorYes((Player)target)){
+				if(target != null && target instanceof Player && !isSpectatorFavorYes((Player)target)){
+					specP.addScoreboardTag("has_target");
+					if(SYNC_SPECTATOR_INVS){
+						specP.getInventory().setStorageContents(((Player)target).getInventory().getStorageContents());
+						specP.getInventory().setArmorContents(((Player)target).getInventory().getArmorContents());
+						specP.getInventory().setExtraContents(((Player)target).getInventory().getExtraContents());
+					}
+				}
+				else{ // No valid target found!
+					if(specP.removeScoreboardTag("has_target") && SYNC_SPECTATOR_INVS) specP.getInventory().clear();
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
 					if(newTarget == null){
 						if(specP.getScoreboardTags().contains("spectating")){
@@ -230,56 +301,51 @@ public class SpectatorManager implements Listener{
 								}
 							}}.runTaskLater(pl, 20*60);
 						}
+						continue;
 					}
-					else{
+					if(!specP.getScoreboardTags().contains("spectating")){
+						specP.resetTitle();
+						specP.addScoreboardTag("spectating");
+						if(!specP.hasPermission("hardcore.spectator.bypass.blindness")){
+							specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+						}
+					}
+					if(!specP.hasPermission("hardcore.spectator.bypass.forcedtarget")){
+						final UUID newTargetUUID = newTarget.getUniqueId();
+						if(specP.teleport(newTarget, TeleportCause.SPECTATE)){
+							//specP.setSpectatorTarget(newTarget);
+							new BukkitRunnable(){@Override public void run(){
+								Player newTarget = pl.getServer().getPlayer(newTargetUUID);
+								if(target != null) specP.setSpectatorTarget(newTarget);
+							}}.runTaskLater(pl, 15);
+						}
+					}
+					else if(!specP.hasPermission("hardcore.spectator.bypass.maxrange")){
 						double distSqToTarget = Extras.crossDimensionalDistanceSquared(specP.getLocation(), newTarget.getLocation());
-						if(!specP.hasPermission("hardcore.spectator.bypass.slowness"))
-							specP.setFlySpeed(FLY_SPEED);
-						
-						if(!specP.getScoreboardTags().contains("spectating")){
-							specP.resetTitle();
-							specP.addScoreboardTag("spectating");
-							if(!specP.hasPermission("hardcore.spectator.bypass.blindness")){
-								specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
-							}
-						}
-						if(!specP.hasPermission("hardcore.spectator.bypass.forcedtarget")){
+						if(distSqToTarget >= TP_DIST_SQ || !specP.getWorld().getUID().equals(newTarget.getWorld().getUID())){
 							//sendSpectateNotice(specP, newTarget, specP.getLocation());//Done by TeleportListener below
-							UUID targetUUID = newTarget.getUniqueId();
-							if(specP.teleport(newTarget, TeleportCause.SPECTATE)){//TODO: remove in favor of below?
-								//specP.setSpectatorTarget(newTarget);
-								new BukkitRunnable(){@Override public void run(){
-									specP.setSpectatorTarget(null);
-									Player target = pl.getServer().getPlayer(targetUUID);
-									specP.setSpectatorTarget(null);//TODO: remove?
-									if(target != null) specP.setSpectatorTarget(newTarget);
-								}}.runTaskLater(pl, 20);
-								new BukkitRunnable(){@Override public void run(){
-									specP.setSpectatorTarget(null);
-									Player target = pl.getServer().getPlayer(targetUUID);
-									if(target != null) specP.setSpectatorTarget(newTarget);
-								}}.runTaskLater(pl, 40);
-								new BukkitRunnable(){@Override public void run(){
-									specP.setSpectatorTarget(null);
-									Player target = pl.getServer().getPlayer(targetUUID);
-									if(target != null) specP.setSpectatorTarget(newTarget);
-								}}.runTaskLater(pl, 80);
-							}
+							specP.teleport(newTarget, TeleportCause.SPECTATE);
 						}
-						else if(!specP.hasPermission("hardcore.spectator.bypass.maxrange")){
-							if(distSqToTarget >= TP_DIST_SQ || !specP.getWorld().getUID().equals(newTarget.getWorld().getUID())){
-								//sendSpectateNotice(specP, newTarget, specP.getLocation());//Done by TeleportListener below
-								specP.teleport(newTarget, TeleportCause.SPECTATE);
+						else if(distSqToTarget >= BOUNCE_DIST_SQ ||
+							(distSqToTarget >= BELOW_SEA_LVL_BOUNCE_DIST_SQ && specP.getLocation().getY() < specP.getWorld().getSeaLevel())
+						){
+							Vector fromSpecToTarget = newTarget.getLocation().toVector().subtract(specP.getLocation().toVector());
+							Vector bounceBackV = fromSpecToTarget.normalize();
+							bounceBackV.multiply(new Vector(.8, 10, .8));
+							specP.setVelocity(bounceBackV);
+						}
+						else if(!specP.hasPermission("hardcore.spectator.bypass.antixray") && canSeeThroughBlocks(specP.getEyeLocation())){
+							if(ANTI_XRAY_SEE_THRU && makeSeeThru(specP, specP.getEyeLocation())){
+								specP.addScoreboardTag("cleanup_see_thru");
+								if(needSeeThruCleanup){
+									cleanupSeeThru(specP, specP.getEyeLocation(), SPEC_SEE_THRU_RADIUS);
+									needSeeThruCleanup = false;
+								}
 							}
-							else if(distSqToTarget >= BOUNCE_DIST_SQ){
-								Vector fromSpecToTarget = newTarget.getLocation().toVector()
-											.subtract(specP.getLocation().toVector());
-								Vector bounceBackV = fromSpecToTarget.normalize();
-								bounceBackV.multiply(new Vector(.8, 10, .8));
-								specP.setVelocity(bounceBackV);
+							else if(specP.hasPermission("hardcore.spectator.bypass.antixray.ifclose") && distSqToTarget < 3*3){
+								// all good
 							}
-							else if(!specP.hasPermission("hardcore.spectator.bypass.antixray") && canSeeThroughBlocks(specP.getEyeLocation())
-								&& (!specP.hasPermission("hardcore.spectator.bypass.antixray.ifclose") || distSqToTarget > 3*3)){
+							else{
 								Location closestAir = EvUtils.getClosestBlock(specP.getEyeLocation(), 10,
 										(Block b) -> {return !b.getType().isOccluding();});
 								if(closestAir != null){
@@ -291,6 +357,9 @@ public class SpectatorManager implements Listener{
 							}
 						}
 					}
+				}
+				if(needSeeThruCleanup){
+					cleanupSeeThru(specP, specP.getEyeLocation(), 0);
 				}
 			}
 		}}.runTaskTimer(pl, 20, 20);//delay, freq
@@ -351,28 +420,25 @@ public class SpectatorManager implements Listener{
 		//pl.getLogger().info(evt.getPlayer().getName()+" is now spectating "+target.getName());
 	}
 
-	public void addSpectator(Player player){
-		if(spectators.add(player.getUniqueId())){
-			pl.getLogger().info("Added spectator: "+player.getName());
+	public boolean addSpectator(Player player){
+		if(player.getGameMode() == GameMode.SPECTATOR){
+			pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators").addEntry(player.getName());
+		}
+		if(isSpectator(player) && spectators.add(player.getUniqueId())){
 			player.addScoreboardTag("spectating");
 			if(!player.hasPermission("hardcore.spectator.bypass.blindness"))
 				player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
-			if(!player.hasPermission("hardcore.spectator.bypass.slowness"))
-				player.setFlySpeed(FLY_SPEED);
-//			pl.setPermission(player, "essentials.tpa", false);
-//			pl.setPermission(player, "essentials.tpahere", false);
-//			pl.setPermission(player, "essentials.tpaccept", false);
-//			player.getScoreboard().resetScores(player.getName());
-			/*if(!player.hasPermission("hardcore.spectator.bypass.notify")){//Already handled by onJoin, onQuit, and onTeleport
-				Player newTarget = getClosestGm0WithPerms(player.getLocation(), player);
-				if(newTarget != null) newTarget.sendMessage("§7>> §b"+player.getDisplayName()+"§7 is now spectating you");
-			}*/
+			if(!player.hasPermission("hardcore.spectator.bypass.slowness")) player.setFlySpeed(FLY_SPEED);
 			runSpectatorLoop();
+			pl.getLogger().info("Added spectator: "+player.getName());
+			return true;
 		}
+		return false;
 	}
 	public boolean removeSpectator(Player player){
+		if(!player.hasPermission("hardcore.spectator.bypass.slowness")) player.getPlayer().setFlySpeed(0.2f);
+		player.removeScoreboardTag("spectating");
 		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators").removeEntry(player.getName());
-		//player.getPlayer().setFlySpeed(0.2f);
 		if(spectators.remove(player.getUniqueId())){
 			pl.getLogger().fine("Removed spectator: "+player.getName());
 			return true;
@@ -382,7 +448,7 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler
 	public void onQuit(PlayerQuitEvent evt){
-		if(removeSpectator(evt.getPlayer()) && evt.getPlayer().getScoreboardTags().contains("dead")){
+		if(removeSpectator(evt.getPlayer())){
 			// Eh, if they logged out people can deduce that they are no longer spectating
 			//Player oldTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
 			//if(oldTarget != null){
@@ -398,29 +464,25 @@ public class SpectatorManager implements Listener{
 	}
 
 	@EventHandler
-	public void onLogin(PlayerLoginEvent evt){
+	public void onLogin(PlayerLoginEvent evt){ // Used only to keep track of how much longer spectators need to wait
 		final UUID uuid = evt.getPlayer().getUniqueId();
 		OfflinePlayer offP = pl.getServer().getOfflinePlayer(uuid);
 		final long millisSinceLastLogin = System.currentTimeMillis() - offP.getLastPlayed();
-		final int ticksSinceLastLogin = (int)(millisSinceLastLogin/50);
+		final long ticksSinceLastLogin = millisSinceLastLogin/50;
 		if(ticksSinceLastLogin > 0){
 			new BukkitRunnable(){@Override public void run(){
 				Player p = pl.getServer().getPlayer(uuid);
-				if(p != null && isSpectator(p)){
-					addSpectator(evt.getPlayer());
+				if(p != null && isSpectatorFavorYes(p)){
 					final double inHrs = ((double)ticksSinceLastLogin)/(20*60*60);
 					pl.getLogger().info("Adding: "+inHrs+"h to SinceLastDeath (ticks="+ticksSinceLastLogin+")");
-					p.incrementStatistic(Statistic.TIME_SINCE_DEATH, ticksSinceLastLogin);
+					p.incrementStatistic(Statistic.TIME_SINCE_DEATH, (int)ticksSinceLastLogin);
 				}
 			}}.runTaskLater(pl, 20);
 		}
 	}
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onJoin(PlayerJoinEvent evt){
-		if(isSpectatorFavorYes(evt.getPlayer())) pl.getServer().getScoreboardManager().getMainScoreboard()
-			.getTeam("Spectators").addEntry(evt.getPlayer().getName());
-		if(isSpectator(evt.getPlayer())){
-			addSpectator(evt.getPlayer());
+		if(addSpectator(evt.getPlayer())){
 			Player newTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
 			// Already done in onSpectatorTeleport() by runSpectatorLoop() if dist >= TP_DIST_SQ
 			if(newTarget != null && Extras.crossDimensionalDistanceSquared(evt.getPlayer().getLocation(), newTarget.getLocation()) < TP_DIST_SQ){
@@ -437,11 +499,10 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler
 	public void onGameModeChange(PlayerGameModeChangeEvent evt){
-		if(evt.getNewGameMode() == GameMode.SPECTATOR){
-			if(isSpectator(evt.getPlayer())) addSpectator(evt.getPlayer());
-			pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Spectators").addEntry(evt.getPlayer().getName());
-		}
-		else removeSpectator(evt.getPlayer());
+		new BukkitRunnable(){@Override public void run(){
+			if(evt.getNewGameMode() == GameMode.SPECTATOR) addSpectator(evt.getPlayer());
+			else removeSpectator(evt.getPlayer());
+		}}.runTaskLater(pl, 1);
 	}
 
 	@EventHandler
@@ -452,10 +513,11 @@ public class SpectatorManager implements Listener{
 		pl.getLogger().warning(evt.getPlayer().getName()+" pressed respawn/spectate world");
 		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Dead").removeEntry(evt.getPlayer().getName());
 		Extras.grantLocationBasedAdvancements(evt.getPlayer(), /*silently=*/true);
+		if(SYNC_SPECTATOR_INVS) Extras.grantItemBasedAdvancements(evt.getPlayer(), /*silently=*/true);
 		final UUID uuid = evt.getPlayer().getUniqueId();
 		new BukkitRunnable(){@Override public void run(){
 			Player p = pl.getServer().getPlayer(uuid);
-			if(p != null && isSpectatorFavorYes(p)) addSpectator(p);
+			if(p != null) addSpectator(p);
 		}}.runTaskLater(pl, 20*5);
 	}
 
@@ -469,7 +531,7 @@ public class SpectatorManager implements Listener{
 		Player player = evt.getPlayer();
 
 		if(command.equals("tp") && message.indexOf(' ', space+1) == -1){
-			if(SpectatorManager.isSpectator(player)){
+			if(isSpectator(player)){
 				evt.setCancelled(true);
 				Player target = null;
 				if(space < 0 || (target=pl.getServer().getPlayer(message.substring(space + 1))) == null){
@@ -493,16 +555,15 @@ public class SpectatorManager implements Listener{
 	}
 
 	/*@EventHandler(priority = EventPriority.MONITOR)
-	public void onChat(AsyncPlayerChatEvent evt){// &9[&7Dead&9] prefix?
+	public void onChat(AsyncPlayerChatEvent evt){//TODO: &9[&7Dead&9] prefix?
 		if(!SpectatorManager.isSpectator(evt.getPlayer()) || evt.isCancelled()) return;
 	}*/
 
 	/*@EventHandler //TODO: isn't triggered by spectators opening their inventory???
 	public void onInventoryOpen(InventoryOpenEvent evt){
-		if(evt.getPlayer() instanceof Player == false) return;
 		Player player = (Player)evt.getPlayer();
 		Entity entity = player.getSpectatorTarget();
-		//pl.getLogger().info("player who opened: "+evt.getPlayer().getName()+", spectate target: "+(entity == null ? "null" : entity.getName()));
+		pl.getLogger().info("player who opened: "+evt.getPlayer().getName()+", spectate target: "+(entity == null ? "null" : entity.getName()));
 		if(entity == null || entity instanceof Player == false || !SpectatorManager.isSpectator(player)) return;
 		pl.getLogger().info("with spectator target");
 		if(evt.getInventory().getType() == InventoryType.PLAYER){
@@ -513,5 +574,5 @@ public class SpectatorManager implements Listener{
 			player.getInventory().setItemInOffHand(target.getInventory().getItemInOffHand());
 		}
 		//TODO: crafting table inventory?
-	}//*/
+	}*/
 }

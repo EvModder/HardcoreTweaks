@@ -453,13 +453,13 @@ public class NewPlayerManager implements Listener{
 			evt.setCancelled(true);
 		}
 		else if(evt.getPlayer().getScoreboardTags().contains("dead") && command.equals("/respawn")){
+			evt.setCancelled(true);
 			long secondsLeft = HCTweaks.secondsLeftUntilRespawn(evt.getPlayer());
 			if(secondsLeft > 0){
 				evt.getPlayer().sendMessage(ChatColor.RED+"You cannot use that command yet");
 				evt.getPlayer().sendMessage(SpectatorManager.formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY));
-				return;
 			}
-			pl.resetPlayer(evt.getPlayer());
+			else pl.resetPlayer(evt.getPlayer());
 		}
 	}
 }

@@ -20,7 +20,7 @@ public class PlayerDeathListener implements Listener{
 	final String SPEC_PREFIX = /*ChatColor.translateAlternateColorCodes('&', */"&9[&7Dead&9]&f·"/*)*/;
 	final HCTweaks pl;
 	public PlayerDeathListener(HCTweaks plugin){ pl = plugin; }
-	final long QD_HRS = 5;
+	final long QD_HRS = 3;
 
 	@EventHandler
 	public void onDeath(PlayerDeathEvent evt){
@@ -66,8 +66,8 @@ public class PlayerDeathListener implements Listener{
 				evt.getEntity().addScoreboardTag("respawn_penalty_"+respawnPenalty);
 //				pl.getLogger().info("Quick-deaths for "+name+": "+quickDeaths);
 			}
-			pl.getLogger().info("Time alive: "+millis_alive);//TODO: temp, delete this debug
-			pl.getLogger().info("Was quick-death: "+quickDeath
+			//pl.getLogger().info("Time alive: "+millis_alive);//TODO: temp, delete this debug
+			pl.getLogger().info("Was quick-death(<"+QD_HRS+"h): "+quickDeath
 					+" ("+TextUtils.formatTime(millis_alive, false, "§6", "§c", " ")
 					+ChatColor.RESET+(quickDeath ? "§r | §6streak=§c"+quickDeaths : "")+"§r)");
 			// Update death-stats

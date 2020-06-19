@@ -19,6 +19,7 @@ enable-compass-tracker: true
 
 # Enable spectating
 enable-spectating: true #TODO
+spectators-sync-inv: true
 
 # Possible modes are:
 # * blacklist: everyone can spectate you unless you blacklist them

@@ -6,6 +6,7 @@ import org.bukkit.GameMode;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.AbstractHorse;
@@ -45,20 +46,25 @@ public class Extras implements Listener{
 					/*"minecraft:*/"end/find_end_city",
 					/*"minecraft:*/"nether/fast_travel",
 					/*"minecraft:*/"nether/find_fortress",
+					/*"minecraft:*/"nether/find_bastion",
+					/*"minecraft:*/"nether/explore_nether",
+					/*"minecraft:*/"nether/create_beacon", // Within a 20×20×14 cuboid centered on a beacon block when becomes powered
+					/*"minecraft:*/"nether/create_full_beacon", // Within a 20×20×14 cuboid centered on a beacon block when becomes full power
 					/*"minecraft:*/"story/enter_the_nether",
 					/*"minecraft:*/"story/enter_the_end",
 			};
 			for(String advancement : advancementsToGrant){
-				NamespacedKey key = NamespacedKey.minecraft(advancement);
-				AdvancementProgress progress = player.getAdvancementProgress(pl.getServer().getAdvancement(key));
-				for(String criteria : progress.getRemainingCriteria()) progress.awardCriteria(criteria);
+				try{
+					NamespacedKey key = NamespacedKey.minecraft(advancement);
+					AdvancementProgress progress = player.getAdvancementProgress(pl.getServer().getAdvancement(key));
+					for(String criteria : progress.getRemainingCriteria()) progress.awardCriteria(criteria);
+				}
+				catch(IllegalArgumentException ex){/*adv no longer exists or not yet added*/}
 				// Alternative way (downside: outputs to console)
 //				pl.runCommand("minecraft:advancement grant "+player.getName()+" only "+advancement);
 			}
 		}
 		else{
-			final boolean announceAdvDefault = player.getWorld().getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS);
-			player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
 			// TODO: prevent advancement poppup on player screen
 			/*Listener hideAdvancementPacket = new Listener(){
 				@EventHandler
@@ -67,13 +73,60 @@ public class Extras implements Listener{
 				}
 			};
 			pl.getServer().getPluginManager().registerEvents(hideAdvancementPacket, pl);*/
-			new BukkitRunnable(){@Override public void run(){
-				grantLocationBasedAdvancements(player, false);
-			}}.runTaskLater(pl, 2);
-			new BukkitRunnable(){@Override public void run(){
-				player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, announceAdvDefault);
-//				HandlerList.unregisterAll(hideAdvancementPacket);
-			}}.runTaskLater(pl, 4);
+			for(final World w : player.getServer().getWorlds()){
+				if(w.getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS)){
+					w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+					new BukkitRunnable(){@Override public void run(){
+						w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, true);
+//						HandlerList.unregisterAll(hideAdvancementPacket);
+					}}.runTaskLater(pl, 10);
+				}
+			}
+			new BukkitRunnable(){@Override public void run(){grantLocationBasedAdvancements(player, false);}}.runTaskLater(pl, 5);
+		}
+	}
+	public static void grantItemBasedAdvancements(Player player, boolean silently){
+		HCTweaks pl = HCTweaks.getPlugin();
+		if(!silently){
+			String[] advancementsToGrant = new String[]{
+					/*"minecraft:*/"story/root",
+					/*"minecraft:*/"story/mine_stone",
+					/*"minecraft:*/"story/upgrade_tools",
+					/*"minecraft:*/"story/smelt_iron",
+					/*"minecraft:*/"story/obtain_armor",
+					/*"minecraft:*/"story/lava_bucket",
+					/*"minecraft:*/"story/iron_tools",
+					/*"minecraft:*/"story/form_obsidian",
+					/*"minecraft:*/"story/mine_diamond",
+					/*"minecraft:*/"story/shiny_gear",
+					/*"minecraft:*/"nether/obtain_ancient_debris",
+					/*"minecraft:*/"nether/obtain_crying_obsidian",
+					/*"minecraft:*/"nether/use_lodestone",
+					/*"minecraft:*/"nether/get_wither_skull",
+					/*"minecraft:*/"nether/obtain_blaze_rod",
+					/*"minecraft:*/"end/dragon_egg",
+					/*"minecraft:*/"end/dragon_breath",
+					/*"minecraft:*/"end/elytra",
+					/*"minecraft:*/"husbandry/tactical_fishing",
+					/*"minecraft:*/"husbandry/break_diamond_hoe",
+			};
+			for(String advancement : advancementsToGrant){
+				try{
+					NamespacedKey key = NamespacedKey.minecraft(advancement);
+					AdvancementProgress progress = player.getAdvancementProgress(pl.getServer().getAdvancement(key));
+					for(String criteria : progress.getRemainingCriteria()) progress.awardCriteria(criteria);
+				}
+				catch(IllegalArgumentException ex){/*adv no longer exists or not yet added*/}
+			}
+		}
+		else{
+			for(final World w : player.getServer().getWorlds()){
+				if(w.getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS)){
+					w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+					new BukkitRunnable(){@Override public void run(){w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, true);}}.runTaskLater(pl, 10);
+				}
+			}
+			new BukkitRunnable(){@Override public void run(){grantItemBasedAdvancements(player, false);}}.runTaskLater(pl, 5);
 		}
 	}
 
