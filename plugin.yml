@@ -85,7 +85,7 @@ commands:
 
    regioncleanup:
       description: Delete region files that match given criteria
-      usage: /regioncleanup [world:<name>/all] [visitlog:true/false]m [age:2m10d45m] [size:XXXX (in KB)] [mock]
+      usage: /regioncleanup [world:name/all] [visitlog:bool] [age:2y7w59s] [size:XXXX] [mock]
       permission: hardcore.regiondelete
       permission-message: You do not have permission to do this.
 

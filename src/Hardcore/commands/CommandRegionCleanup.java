@@ -1,5 +1,6 @@
 package Hardcore.commands;
 
+import org.apache.logging.log4j.util.Strings;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -7,7 +8,12 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import Hardcore.HCTweaks;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import net.evmodder.EvLib.EvCommand;
 import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.FileIO;
@@ -51,12 +58,12 @@ public class CommandRegionCleanup extends EvCommand{
 	long showFilesizeStats(List<World> worlds, CommandSender sender){ // Sender param is optional
 		HashMap<Long, Integer> szOccurCount = new HashMap<>();
 		ArrayList<Long> fileAges = new ArrayList<>();
-		long fileAgeMax = -1;
+		long fileSizeMax = -1;
 		for(World world : worlds){
 			for(File file : new File(EvUtils.getRegionFolder(world)).listFiles()){
 				if(file.isFile() && file.getName().endsWith(".mca")){
 					long fileSize = roundToSigFigs(file.length()/1024, 3);
-					fileAgeMax = Math.max(fileAgeMax,  fileSize);
+					fileSizeMax = Math.max(fileSizeMax,  fileSize);
 					//pl.getLogger().info("sigFig fileSize: "+fileSize+" (regular size: "+(file.length()/1024)+")");
 					Integer currentCount = szOccurCount.get(fileSize);
 					szOccurCount.put(fileSize, currentCount == null ? 1 : currentCount+1);
@@ -78,12 +85,10 @@ public class CommandRegionCleanup extends EvCommand{
 		long fileAgeMedian = fileAges.get(fileAges.size()/2);
 
 		if(sender != null){
-			sender.sendMessage("File size max: "+fileAgeMax);
-			sender.sendMessage("File size max: "+fileAgeMax);
-			sender.sendMessage("File size mode: "+fileSizeMode);
-			sender.sendMessage("File age oldest: "+sdf.format(new Date(fileAgeOldest)));
-			sender.sendMessage("File age youngest: "+sdf.format(new Date(fileAgeYoungest)));
-			sender.sendMessage("File age median: "+sdf.format(new Date(fileAgeMedian)));
+			sender.sendMessage("Num files: "+fileAges.size());
+			sender.sendMessage("File size max: §c"+fileSizeMax+"§r, mode: §c"+fileSizeMode);
+			sender.sendMessage("File age range: [ §c"+sdf.format(new Date(fileAgeOldest))+"§r to §c"+sdf.format(new Date(fileAgeYoungest))+"§r ]");
+			sender.sendMessage("File age median: §c"+sdf.format(new Date(fileAgeMedian)));
 		}
 
 		if(SHOW_FILE_SZ_QUANTILES)
@@ -91,13 +96,19 @@ public class CommandRegionCleanup extends EvCommand{
 		for(World w : worlds){
 			File folder = new File("./"+w.getName()+"/region/");
 			if(!folder.exists()) continue;
-			sender.sendMessage("Filesize quantiles for "+w.getName()+" (in KB):");
+			sender.sendMessage("Filesize quantiles (in KB):");
 			File[] files = folder.listFiles();
 			long[] fileSizes = new long[folder.listFiles().length];
 			for(int i=0; i<files.length; ++i) fileSizes[i] = files[i].length()/1024;
 			Arrays.sort(fileSizes);
-			sender.sendMessage("Min: "+fileSizes[0]);
-			//sender.sendMessage("10%: "+fileSizes[fileSizes.length*1/10 - 1]);
+			long q0 = fileSizes[0];
+			long q25 = fileSizes[(int)(fileSizes.length*2.5/10 - 1)];
+			long q50 = fileSizes[fileSizes.length*5/10 - 1];
+			long q75 = fileSizes[(int)(fileSizes.length*7.5/10 - 1)];
+			long q100 = fileSizes[fileSizes.length - 1];
+			sender.sendMessage("Min: §c"+q0+" §e>>§r 25%: §c"+q25+" §e>>§r 50%: §c"+q50+" §e>>§r 75%: §c"+q75+" §e>>§r Max: §c"+q100);
+			//sender.sendMessage("Min: "+fileSizes[0]);
+			/*//sender.sendMessage("10%: "+fileSizes[fileSizes.length*1/10 - 1]);
 			//sender.sendMessage("20%: "+fileSizes[fileSizes.length*2/10 - 1]);
 			sender.sendMessage("25%: "+fileSizes[(int)(fileSizes.length*2.5/10 - 1)]);
 			//sender.sendMessage("30%: "+fileSizes[fileSizes.length*3/10 - 1]);
@@ -107,8 +118,8 @@ public class CommandRegionCleanup extends EvCommand{
 			//sender.sendMessage("70%: "+fileSizes[fileSizes.length*7/10 - 1]);
 			sender.sendMessage("75%: "+fileSizes[(int)(fileSizes.length*7.5/10 - 1)]);
 			//sender.sendMessage("80%: "+fileSizes[fileSizes.length*8/10 - 1]);
-			//sender.sendMessage("90%: "+fileSizes[fileSizes.length*9/10 - 1]);
-			sender.sendMessage("Max: "+fileSizes[fileSizes.length - 1]);
+			//sender.sendMessage("90%: "+fileSizes[fileSizes.length*9/10 - 1]);*/
+			//sender.sendMessage("Max: "+fileSizes[fileSizes.length - 1]);
 		}
 		//}}.start();
 		return fileAgeMedian;
@@ -122,7 +133,7 @@ public class CommandRegionCleanup extends EvCommand{
 		World world = sender instanceof Player ? ((Player)sender).getWorld() : null;
 		boolean hasVisitlog = true;
 		long maxAgeInMillis = TextUtils.parseTime("1y");
-		long maxKB = 10;
+		long maxKB = 1000;
 		//boolean requireAllDead = true;
 		boolean hasConfirm = !REQUIRE_CONFIRMATION, simulateOnly = false;
 
@@ -181,25 +192,31 @@ public class CommandRegionCleanup extends EvCommand{
 			StringBuilder commandString = new StringBuilder("/").append(command.getName());
 			for(String arg : args) commandString.append(' ').append(arg);
 
-			sender.sendMessage("§c§l§m====================================");
-			TellrawBlob blob = new TellrawBlob(
-					new RawTextComponent("§6Click to confirm: §7["),
-					new ActionComponent("§f>>§cDelete§f<<", ClickEvent.RUN_COMMAND, commandString.toString()),
-					new RawTextComponent("§7]")
-			);
-			HCTweaks.getPlugin().getLogger().info("tellraw blob: "+blob.toString());
-			HCTweaks.getPlugin().runCommand("minecraft:tellraw "+sender.getName()+" "+blob.toString());
-			sender.sendMessage("§c§l§m====================================");
+			if(!simulateOnly){
+				sender.sendMessage("§c§l§m====================================");
+				TellrawBlob blob = new TellrawBlob(
+						new RawTextComponent("§6Click to confirm: §7["),
+						new ActionComponent("§f>>§4§lDelete§f<<", ClickEvent.RUN_COMMAND, commandString.toString()+" confirm"),
+						new RawTextComponent("§7]")
+				);
+				HCTweaks.getPlugin().getLogger().info("tellraw blob: "+blob.toString());
+				HCTweaks.getPlugin().runCommand("minecraft:tellraw "+sender.getName()+" "+blob.toString());
+				sender.sendMessage("§c§l§m====================================");
+			}
 
 			String maxDateStr = sdf.format(new Date(MAX_FILE_DATE_MILLIS));
 			sender.sendMessage(
 					"§bDelete §7region .mca§b files IF:\n" +
 					"§bFile is no larger than §c"+MAX_FILE_SZ+"§bKB\n" +
 					"§bFile hasn't been modified since §c"+maxDateStr+"§b\n" +
-					"§bIn world: §e"+(world == null ? "§call" : world.getName())+"§b.\n"+
-						"§4[§c§lWarning§4] §6This may delete a lot of your world map!\n"+
-						"§6Read this first:§7§o http://bukkit.org/reducelag/put-page-here \n ");
-			return true;
+					"§bFile "+(HAS_VISITLOG ? "§cHAS" : "does §cNOT§b have")+"§b a visit log\n"+
+					"§bIn world: §e"+Strings.join(worlds.stream().map(w -> w.getName()).collect(Collectors.toList()), ',')+"§b.");
+
+			if(!simulateOnly){
+				sender.sendMessage("\n§4[§c§lWarning§4] §6This may delete a lot of your world map!\n"+
+									"§6Read this first:§7§o http://bukkit.org/reducelag/put-page-here \n ");
+				return true;
+			}
 		}
 
 		sender.sendMessage("§6Staring region-delete...");
@@ -212,7 +229,8 @@ public class CommandRegionCleanup extends EvCommand{
 				delFolder.mkdir();
 			}
 
-			int skipCuzSize = 0, skipCuzAge = 0/*, skipCuzAgeVsCreate = 0, skipCuzError = 0, skipCuzDist = 0*/, skipCuzVisitlog = 0;
+			int skipCuzSize = 0, skipCuzAge = 0/*, skipCuzAgeVsCreate = 0, skipCuzDist = 0*/, skipCuzError = 0,
+					skipCuzVisitlog = 0, skipCuzActiveVisitlog = 0;
 			for(World w : worlds){
 				String regionFolderStr = EvUtils.getRegionFolder(w);
 				File folder = new File(regionFolderStr);
@@ -228,27 +246,43 @@ public class CommandRegionCleanup extends EvCommand{
 						if(lastModified > MAX_FILE_DATE_MILLIS){++skipCuzAge; continue;}//<<<<<<<<<<<<<<<
 
 						String visitlog = regionFolderStr+file.getName().substring(0, file.getName().length()-4)+".visitlog";
-						if(HAS_VISITLOG){
-							if(!new File(visitlog).exists()){++skipCuzVisitlog; continue;}//<<<<<<<<<<<<<<<
-							else{
-								int aliveResidents = 0;
-								for(String visit : FileIO.loadFile(visitlog, "").split("\n")){
-									int sep = visit.indexOf(',');
-									long lastVisit = Long.parseLong(visit.substring(0, sep));
-									UUID visitorUUID = UUID.fromString(visit.substring(sep+1));
-									OfflinePlayer visitor = sender.getServer().getOfflinePlayer(visitorUUID);
-									if(visitor == null) continue; //TODO: print error/warning?
-									String lastDeathDateStr = HCTweaks.getLastDeath(visitor.getName()); //TODO: name changes might be bad
-									try{
-										Date lastDeathDate = sdf.parse(lastDeathDateStr);
-										long lastDeath = lastDeathDate.getTime();
-										boolean visitedThisLife = lastVisit > lastDeath;
-										if(visitedThisLife) ++aliveResidents;
-									}
-									catch(ParseException e){e.printStackTrace();}
+						boolean hasVisitlog = new File(visitlog).exists();
+						if(HAS_VISITLOG && !hasVisitlog){++skipCuzVisitlog; continue;}//<<<<<<<<<<<<<<<
+						else if(!HAS_VISITLOG && hasVisitlog){++skipCuzVisitlog; continue;}//<<<<<<<<<<<<<<<
+						if(HAS_VISITLOG && hasVisitlog){
+							String visitFileContents = "";
+							try{visitFileContents = new String(Files.readAllBytes(Paths.get(visitlog)));}
+							catch(IOException e1){e1.printStackTrace();}
+							int aliveResidents = 0;
+							String[] visitLines = visitFileContents.split("\n");
+							for(String visit : visitLines){
+								try{
+								int sep = visit.indexOf(',');
+								if(sep == -1){
+									HCTweaks.getPlugin().getLogger().warning("sep is -1!\n"+ "file: "+visitFileContents+"\n, line: "+visit);
+									HCTweaks.getPlugin().getLogger().warning("file name: "+visitlog);
+									++skipCuzError; continue;
 								}
-								if(aliveResidents > 0){++skipCuzVisitlog; continue;}//<<<<<<<<<<<<<<<
+								long lastVisit = Long.parseLong(visit.substring(0, sep));
+								UUID visitorUUID = UUID.fromString(visit.substring(sep+1));
+								OfflinePlayer visitor = sender.getServer().getOfflinePlayer(visitorUUID);
+								if(visitor == null) continue; //TODO: print error/warning?
+								String lastDeathDateStr = HCTweaks.getLastDeath(visitor.getName()); //TODO: name changes might be bad
+								try{
+									long lastDeath = lastDeathDateStr.equalsIgnoreCase("None")
+											? Long.MAX_VALUE : sdf.parse(lastDeathDateStr).getTime();
+									boolean visitedThisLife = lastVisit > lastDeath;
+									if(visitedThisLife) ++aliveResidents;
+								}
+								catch(ParseException e){e.printStackTrace();}
+								}catch(Exception e){
+									HCTweaks.getPlugin().getLogger().warning("visit: '"+visit+"'");
+									HCTweaks.getPlugin().getLogger().warning("file name: "+visitlog);
+									++skipCuzError; continue;
+								}
+								
 							}
+							if(aliveResidents > 0){++skipCuzActiveVisitlog; continue;}//<<<<<<<<<<<<<<<
 						}
 						/*try{
 							BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
@@ -277,8 +311,9 @@ public class CommandRegionCleanup extends EvCommand{
 			sender.sendMessage("§aProcess Complete!");
 			sender.sendMessage("Skipped file reasons: "
 					+"FileSize:"+skipCuzSize+", FileAge:"+skipCuzAge+", Visitlog:"+skipCuzVisitlog
+					+", Active visitlog: "+skipCuzActiveVisitlog
 					/*+", CreationVsModified:"+skipCuzAgeVsCreate
-					+", DistFromSpawn:"+skipCuzDist+", Error:"+skipCuzError*/);
+					+", DistFromSpawn:"+skipCuzDist*/+", Error:"+skipCuzError);
 		}}.start();
 		return true;
 	}

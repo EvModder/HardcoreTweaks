@@ -54,7 +54,7 @@ public class ChunkLoadListener implements Listener{
 			}
 			reader.close();
 		}catch(IOException e){}}
-		if(isNew) builder.append("created: ").append(System.currentTimeMillis());
+		if(isNew) builder.append("\ncreated: ").append(System.currentTimeMillis());
 		try{
 			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
 			writer.write(builder.toString()); writer.close();
