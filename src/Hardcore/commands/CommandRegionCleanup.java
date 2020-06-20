@@ -178,7 +178,7 @@ public class CommandRegionCleanup extends EvCommand{
 				sender.sendMessage(ChatColor.RED+"Add 'confirm' to the command to run the region delete");
 				return true;
 			}
-			StringBuilder commandString = new StringBuilder('/').append(command.getName());
+			StringBuilder commandString = new StringBuilder("/").append(command.getName());
 			for(String arg : args) commandString.append(' ').append(arg);
 
 			sender.sendMessage("§c§l§m====================================");
@@ -187,6 +187,7 @@ public class CommandRegionCleanup extends EvCommand{
 					new ActionComponent("§f>>§cDelete§f<<", ClickEvent.RUN_COMMAND, commandString.toString()),
 					new RawTextComponent("§7]")
 			);
+			HCTweaks.getPlugin().getLogger().info("tellraw blob: "+blob.toString());
 			HCTweaks.getPlugin().runCommand("minecraft:tellraw "+sender.getName()+" "+blob.toString());
 			sender.sendMessage("§c§l§m====================================");
 
@@ -196,7 +197,7 @@ public class CommandRegionCleanup extends EvCommand{
 					"§bFile is no larger than §c"+MAX_FILE_SZ+"§bKB\n" +
 					"§bFile hasn't been modified since §c"+maxDateStr+"§b\n" +
 					"§bIn world: §e"+(world == null ? "§call" : world.getName())+"§b.\n"+
-						"§4[§c§lWarning§4] §6This may delete a lot of your world!\n"+
+						"§4[§c§lWarning§4] §6This may delete a lot of your world map!\n"+
 						"§6Read this first:§7§o http://bukkit.org/reducelag/put-page-here \n ");
 			return true;
 		}
