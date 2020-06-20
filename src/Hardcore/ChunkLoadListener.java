@@ -18,6 +18,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
+import net.evmodder.EvLib.EvUtils;
 
 public class ChunkLoadListener implements Listener{
 	final HCTweaks pl;
@@ -81,18 +82,7 @@ public class ChunkLoadListener implements Listener{
 		if(queuedUpdates.add(rXZ_Key)){
 			World world = pl.getServer().getWorld(worldUUID);
 			//String rFile = "./"+world.getName()+"/region/r."+rX+"."+rZ+".mca";
-			String logFile = null;
-			switch(world.getEnvironment()){
-				case NORMAL:
-					logFile = "./"+world.getName()+"/region/r."+rX+"."+rZ+".visitlog";
-					break;
-				case NETHER:
-					logFile = "./"+world.getName()+"/DIM-1/region/r."+rX+"."+rZ+".visitlog";
-					break;
-				case THE_END:
-					logFile = "./"+world.getName()+"/DIM1/region/r."+rX+"."+rZ+".visitlog";
-					break;
-			}
+			String logFile = EvUtils.getRegionFolder(world) + "/r."+rX+"."+rZ+".visitlog";
 			updateRegionLog(logFile, playerUUID);
 			new BukkitRunnable(){@Override public void run(){queuedUpdates.remove(rXZ_Key);}}.runTaskLater(pl, 20*60*60*2);//2h
 		}
