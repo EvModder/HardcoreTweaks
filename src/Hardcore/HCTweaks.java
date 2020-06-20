@@ -3,7 +3,6 @@ package Hardcore;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -15,7 +14,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import Hardcore.commands.*;
 import net.evmodder.EvLib.EvPlugin;
-import net.evmodder.HorseOwners.HorseManager;
 
 //TODO: track regions,entities, etc (fileIO with x,z,pUUID,spawnDate)
 //TODO: only delete regions if there is no player that has been to that region in their current life
@@ -29,6 +27,7 @@ public class HCTweaks extends EvPlugin{
 	private static HCTweaks plugin; public static HCTweaks getPlugin(){return plugin;}
 	String WORLD_NAME;
 	final public static String DEATH_LOG_FILENAME = "deaths/log.txt";
+	final boolean FREE_HORSES_ON_DEATH = true;
 
 	@Override public void onEvEnable(){
 		plugin = this;
@@ -69,15 +68,7 @@ public class HCTweaks extends EvPlugin{
 	}
 
 	boolean deletePlayerdata(UUID uuid){
-		try{
-			HorseManager horsePl = (HorseManager) getServer().getPluginManager().getPlugin("HorseOwners");
-			if(horsePl != null){
-				ArrayList<String> horses = new ArrayList<String>();
-				if(horsePl.getHorseOwners().containsKey(uuid)) horses.addAll(horsePl.getHorseOwners().get(uuid));
-				for(String horseName : horses) horsePl.removeHorse(uuid, horseName, true);
-			}
-		}
-		catch(NoClassDefFoundError ex){getLogger().severe("Failed to delete HorseOwners data");}
+		if(FREE_HORSES_ON_DEATH) Extras.freeOwnedHorses(uuid, /*removeCompletely=*/false);
 		getLogger().info("Deleting playerdata for: "+uuid);
 		if(new File("./plugins/EvFolder/DELETED").exists()) new File("./plugins/EvFolder/DELETED").mkdir();
 

@@ -73,12 +73,17 @@ public class CommandRegionCleanup extends EvCommand{
 			}
 		}
 		Collections.sort(fileAges);
+		long fileAgeOldest = fileAges.get(0);
+		long fileAgeYoungest = fileAges.get(fileAges.size()-1);
 		long fileAgeMedian = fileAges.get(fileAges.size()/2);
 
 		if(sender != null){
 			sender.sendMessage("File size max: "+fileAgeMax);
+			sender.sendMessage("File size max: "+fileAgeMax);
 			sender.sendMessage("File size mode: "+fileSizeMode);
-			sender.sendMessage("File age median (last modified): "+sdf.format(new Date(fileAgeMedian)));
+			sender.sendMessage("File age oldest: "+sdf.format(new Date(fileAgeOldest)));
+			sender.sendMessage("File age youngest: "+sdf.format(new Date(fileAgeYoungest)));
+			sender.sendMessage("File age median: "+sdf.format(new Date(fileAgeMedian)));
 		}
 
 		if(SHOW_FILE_SZ_QUANTILES)

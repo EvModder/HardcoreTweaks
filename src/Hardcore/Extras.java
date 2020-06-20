@@ -1,6 +1,7 @@
 package Hardcore;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.UUID;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
@@ -9,16 +10,13 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.advancement.AdvancementProgress;
-import org.bukkit.entity.AbstractHorse;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.HorseOwners.HorseLibrary;
+import net.evmodder.HorseOwners.HorseManager;
 
 public class Extras implements Listener{
 	Extras(){
@@ -146,6 +144,19 @@ public class Extras implements Listener{
 		else return "§6 - Feb'20 Event participant";
 	}
 
+	public static void freeOwnedHorses(UUID playerUUID, boolean removeCompletely){
+		HCTweaks pl = HCTweaks.getPlugin();
+		try{
+			HorseManager horsePl = (HorseManager) pl.getServer().getPluginManager().getPlugin("HorseOwners");
+			if(horsePl != null){
+				ArrayList<String> horses = new ArrayList<String>();
+				if(horsePl.getHorseOwners().containsKey(playerUUID)) horses.addAll(horsePl.getHorseOwners().get(playerUUID));
+				for(String horseName : horses) horsePl.removeHorse(playerUUID, horseName, removeCompletely);
+			}
+		}
+		catch(NoClassDefFoundError ex){pl.getLogger().severe("Failed to delete HorseOwners data");}
+	}
+
 /*	public static boolean setPermissionX(Player player, String permission, boolean value){
 		if(player.hasPermission(permission) == value) return false;
 		HCTweaks.getPlugin().runCommand("perms player setperm "+player.getName()+" "+permission+" "+(""+value).toLowerCase());
@@ -185,7 +196,8 @@ public class Extras implements Listener{
 			evt.setCancelled(true);
 		}
 	}
-	@EventHandler
+	//TODO: re-enable if needed
+	/*@EventHandler
 	public void onChunkLoad(ChunkLoadEvent evt){
 		if(evt.isNewChunk() || evt.isAsynchronous()) return;
 		for(Entity e : evt.getChunk().getEntities()){
@@ -198,5 +210,5 @@ public class Extras implements Listener{
 				}
 			}
 		}
-	}
+	}*/
 }
