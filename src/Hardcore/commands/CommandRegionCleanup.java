@@ -125,6 +125,7 @@ public class CommandRegionCleanup extends EvCommand{
 		return fileAgeMedian;
 	}
 
+	private boolean deleteInProgress = false;
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String args[]){
 		//cmd: /regioncleanup [world:<name>/all,W=all] [visitlog:true/false,V=true]m [age:2m10d45m,A=1y] [size:Xkb,S=10kb] [confirm] [mock]
@@ -218,6 +219,11 @@ public class CommandRegionCleanup extends EvCommand{
 				return true;
 			}
 		}
+		if(deleteInProgress){
+			sender.sendMessage("§cA region-delete process is already in progress, please wait for it to complete before running another");
+			return true;
+		}
+		deleteInProgress = true;
 
 		sender.sendMessage("§6Staring region-delete...");
 
@@ -231,6 +237,7 @@ public class CommandRegionCleanup extends EvCommand{
 
 			int skipCuzSize = 0, skipCuzAge = 0/*, skipCuzAgeVsCreate = 0, skipCuzDist = 0*/, skipCuzError = 0,
 					skipCuzVisitlog = 0, skipCuzActiveVisitlog = 0;
+			long totalDeletedKB = 0, totalNumDeleted = 0;
 			for(World w : worlds){
 				String regionFolderStr = EvUtils.getRegionFolder(w);
 				File folder = new File(regionFolderStr);
@@ -256,13 +263,34 @@ public class CommandRegionCleanup extends EvCommand{
 							int aliveResidents = 0;
 							String[] visitLines = visitFileContents.split("\n");
 							for(String visit : visitLines){
-								try{
+								//TODO: temp fix code /////////////////////
+								if(visit.equals(visitLines[visitLines.length-1])){
+									if(!visit.startsWith("created:")){
+										if(visit.contains("created:")){
+											try{
+												BufferedWriter writer = new BufferedWriter(new FileWriter(visitlog));
+												writer.write(visitFileContents.replace("created:", "\ncreated:")); writer.close();
+											}catch(IOException e){}
+											HCTweaks.getPlugin().getLogger().severe("fixed bad visitlog creation ts!");
+										}
+										else{
+											try{
+												BufferedWriter writer = new BufferedWriter(new FileWriter(visitlog));
+												writer.write(visitFileContents+"\ncreated:"+0); writer.close();
+											}catch(IOException e){}
+											HCTweaks.getPlugin().getLogger().severe("fixed missing visitlog creation ts!");
+										}
+									}
+								}
+								///////////////////////////////////////////
+								if(visit.startsWith("created:")) continue; // or break;, since this should always be the last line
 								int sep = visit.indexOf(',');
 								if(sep == -1){
 									HCTweaks.getPlugin().getLogger().warning("sep is -1!\n"+ "file: "+visitFileContents+"\n, line: "+visit);
 									HCTweaks.getPlugin().getLogger().warning("file name: "+visitlog);
 									++skipCuzError; continue;
 								}
+								try{
 								long lastVisit = Long.parseLong(visit.substring(0, sep));
 								UUID visitorUUID = UUID.fromString(visit.substring(sep+1));
 								OfflinePlayer visitor = sender.getServer().getOfflinePlayer(visitorUUID);
@@ -280,7 +308,6 @@ public class CommandRegionCleanup extends EvCommand{
 									HCTweaks.getPlugin().getLogger().warning("file name: "+visitlog);
 									++skipCuzError; continue;
 								}
-								
 							}
 							if(aliveResidents > 0){++skipCuzActiveVisitlog; continue;}//<<<<<<<<<<<<<<<
 						}
@@ -300,20 +327,28 @@ public class CommandRegionCleanup extends EvCommand{
 						// Perform delete
 						if(!SIMULATE_ONLY){
 							file.renameTo(new File(delFolder.getPath()+'/'+file.getName()));
-							deletedKB += fileSize;
-							++numDeleted;
+							if(hasVisitlog){
+								File visitlogFile = new File(visitlog);
+								visitlogFile.renameTo(new File(delFolder.getPath()+'/'+visitlogFile.getName()));
+							}
 						}
+						deletedKB += fileSize;
+						++numDeleted;
 					}
 				}
 				sender.sendMessage("§6Finished region-delete for world: §c"+w.getName()+"§6.");
 				sender.sendMessage("§6Space freed: §c"+deletedKB+"§6KB, §c"+numDeleted+"§6 files");
+				totalDeletedKB += deletedKB;
+				totalNumDeleted += numDeleted;
 			}
 			sender.sendMessage("§aProcess Complete!");
-			sender.sendMessage("Skipped file reasons: "
-					+"FileSize:"+skipCuzSize+", FileAge:"+skipCuzAge+", Visitlog:"+skipCuzVisitlog
-					+", Active visitlog: "+skipCuzActiveVisitlog
+			sender.sendMessage("Deleted kb:"+totalDeletedKB+", files:"+totalNumDeleted);
+			sender.sendMessage("Skip reasons: "
+					+"FileSize:"+skipCuzSize+", FileAge:"+skipCuzAge+", HasVisitLog:"+skipCuzVisitlog
+					+", ActiveVisitLog: "+skipCuzActiveVisitlog
 					/*+", CreationVsModified:"+skipCuzAgeVsCreate
 					+", DistFromSpawn:"+skipCuzDist*/+", Error:"+skipCuzError);
+			deleteInProgress = false;
 		}}.start();
 		return true;
 	}
