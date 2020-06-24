@@ -15,6 +15,7 @@ import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
@@ -34,6 +35,8 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -48,7 +51,7 @@ import net.evmodder.EvLib.extras.TextUtils;
 public class NewPlayerManager implements Listener{
 	final HCTweaks pl;
 	final double EULERS_CONSTANT = 0.57721566490153286060651209d;
-	final int PRE_GEN_SPAWNS;
+	final int PRE_GEN_SPAWNS, MAX_NEW_ACCS_ON_SAME_IP;
 	final ItemStack GUIDE_BOOK;
 	final ArrayDeque<Location> spawnLocs;
 	final String WORLD_NAME, SPAWN_MSG, RESPAWN_MSG;
@@ -103,6 +106,7 @@ public class NewPlayerManager implements Listener{
 				pl.getConfig().getString("spawn-welcome-message", "&bWelcome, &7%name%&b!"));
 		RESPAWN_MSG = TextUtils.translateAlternateColorCodes('&',
 				pl.getConfig().getString("respawn-welcome-message", "&bWelcome, &7%name%&b!"));
+		MAX_NEW_ACCS_ON_SAME_IP = pl.getConfig().getInt("max-new-accounts-per-day-with-same-ip", 3);
 	}
 
 	void saveSpawnLocs(){
@@ -357,6 +361,21 @@ public class NewPlayerManager implements Listener{
 		}
 	}*/
 
+	HashMap<String, Integer> newPlayerCountByIP = new HashMap<>();
+	@EventHandler
+	public void onPlayerLogin(PlayerLoginEvent evt){
+		final UUID uuid = evt.getPlayer().getUniqueId();
+		OfflinePlayer offP = pl.getServer().getOfflinePlayer(uuid);
+		if(!offP.hasPlayedBefore()){
+			String playerIP = evt.getAddress().getHostAddress();
+			int numNewPlayersOnIP = newPlayerCountByIP.getOrDefault(playerIP, 0) + 1;
+			if(numNewPlayersOnIP > MAX_NEW_ACCS_ON_SAME_IP){
+				evt.setKickMessage(ChatColor.RED+"Too many new players have joined from your IP recently..\nTry again tomorrow");
+				evt.setResult(Result.KICK_OTHER);
+			}
+			else newPlayerCountByIP.put(playerIP, numNewPlayersOnIP);
+		}
+	}
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent evt){
 		final Player player = evt.getPlayer();

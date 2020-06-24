@@ -21,6 +21,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -32,6 +33,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.extras.ActionBarUtils;
+import net.evmodder.EvLib.extras.TextUtils;
 import net.evmodder.EvLib.util.Pair;
 
 public class SpectatorManager implements Listener{
@@ -464,21 +466,31 @@ public class SpectatorManager implements Listener{
 	}
 
 	@EventHandler
-	public void onLogin(PlayerLoginEvent evt){ // Used only to keep track of how much longer spectators need to wait
+	public void onLogin(PlayerLoginEvent evt){ // PlayerLoginEvent is useful because getLastPlayed() returns last disconnect ts
 		final UUID uuid = evt.getPlayer().getUniqueId();
 		OfflinePlayer offP = pl.getServer().getOfflinePlayer(uuid);
 		final long millisSinceLastLogin = System.currentTimeMillis() - offP.getLastPlayed();
 		final long ticksSinceLastLogin = millisSinceLastLogin/50;
-		if(ticksSinceLastLogin > 0){
-			new BukkitRunnable(){@Override public void run(){
-				Player p = pl.getServer().getPlayer(uuid);
-				if(p != null && isSpectatorFavorYes(p)){
-					final double inHrs = ((double)ticksSinceLastLogin)/(20*60*60);
-					pl.getLogger().info("Adding: "+inHrs+"h to SinceLastDeath (ticks="+ticksSinceLastLogin+")");
-					p.incrementStatistic(Statistic.TIME_SINCE_DEATH, (int)ticksSinceLastLogin);
-				}
-			}}.runTaskLater(pl, 20);
+		if(ticksSinceLastLogin <= 0) pl.getLogger().warning("Unexpected ticksSinceLastLogin: "+ticksSinceLastLogin);
+
+		if(!ALLOW_SPECTATORS){
+			long secondsLeft = HCTweaks.secondsLeftUntilRespawn(evt.getPlayer(), ticksSinceLastLogin/20);
+			if(secondsLeft <= 0) pl.resetPlayer(evt.getPlayer());
+			else{
+				evt.setKickMessage(ChatColor.RED+"Spectating is currently disabled\n"
+						+ChatColor.GRAY+"You can respawn in "+formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY));
+				evt.setResult(Result.KICK_OTHER);
+			}
+			return;
 		}
+		new BukkitRunnable(){@Override public void run(){
+			Player p = pl.getServer().getPlayer(uuid);
+			if(p != null && isSpectatorFavorYes(p)){
+				String waitTimeAdded = TextUtils.formatTime(millisSinceLastLogin, /*show0s=*/false);
+				pl.getLogger().info("Adding: "+waitTimeAdded+" to TIME_SINCE_DEATH statistic (ticks="+ticksSinceLastLogin+")");
+				p.incrementStatistic(Statistic.TIME_SINCE_DEATH, (int)ticksSinceLastLogin);
+			}
+		}}.runTaskLater(pl, 20);
 	}
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onJoin(PlayerJoinEvent evt){
@@ -488,12 +500,6 @@ public class SpectatorManager implements Listener{
 			if(newTarget != null && Extras.crossDimensionalDistanceSquared(evt.getPlayer().getLocation(), newTarget.getLocation()) < TP_DIST_SQ){
 				sendSpectatorNotices(/*spectator=*/evt.getPlayer(), newTarget, /*from=*/null, /*to=*/evt.getPlayer().getLocation());
 			}
-		}
-		if(!ALLOW_SPECTATORS){
-			long secondsLeft = HCTweaks.secondsLeftUntilRespawn(evt.getPlayer());
-			if(secondsLeft <= 0) pl.resetPlayer(evt.getPlayer());
-			else evt.getPlayer().kickPlayer(ChatColor.RED+"Spectating is currently disabled\n"
-					+ChatColor.GRAY+"You can respawn in "+formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY));
 		}
 	}
 
@@ -507,13 +513,21 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler
 	public void onRespawn(PlayerRespawnEvent evt){
-		// NOTE: This can also be called when a player exists the end!
-		if(!evt.getPlayer().getScoreboardTags().contains("dead")) return;
-
+		if(!evt.getPlayer().getScoreboardTags().contains("dead")) return; // PlayerRespawnEvent is also be called when leaving the end, etc.
 		pl.getLogger().warning(evt.getPlayer().getName()+" pressed respawn/spectate world");
+
 		pl.getServer().getScoreboardManager().getMainScoreboard().getTeam("Dead").removeEntry(evt.getPlayer().getName());
+
+		if(!ALLOW_SPECTATORS){
+			long secondsLeft = HCTweaks.secondsLeftUntilRespawn(evt.getPlayer());
+			evt.getPlayer().kickPlayer(ChatColor.RED+"Spectating is currently disabled\n"
+						+ChatColor.GRAY+"You can respawn in "+formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY));
+			return;
+		}
+
 		Extras.grantLocationBasedAdvancements(evt.getPlayer(), /*silently=*/true);
 		if(SYNC_SPECTATOR_INVS) Extras.grantItemBasedAdvancements(evt.getPlayer(), /*silently=*/true);
+
 		final UUID uuid = evt.getPlayer().getUniqueId();
 		new BukkitRunnable(){@Override public void run(){
 			Player p = pl.getServer().getPlayer(uuid);

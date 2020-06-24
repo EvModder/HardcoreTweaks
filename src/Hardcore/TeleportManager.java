@@ -23,6 +23,7 @@ public class TeleportManager implements Listener{
 	final HashMap<UUID, HashSet<UUID>> pendingTpas, pendingTpaheres;//to -> from
 	final HashMap<Pair<UUID, UUID>, BukkitRunnable> tpTimeouts;
 	final long MAX_PLAYTIME_RATIO;
+	final boolean CHECK_TP_TAGS;
 
 	public TeleportManager(HCTweaks plugin){
 		pl = plugin;
@@ -30,6 +31,7 @@ public class TeleportManager implements Listener{
 		pendingTpaheres = new HashMap<UUID, HashSet<UUID>>();
 		tpTimeouts = new HashMap<Pair<UUID, UUID>, BukkitRunnable>();
 		MAX_PLAYTIME_RATIO = pl.getConfig().getLong("max-playtime-ratio-for-teleport", Long.MAX_VALUE);
+		CHECK_TP_TAGS = !pl.getConfig().getBoolean("can-teleport-same-person-twice-directly-or-indirectly", false);
 		new CommandTpaccept(pl, this);
 		new CommandTpa(pl, this);
 		new CommandTpahere(pl, this);
@@ -145,7 +147,7 @@ public class TeleportManager implements Listener{
 			if(tellReceiverWhyNot) target.sendMessage("You can't accept teleports when you are dead");
 			return false;
 		}
-		if(check_tp_tags(from, target)){
+		if(CHECK_TP_TAGS && check_tp_tags(from, target)){
 			if(tellFromWhyNot) from.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "+
 					ChatColor.GRAY+target.getDisplayName());
 			if(tellReceiverWhyNot) target.sendMessage(ChatColor.RED+"You already have a teleport directly or indirectly connected to "+

@@ -1,48 +1,48 @@
 # Name of primary hardcore (over)world
 world-name: 'Reliquist'
 
-# Number of spawn locations to pre-compute (to reduce lag on a player's first join)
-prepared-spawn-locations: 5
-
-# Delay (in hours) until player can respawn.
-# Set to -1 to disable respawning altogether
-respawn-wait: 20
-
-spawn-welcome-message: '&b>> &6&lWelcome&6, &a%name%&6, &lto &4&lH&ca&4&lrd&cc&4&lore&6&l!'
-respawn-welcome-message: '&b>> &6&lWelcome back&6, &a%name%&6 &lhas been reborn!'
-
-# Region Monitor
+# Region Monitor (aka visitlog)
 remember-visiting-players: true
 
 # Compass Manager
 enable-compass-tracker: true
 
-# Enable spectating
-enable-spectating: true #TODO
+enable-teleports: true
+# 1:x, where if playtime1 is > x*playtime2, teleport isn't allowed
+max-playtime-ratio-for-teleport: 100
+can-teleport-same-person-twice-directly-or-indirectly: false
+
+
+#----------------------------------------------------------#
+#                        Spectating                        #
+#----------------------------------------------------------#
+enable-spectating: true
 spectators-sync-inv: true
 
-# Possible modes are:
 # * blacklist: everyone can spectate you unless you blacklist them
 # * whitelist: nobody can spectate you unless you whitelist them
+# Configure default spectator mode:
 spectator-mode: blacklist
-
-enable-teleports: true #TODO
-teleports-per-life: 100 #TODO
-can-teleport-same-person-twice: false #TODO
-can-teleport-same-person-twice-indirectly: false #TODO
-
-# 1:x, where if p1t is > x*pt2 teleport isn't allowed
-max-playtime-ratio-for-teleport: 100
 
 set-whitelist-mode-when-has-x-advancements: 15
 set-whitelist-mode-when-has-x-levels: 50
-advancements-included:
-  - story
-  - adventure
-  - nether
-  - end
-  - husbandry
+advancements-included: [story, adventure, nether, end, husbandry]
 
+
+#----------------------------------------------------------#
+#                       New Players                        #
+#----------------------------------------------------------#
+# Number of spawn locations to pre-compute (to reduce lag on a player's first join)
+prepared-spawn-locations: 5
+
+max-new-accounts-per-day-with-same-ip: 4 #TODO: right now it is not daily--it resets on server restart
+
+spawn-welcome-message: '&b>> &6&lWelcome&6, &a%name%&6, &lto &4&lH&ca&4&lrd&cc&4&lore&6&l!'
+respawn-welcome-message: '&b>> &6&lWelcome back&6, &a%name%&6 &lhas been reborn!'
+
+# Delay (in hours) until player can respawn.
+# Set to -1 to disable respawning altogether
+respawn-wait: 20
 
 #----------------------------------------------------------#
 #                      Event Related                       #

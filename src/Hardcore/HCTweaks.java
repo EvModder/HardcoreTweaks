@@ -15,13 +15,15 @@ import org.bukkit.scheduler.BukkitRunnable;
 import Hardcore.commands.*;
 import net.evmodder.EvLib.EvPlugin;
 
-//TODO: track regions,entities, etc (fileIO with x,z,pUUID,spawnDate)
-//TODO: only delete regions if there is no player that has been to that region in their current life
-//TODO: spectator blacklist/whitelist
+//TEST: track regions,entities, etc (fileIO with x,z,pUUID,spawnDate)
+//TEST: only delete regions if there is no player that has been to that region in their current life
+//TEST: spectator blacklist/whitelist
 //TODO: (ChatManager) [-] -> *, no filter for self chat, toggle filtering with tag
 //TODO: visible spectators
-//TODO: nobody who you can spectate infinity box
+//TODO: nobody who you can spectate -> infinity box
 //TODO: /spectate whitelist/blacklist add/remove <name> //uses add/remove instead of toggle
+//TODO: in /about, show TP list in descending order of last login (and only show the first X(10?) players)
+//TODO: limit new accounts from the same day (X per day)
 //NewY0rkServer1
 public class HCTweaks extends EvPlugin{
 	private static HCTweaks plugin; public static HCTweaks getPlugin(){return plugin;}
@@ -57,7 +59,8 @@ public class HCTweaks extends EvPlugin{
 		getServer().getPluginManager().registerEvents(new NewPlayerManager(this), this);
 		getServer().getPluginManager().registerEvents(new ScoreboardManager(this), this);
 		getServer().getPluginManager().registerEvents(new SpectatorManager(this), this);
-		getServer().getPluginManager().registerEvents(new TeleportManager(this), this);
+		if(config.getBoolean("enable-teleports", true))
+			getServer().getPluginManager().registerEvents(new TeleportManager(this), this);
 	}
 	@Override public void onEvDisable(){
 		for(Player player : getServer().getOnlinePlayers()){
@@ -119,22 +122,29 @@ public class HCTweaks extends EvPlugin{
 		}
 		return 0;
 	}
-	public static long secondsLeftUntilRespawn(Player spectator){
-		int secondsSinceDeath = spectator.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
+	public static long secondsLeftUntilRespawn(Player spectator, long subtractSeconds){
+		long secondsSinceDeath = spectator.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
 		long frequentDeathPenalty = HCTweaks.getFrequentDeathRespawnPenalty(spectator);
 		long secondsLeft = HCTweaks.getPlugin().getConfig().getInt("respawn-wait", 24)*60*60 + frequentDeathPenalty - secondsSinceDeath;
 		return secondsLeft;
 	}
+	public static long secondsLeftUntilRespawn(Player spectator){
+		return secondsLeftUntilRespawn(spectator, /*subtractSeconds=*/0);
+	}
 	public void resetPlayer(Player player){
 		runCommand("essentials:nick "+player.getName()+" off");
 		player.resetTitle();
-		player.kickPlayer(ChatColor.GOLD+"Resetting playerdata...\n"+ChatColor.GRAY+"When you rejoin, you will respawn as a fresh start!");
+		String kickMsg = ChatColor.GOLD+"Resetting playerdata...\n"+ChatColor.GRAY+"When you rejoin, you will respawn as a fresh start!";
+		player.kickPlayer(kickMsg);
 		final UUID uuid = player.getUniqueId();
 		new BukkitRunnable(){
 			int attempts = 0;
 			@Override public void run(){
+				++attempts;
 				//Make sure they are offline
-				if((getServer().getPlayer(uuid) == null && deletePlayerdata(uuid)) || ++attempts == 10) cancel();
+				Player player = getServer().getPlayer(uuid);
+				if(player != null) player.kickPlayer(kickMsg);
+				else if(deletePlayerdata(uuid) || attempts == 10) cancel();
 			}
 		}.runTaskTimer(this, /*delay=*/5, /*period=*/20);
 	}
