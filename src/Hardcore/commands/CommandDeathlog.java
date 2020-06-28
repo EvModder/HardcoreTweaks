@@ -1,5 +1,6 @@
 package Hardcore.commands;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import Hardcore.HCTweaks;
@@ -9,7 +10,6 @@ import org.apache.commons.lang.StringUtils;
 import net.evmodder.EvLib.EvCommand;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.extras.TextUtils;
-import net.md_5.bungee.api.ChatColor;
 
 public class CommandDeathlog extends EvCommand{
 	public CommandDeathlog(HCTweaks pl){super(pl);}

@@ -449,9 +449,9 @@ public class NewPlayerManager implements Listener{
 			player.setGravity(true);
 			player.setWalkSpeed(0.2f);
 			removeSpawnBox(player.getLocation(), player);
-			player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10, 3), true);
-			player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10, 3), true);
-			player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 2, 0), true);
+			player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10, 3, true));
+			player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10, 3, true));
+			player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 2, 0, true));
 			player.setInvulnerable(false);
 			player.setSaturation(20);
 			player.setHealth(evt.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
