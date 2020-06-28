@@ -41,8 +41,21 @@ public class CommandColor extends EvCommand{
 			sender.sendMessage(ChatColor.GRAY+"/color #");
 			return true;
 		}
-		if(args.length > 1 || (args[0]=args[0].trim().replaceAll("&", "")).length() > 1){
-			sender.sendMessage(ChatColor.GRAY+"Please provide just a single character");
+		if(args.length > 1 || (args[0].replaceAll("&", "")).length() > 1){
+			String colorNick = TextUtils.translateAlternateColorCodes('&', args[0]);
+			String rawNick = ChatColor.stripColor(colorNick);
+			if(!sender.hasPermission("hardcore.color.custom") || !rawNick.equalsIgnoreCase(displayName)){
+				sender.sendMessage(ChatColor.GRAY+"Please provide just a single character");
+			}
+			else if(!rawNick.equals(displayName)){
+				sender.sendMessage(ChatColor.GRAY+"Please use your exact name (case sensitive)");
+			}
+			else{
+				if(!sender.hasPermission("hardcore.color.formats")) args[0] = TextUtils.stripFormatsOnly(args[0], '&');
+				HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" "+args[0]);
+				sender.sendMessage(ChatColor.GREEN+"Color set!");
+				((Player)sender).addScoreboardTag("color_nick");
+			}
 			return true;
 		}
 		char colorCh = Character.toLowerCase(args[0].charAt(0));
@@ -51,7 +64,7 @@ public class CommandColor extends EvCommand{
 			sender.sendMessage(ChatColor.GRAY+"Unknown color '"+colorCh+"'");
 			return true;
 		}
-		if(TextUtils.isFormat(colorCh)){
+		if(TextUtils.isFormat(colorCh) && !sender.hasPermission("hardcore.color.formats")){
 			sender.sendMessage(ChatColor.GRAY+"Please pick a color code");
 			return true;
 		}

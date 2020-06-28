@@ -102,6 +102,14 @@ permissions:
       description: Permission to use /color
       default: true
 
+   hardcore.color.custom:
+      description: Permission to use /color <full colored name here>
+      default: op
+
+   hardcore.color.formats:
+      description: Permission to use formats in /color
+      default: op
+
    hardcore.compass.coords:
       description: Tell coordinates when using a compass tracker
       default: op
