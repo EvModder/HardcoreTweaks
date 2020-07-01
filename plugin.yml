@@ -1,6 +1,7 @@
 name: HardcoreTweaks
 main: Hardcore.HCTweaks
-author: EvModder/EvDoc/Evil_Witchdoctor
+author: EvModder/EvDoc
+description: Hardcore amenities and management tools
 version: 1.2 #1.2=spectator system upgrades
 softdepend: [Essentials, HorseOwners] # Horse(ClaimEvent,RenameEvent) used in ScoreboardManager
 api-version: 1.13
