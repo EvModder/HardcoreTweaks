@@ -409,17 +409,16 @@ public class NewPlayerManager implements Listener{
 			
 		}
 
-		// Update tags
-		// TODO: should color nick be saved?
+		// Update color_nick if a player changes their username
 		if(player.getScoreboardTags().contains("color_nick")){
-			ChatColor color = TextUtils.getCurrentColor(player.getDisplayName());
-			if(color != null){
-				new BukkitRunnable(){@Override public void run(){
+			new BukkitRunnable(){@Override public void run(){
+				ChatColor color = TextUtils.getCurrentColor(player.getDisplayName());
+				if(color != null && !ChatColor.stripColor(player.getDisplayName()).equals(player.getName())){
 					pl.getLogger().info("updating nickname: &"+color.getChar()+player.getName());
 					pl.runCommand("nick "+player.getName()+" &"+color.getChar()+player.getName());
-				}}.runTaskLater(pl, 40);
-			}
-			else pl.getLogger().info(player.getName()+" does not have a colored nick");
+				}
+				else pl.getLogger().info(player.getName()+" does not have a colored nick");
+			}}.runTaskLater(pl, 40);
 		}
 		if(!player.isOp()){
 //			pl.setPermission(player, "essentials.tpa", player.getScoreboardTags().contains("has_tpa"));
