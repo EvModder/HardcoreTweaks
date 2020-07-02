@@ -133,7 +133,7 @@ public class Extras implements Listener{
 		if(!evtFile.exists()) return null;
 		// Advancements: Foofy, Experience: Foofy, Build Contest: Xigo
 		// Build Contest honorables: KingSteamRoller, KaiBe, ninjaa_momnkey, Foofy, Bella, Morphanee, Foxuwu, Elessar
-		return "§6 - Aug'19 Event"+(evtFile.length() <= 10 ? " participant" : ":§c champion");
+		return "§6 - Aug'19 Event"+(evtFile.length() <= 10 ? " participant" : ":§c Champion");
 	}
 	public static String eventStatusFeb20Equine(UUID uniqueId){
 		File evtFile = new File("./plugins/EvFolder/events/feb20/"+uniqueId+".txt");

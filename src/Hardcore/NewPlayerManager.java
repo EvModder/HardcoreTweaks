@@ -415,9 +415,11 @@ public class NewPlayerManager implements Listener{
 			ChatColor color = TextUtils.getCurrentColor(player.getDisplayName());
 			if(color != null){
 				new BukkitRunnable(){@Override public void run(){
+					pl.getLogger().info("updating nickname: &"+color.getChar()+player.getName());
 					pl.runCommand("nick "+player.getName()+" &"+color.getChar()+player.getName());
-				}}.runTaskLater(pl, 20);
+				}}.runTaskLater(pl, 40);
 			}
+			else pl.getLogger().info(player.getName()+" does not have a colored nick");
 		}
 		if(!player.isOp()){
 //			pl.setPermission(player, "essentials.tpa", player.getScoreboardTags().contains("has_tpa"));

@@ -16,6 +16,10 @@ public class CommandColor extends EvCommand{
 
 	@Override public List<String> onTabComplete(CommandSender s, Command c, String a, String[] args){
 		if(args.length > 0){
+			if(!args[0].isEmpty() && s.hasPermission("hardcore.color.custom")
+					&& s.getName().toLowerCase().startsWith(
+						ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', args[0]))
+						.toLowerCase().replace("&", ""))) return null;
 			ArrayList<String> tabCompletes = new ArrayList<String>();
 			for(char ch : TextUtils.COLOR_CHARS) tabCompletes.add(String.valueOf(ch));
 			return tabCompletes;
@@ -32,8 +36,12 @@ public class CommandColor extends EvCommand{
 		String displayName = ((Player)sender).getDisplayName();
 		int nameIdx = displayName.indexOf(sender.getName());
 		if(nameIdx == -1){
-			sender.sendMessage(ChatColor.RED+"You cannot use this command if you have a custom nickname set");
-			return true;
+			displayName = ChatColor.stripColor(displayName);
+			nameIdx = displayName.indexOf(sender.getName());
+			if(nameIdx == -1){
+				sender.sendMessage(ChatColor.RED+"You cannot use this command if you have a custom nickname set");
+				return true;
+			}
 		}
 		if(args.length == 0){
 			sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
@@ -44,10 +52,10 @@ public class CommandColor extends EvCommand{
 		if(args.length > 1 || (args[0].replaceAll("&", "")).length() > 1){
 			String colorNick = TextUtils.translateAlternateColorCodes('&', args[0]);
 			String rawNick = ChatColor.stripColor(colorNick);
-			if(!sender.hasPermission("hardcore.color.custom") || !rawNick.equalsIgnoreCase(displayName)){
+			if(!sender.hasPermission("hardcore.color.custom") || !rawNick.equalsIgnoreCase(sender.getName())){
 				sender.sendMessage(ChatColor.GRAY+"Please provide just a single character");
 			}
-			else if(!rawNick.equals(displayName)){
+			else if(!rawNick.equals(sender.getName())){
 				sender.sendMessage(ChatColor.GRAY+"Please use your exact name (case sensitive)");
 			}
 			else{
