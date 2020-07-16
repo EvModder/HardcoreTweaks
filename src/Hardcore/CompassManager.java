@@ -15,6 +15,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.meta.CompassMeta;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.extras.TextUtils;
 
@@ -51,6 +52,7 @@ public class CompassManager implements Listener{
 	@EventHandler
 	public void onCompassClick(PlayerInteractEvent evt){
 		if(evt.getItem() == null || evt.getItem().getType() != Material.COMPASS
+				|| !evt.getItem().hasItemMeta() || ((CompassMeta)evt.getItem().getItemMeta()).hasLodestone()
 				|| evt.getAction() != Action.RIGHT_CLICK_AIR) return;
 		if(evt.getPlayer().getScoreboardTags().contains("compass_player")){
 			evt.getPlayer().removeScoreboardTag("compass_player");

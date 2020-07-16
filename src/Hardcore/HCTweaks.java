@@ -24,7 +24,6 @@ import net.evmodder.EvLib.EvPlugin;
 //TODO: /spectate whitelist/blacklist add/remove <name> //uses add/remove instead of toggle
 //TODO: in /about, show TP list in descending order of last login (and only show the first X(10?) players)
 //TODO: limit new accounts from the same day (X per day)
-//NewY0rkServer1
 public class HCTweaks extends EvPlugin{
 	private static HCTweaks plugin; public static HCTweaks getPlugin(){return plugin;}
 	String WORLD_NAME;
