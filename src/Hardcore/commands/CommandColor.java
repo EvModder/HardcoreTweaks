@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.ChatColor;
 import net.evmodder.EvLib.EvCommand;
+import net.evmodder.EvLib.extras.ReflectionUtils;
 import net.evmodder.EvLib.extras.TextUtils;
 
 public class CommandColor extends EvCommand{
@@ -27,11 +28,19 @@ public class CommandColor extends EvCommand{
 		return null;
 	}
 
+	boolean isValidHex(String rrggbb){
+		return rrggbb.matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");
+	}
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String args[]){
 		if(sender instanceof Player == false){
 			sender.sendMessage(ChatColor.RED+"This command can only be run by in-game players!");
 			return true;
+		}
+		if(args.length > 1){
+			sender.sendMessage(ChatColor.RED+"Too many arguments");
+			return false;
 		}
 		String displayName = ((Player)sender).getDisplayName();
 		int nameIdx = displayName.indexOf(sender.getName());
@@ -49,7 +58,18 @@ public class CommandColor extends EvCommand{
 			sender.sendMessage(ChatColor.GRAY+"/color #");
 			return true;
 		}
-		if(args.length > 1 || (args[0].replaceAll("&", "")).length() > 1){
+		String colorId = args[0].replace("&", "").replace("#", "").toLowerCase();
+		if(colorId.length() == 1){
+			if(ChatColor.getByChar(colorId.charAt(0)) == null){
+				sender.sendMessage(ChatColor.GRAY+"Unknown color '"+colorId+"'");
+				return true;
+			}
+			if(TextUtils.isFormat(colorId.charAt(0)) && !sender.hasPermission("hardcore.color.formats")){
+				sender.sendMessage(ChatColor.GRAY+"Please pick a color code");
+				return true;
+			}
+		}
+		else if(ReflectionUtils.getServerVersionString().compareTo("v1_16") < 0 || !isValidHex(colorId)){
 			String colorNick = TextUtils.translateAlternateColorCodes('&', args[0]);
 			String rawNick = ChatColor.stripColor(colorNick);
 			if(!sender.hasPermission("hardcore.color.custom") || !rawNick.equalsIgnoreCase(sender.getName())){
@@ -66,16 +86,6 @@ public class CommandColor extends EvCommand{
 			}
 			return true;
 		}
-		char colorCh = Character.toLowerCase(args[0].charAt(0));
-		ChatColor color = ChatColor.getByChar(colorCh);
-		if(color == null){
-			sender.sendMessage(ChatColor.GRAY+"Unknown color '"+colorCh+"'");
-			return true;
-		}
-		if(TextUtils.isFormat(colorCh) && !sender.hasPermission("hardcore.color.formats")){
-			sender.sendMessage(ChatColor.GRAY+"Please pick a color code");
-			return true;
-		}
 
 		// Got to here, update their nickname!
 		int cutBeforeIdx = nameIdx;
@@ -83,14 +93,22 @@ public class CommandColor extends EvCommand{
 		String textBeforeName = displayName.substring(0, cutBeforeIdx).replace(COLOR_SYMBOL, '&');
 		String textAfterName = displayName.substring(nameIdx+sender.getName().length()).replace(COLOR_SYMBOL, '&');
 
-		if(colorCh == 'f' || colorCh == 'r'){
+		if(colorId.equals("f") || colorId.equals("r")){
 			if(textBeforeName.isEmpty() && textAfterName.isEmpty()) HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" off");
 			else HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" "+textBeforeName+sender.getName()+textAfterName);
 			((Player)sender).removeScoreboardTag("color_nick");
 		}
 		else{
-			HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" "+textBeforeName+("&"+colorCh)+sender.getName()+textAfterName);
-			sender.sendMessage(color+"Color set!");
+			colorId = (colorId.length() == 1 ? "&" : "&#") + colorId;
+			if(sender.getName().equals("EvDoc")){
+				sender.sendMessage("§#009900 test &#");
+				sender.sendMessage("§x009900 test &x");
+				sender.sendMessage("§#§0§0§9§9§0§0 test &#&r&r&g&g&b&b");
+				sender.sendMessage("§x§0§0§9§9§0§0 test &x&r&r&g&g&b&b");
+				return true;
+			}
+			HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" "+textBeforeName+colorId+sender.getName()+textAfterName);
+			sender.sendMessage(TextUtils.translateAlternateColorCodes('&', colorId)+"Color set!");
 			((Player)sender).addScoreboardTag("color_nick");
 		}
 		return true;
