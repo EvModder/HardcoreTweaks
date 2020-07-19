@@ -398,8 +398,8 @@ public class SpectatorManager implements Listener{
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSpectateTeleport(PlayerTeleportEvent evt){
-		/*//TODO: TEMP CODE FOR ARCHERY EVT //////////////////////////////////////////////
 		if(!isSpectatorFavorYes(evt.getPlayer()) || evt.getPlayer().hasPermission("hardcore.spectator.bypass.tpcheck")) return;
+		/*//TODO: TEMP CODE FOR ARCHERY EVT //////////////////////////////////////////////
 		if(evt.getTo().getX() < -29990000 && evt.getTo().getZ() < -29990000){
 			evt.getPlayer().sendMessage(ChatColor.RED+"You cannot join the archery event while in specator mode");
 			evt.setCancelled(true);
