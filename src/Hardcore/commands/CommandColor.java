@@ -61,7 +61,7 @@ public class CommandColor extends EvCommand{
 			sender.sendMessage(ChatColor.GRAY+"/color #");
 			return true;
 		}
-		String colorId = args[0].replace("&", "").replace("#", "").toLowerCase();
+		String colorId = args[0].replace("&", "").replace("#", "").replace("x", "").toLowerCase();
 		if(colorId.length() == 1){
 			if(ChatColor.getByChar(colorId.charAt(0)) == null){
 				sender.sendMessage(ChatColor.GRAY+"Unknown color '"+colorId+"'");
@@ -103,6 +103,7 @@ public class CommandColor extends EvCommand{
 			((Player)sender).removeScoreboardTag("color_nick");
 		}
 		else{
+			if(colorId.length() == 3) colorId =""+colorId.charAt(0)+colorId.charAt(0)+colorId.charAt(1)+colorId.charAt(1)+colorId.charAt(2)+colorId.charAt(2);
 			colorId = (colorId.length() == 1 ? "&" : "&#") + colorId;
 			HCTweaks.getPlugin().runCommand("nick "+sender.getName()+" "+textBeforeName+colorId+sender.getName()+textAfterName);
 			sender.sendMessage(TextUtils.translateAlternateColorCodes('&', colorId)+"Color set!");
