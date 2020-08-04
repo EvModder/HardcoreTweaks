@@ -33,7 +33,7 @@ public class ChunkLoadListener implements Listener{
 	}
 
 	void updateRegionLog(String filename, UUID newVisitor){
-		pl.getLogger().info("Writing to: "+filename+" (triggered by: "+getPlayerName(newVisitor)+")");
+		pl.getLogger().info("Writing: "+filename+" ("+getPlayerName(newVisitor)+")");
 		StringBuilder builder = new StringBuilder();
 		builder.append(System.currentTimeMillis()).append(',').append(newVisitor);
 		boolean isNew = false;
@@ -82,7 +82,7 @@ public class ChunkLoadListener implements Listener{
 		if(queuedUpdates.add(rXZ_Key)){
 			World world = pl.getServer().getWorld(worldUUID);
 			//String rFile = "./"+world.getName()+"/region/r."+rX+"."+rZ+".mca";
-			String logFile = EvUtils.getRegionFolder(world) + "/r."+rX+"."+rZ+".visitlog";
+			String logFile = EvUtils.getRegionFolder(world) + "r."+rX+"."+rZ+".visitlog";
 			updateRegionLog(logFile, playerUUID);
 			new BukkitRunnable(){@Override public void run(){queuedUpdates.remove(rXZ_Key);}}.runTaskLater(pl, 20*60*60*2);//2h
 		}
