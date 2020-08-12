@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
-import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
-import org.bukkit.World.Environment;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,16 +20,6 @@ public class Extras implements Listener{
 	Extras(){
 		HCTweaks pl = HCTweaks.getPlugin();
 		pl.getServer().getPluginManager().registerEvents(this, pl);
-	}
-
-	public static double crossDimensionalDistanceSquared(Location a, Location b){
-		if(a == null || b == null) return Double.MAX_VALUE;
-		if(a.getWorld().getUID().equals(b.getWorld().getUID())) return a.distanceSquared(b);
-		if(a.getWorld().getEnvironment() == Environment.THE_END || b.getWorld().getEnvironment() == Environment.THE_END) return Double.MAX_VALUE;
-		if(!a.getWorld().getName().startsWith(b.getWorld().getName()) && !b.getWorld().getName().startsWith(a.getWorld().getName())) return Double.MAX_VALUE;
-		// By this point, we have overworld & nether (for the same world)
-		if(a.getWorld().getEnvironment() == Environment.NETHER) return new Location(b.getWorld(), a.getX()*8, a.getY(), a.getZ()*8).distanceSquared(b);
-		else return new Location(a.getWorld(), b.getX()*8, b.getY(), b.getZ()*8).distanceSquared(a);
 	}
 
 	public static void grantLocationBasedAdvancements(Player player, boolean silently){

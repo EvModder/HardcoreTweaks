@@ -58,8 +58,7 @@ public class HCTweaks extends EvPlugin{
 		getServer().getPluginManager().registerEvents(new NewPlayerManager(this), this);
 		getServer().getPluginManager().registerEvents(new ScoreboardManager(this), this);
 		getServer().getPluginManager().registerEvents(new SpectatorManager(this), this);
-		if(config.getBoolean("enable-teleports", true))
-			getServer().getPluginManager().registerEvents(new TeleportManager(this), this);
+		if(config.getBoolean("enable-teleports", true)) new TeleportManager(this);
 	}
 	@Override public void onEvDisable(){
 		for(Player player : getServer().getOnlinePlayers()){

@@ -10,7 +10,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitRunnable;
 import Hardcore.SpectatorManager.WatchMode;
 import Hardcore.commands.CommandTpa;
@@ -18,7 +17,7 @@ import Hardcore.commands.CommandTpaccept;
 import Hardcore.commands.CommandTpahere;
 import net.evmodder.EvLib.util.Pair;
 
-public class TeleportManager implements Listener{
+public class TeleportManager{
 	final HCTweaks pl;
 	final HashMap<UUID, HashSet<UUID>> pendingTpas, pendingTpaheres;//to -> from
 	final HashMap<Pair<UUID, UUID>, BukkitRunnable> tpTimeouts;

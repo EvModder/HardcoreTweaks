@@ -126,7 +126,7 @@ public class SpectatorManager implements Listener{
 			double dist;
 			for(Player p : org.bukkit.Bukkit.getServer().getOnlinePlayers()){
 				if(p.getGameMode() == GameMode.SURVIVAL/* && !p.isDead()*/ && (spec == null || canSpectate(spec.getUniqueId(), p))){
-					if((dist=Extras.crossDimensionalDistanceSquared(loc, p.getLocation())) <= closestDistGm0){
+					if((dist=EvUtils.crossDimensionalDistanceSquared(loc, p.getLocation())) <= closestDistGm0){
 						closestDistGm0 = dist;
 						closestPlayer = p;
 					}
@@ -323,7 +323,7 @@ public class SpectatorManager implements Listener{
 						}
 					}
 					else if(!specP.hasPermission("hardcore.spectator.bypass.maxrange")){
-						double distSqToTarget = Extras.crossDimensionalDistanceSquared(specP.getLocation(), newTarget.getLocation());
+						double distSqToTarget = EvUtils.crossDimensionalDistanceSquared(specP.getLocation(), newTarget.getLocation());
 						if(distSqToTarget >= TP_DIST_SQ || !specP.getWorld().getUID().equals(newTarget.getWorld().getUID())){
 							//sendSpectateNotice(specP, newTarget, specP.getLocation());//Done by TeleportListener below
 							specP.teleport(newTarget, TeleportCause.SPECTATE);
@@ -416,7 +416,7 @@ public class SpectatorManager implements Listener{
 			evt.setCancelled(true);
 			return;
 		}
-		if(Extras.crossDimensionalDistanceSquared(evt.getFrom(), evt.getTo()) >= SEND_NOTICE_DIST_SQ){
+		if(EvUtils.crossDimensionalDistanceSquared(evt.getFrom(), evt.getTo()) >= SEND_NOTICE_DIST_SQ){
 			sendSpectatorNotices(evt.getPlayer(), newTarget, evt.getFrom(), evt.getTo());
 		}
 		//evt.getPlayer().setSpectatorTarget(p);
@@ -498,7 +498,7 @@ public class SpectatorManager implements Listener{
 		if(addSpectator(evt.getPlayer())){
 			Player newTarget = getClosestGm0WithPerms(evt.getPlayer().getLocation(), /*spectator=*/evt.getPlayer());
 			// Already done in onSpectatorTeleport() by runSpectatorLoop() if dist >= TP_DIST_SQ
-			if(newTarget != null && Extras.crossDimensionalDistanceSquared(evt.getPlayer().getLocation(), newTarget.getLocation()) < TP_DIST_SQ){
+			if(newTarget != null && EvUtils.crossDimensionalDistanceSquared(evt.getPlayer().getLocation(), newTarget.getLocation()) < TP_DIST_SQ){
 				sendSpectatorNotices(/*spectator=*/evt.getPlayer(), newTarget, /*from=*/null, /*to=*/evt.getPlayer().getLocation());
 			}
 		}
