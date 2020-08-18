@@ -69,7 +69,7 @@ public class HCTweaks extends EvPlugin{
 	}
 
 	boolean deletePlayerdata(UUID uuid){
-		if(FREE_HORSES_ON_DEATH) Extras.freeOwnedHorses(uuid, /*removeCompletely=*/false);
+		if(FREE_HORSES_ON_DEATH) Extras.freeOwnedHorses(uuid);
 		getLogger().info("Deleting playerdata for: "+uuid);
 		if(new File("./plugins/EvFolder/DELETED").exists()) new File("./plugins/EvFolder/DELETED").mkdir();
 

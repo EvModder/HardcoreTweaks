@@ -21,7 +21,7 @@ import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.EvUtils;
-import net.evmodder.HorseOwners.HorseLibrary;
+import net.evmodder.HorseOwners.HorseUtils;
 import net.evmodder.HorseOwners.api.events.HorseClaimEvent;
 import net.evmodder.HorseOwners.api.events.HorseDeathEvent;
 import net.evmodder.HorseOwners.api.events.HorseRenameEvent;
@@ -192,19 +192,19 @@ public class ScoreboardManager implements Listener{
 			case LLAMA:
 				String horseType = horse.getType().name().toLowerCase();
 				sb.getObjective(horseType+"-speed").getScore(name)
-							.setScore((int)(100*HorseLibrary.getNormalSpeed(horse)));
+							.setScore((int)(100*HorseUtils.getNormalSpeed(horse)));
 				sb.getObjective(horseType+"-jump").getScore(name)
-							.setScore((int)(100*HorseLibrary.getNormalJump(horse)));
+							.setScore((int)(100*HorseUtils.getNormalJump(horse)));
 				sb.getObjective(horseType+"-health").getScore(name)
-							.setScore(HorseLibrary.getNormalMaxHealth(horse));
+							.setScore(HorseUtils.getNormalMaxHealth(horse));
 				return;
 			case TRADER_LLAMA:
 				sb.getObjective("trader_llama-h").getScore(name)
-							.setScore(HorseLibrary.getNormalMaxHealth(horse));
+							.setScore(HorseUtils.getNormalMaxHealth(horse));
 				return;
 			case SKELETON_HORSE:
 				sb.getObjective("skeleton_horse-j").getScore(name)
-							.setScore((int)(100*HorseLibrary.getNormalJump(horse)));
+							.setScore((int)(100*HorseUtils.getNormalJump(horse)));
 				return;
 			default:
 		}

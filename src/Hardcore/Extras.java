@@ -1,7 +1,6 @@
 package Hardcore;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.UUID;
 import org.bukkit.GameMode;
 import org.bukkit.GameRule;
@@ -132,14 +131,14 @@ public class Extras implements Listener{
 		else return "§6 - Feb'20 Event participant";
 	}
 
-	public static void freeOwnedHorses(UUID playerUUID, boolean removeCompletely){
+	public static void freeOwnedHorses(UUID playerUUID){
 		HCTweaks pl = HCTweaks.getPlugin();
 		try{
 			HorseManager horsePl = (HorseManager) pl.getServer().getPluginManager().getPlugin("HorseOwners");
 			if(horsePl != null){
-				ArrayList<String> horses = new ArrayList<String>();
-				if(horsePl.getHorseOwners().containsKey(playerUUID)) horses.addAll(horsePl.getHorseOwners().get(playerUUID));
-				for(String horseName : horses) horsePl.removeHorse(playerUUID, horseName, removeCompletely);
+				for(String horse : horsePl.getAPI().getHorses(playerUUID)){
+					horsePl.getAPI().unclaimHorse(horse);
+				}
 			}
 		}
 		catch(NoClassDefFoundError ex){pl.getLogger().severe("Failed to delete HorseOwners data");}
