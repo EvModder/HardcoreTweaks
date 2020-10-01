@@ -438,7 +438,7 @@ public class NewPlayerManager implements Listener{
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		final String command = evt.getMessage().trim().toLowerCase();
-		if((command.equals("/accept-terms") || command.equals("/archery"))//TODO: /archery is TEMP!
+		if((command.equals("/accept-terms"))//TODO: /archery is TEMP!
 				&& evt.getPlayer().removeScoreboardTag("unconfirmed")){
 			// This is the silent way to remove this advancement (in case it was erroneously given)
 			NamespacedKey key = NamespacedKey.minecraft("end/enter_end_gateway");

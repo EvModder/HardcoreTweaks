@@ -79,7 +79,7 @@ public class SpectatorManager implements Listener{
 
 	public static boolean canSpectate(UUID spectator, Player target){
 		// TODO: TEMP, remove after archery event
-		//if(target.getLocation().getX() < -29990000 && target.getLocation().getZ() < -29990000) return false;
+		if(target.getLocation().getX() < -29990000 && target.getLocation().getZ() < -29990000) return false;
 		if(spectator.equals(target.getUniqueId())) return false;
 		String bl_tag = "spectator_blacklist_"+spectator;
 		String wl_tag = "spectator_whitelist_"+spectator;
@@ -399,13 +399,13 @@ public class SpectatorManager implements Listener{
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onSpectateTeleport(PlayerTeleportEvent evt){
 		if(!isSpectatorFavorYes(evt.getPlayer()) || evt.getPlayer().hasPermission("hardcore.spectator.bypass.tpcheck")) return;
-		/*//TODO: TEMP CODE FOR ARCHERY EVT //////////////////////////////////////////////
+		///TODO: TEMP CODE FOR ARCHERY EVT //////////////////////////////////////////////
 		if(evt.getTo().getX() < -29990000 && evt.getTo().getZ() < -29990000){
-			evt.getPlayer().sendMessage(ChatColor.RED+"You cannot join the archery event while in specator mode");
+			evt.getPlayer().sendMessage(ChatColor.RED+"You cannot enter this area while in specator mode");
 			evt.setCancelled(true);
 			return;
 		}///////////////////////////////////////////////////////////////////////////////
-		*/
+
 		if(evt.getCause() == TeleportCause.CHORUS_FRUIT) return;
 		Player newTarget = getClosestGm0WithPerms(evt.getTo(), /*spectator=*/evt.getPlayer());
 		if(!isSpectating(evt.getTo(), newTarget)){
