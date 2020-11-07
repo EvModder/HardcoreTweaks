@@ -130,6 +130,12 @@ public class Extras implements Listener{
 		if(pointsEarned > 3) return "§6 - Feb'20 Event:§c Magister Equitum";
 		else return "§6 - Feb'20 Event participant";
 	}
+	public static String eventStatusAug20Archery(UUID uniqueId){
+		File evtFile = new File("./plugins/EvFolder/events/aug20/"+uniqueId+".txt");
+		if(!evtFile.exists()) return null;
+		// Kamekichi9=576, thegiftofno=478, Rendel=470, Xigo=428, Vilina=418, Elizzar=396, kyab=394, KingSteamRoller=394, Crah=389, Foofy=281
+		return "§6 - Aug'20 Archery"+(evtFile.length() <= 10 ? " participant" : ":§c Champion");
+	}
 
 	public static void freeOwnedHorses(UUID playerUUID){
 		HCTweaks pl = HCTweaks.getPlugin();

@@ -35,7 +35,7 @@ advancements-included: [story, adventure, nether, end, husbandry]
 # Number of spawn locations to pre-compute (to reduce lag on a player's first join)
 prepared-spawn-locations: 5
 
-max-new-accounts-per-day-with-same-ip: 4 #TODO: right now it is not daily--it resets on server restart
+max-new-accounts-per-day-with-same-ip: 5 #TODO: right now it is not daily--it resets on server restart
 
 spawn-welcome-message: '&b>> &6&lWelcome&6, &a%name%&6, &lto &4&lH&ca&4&lrd&cc&4&lore&6&l!'
 respawn-welcome-message: '&b>> &6&lWelcome back&6, &a%name%&6 &lhas been reborn!'

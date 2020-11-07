@@ -76,6 +76,7 @@ public class CommandAbout extends EvCommand{
 		if(!lastDeath.equals("None")) sender.sendMessage(ChatColor.GOLD+" - Past Lives: "+ChatColor.RED+HCTweaks.getNumDeaths(name));
 		final String aug19Evt = Extras.eventStatusAug19Build(uuid); if(aug19Evt != null) sender.sendMessage(aug19Evt);
 		final String feb20Evt = Extras.eventStatusFeb20Equine(uuid); if(feb20Evt != null) sender.sendMessage(feb20Evt);
+		final String aug20Evt = Extras.eventStatusAug20Archery(uuid); if(aug20Evt != null) sender.sendMessage(aug20Evt);
 
 		// Send online-player-only data (tag checking)
 		if(onlineTarget != null){
