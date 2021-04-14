@@ -27,10 +27,10 @@ import java.util.stream.Collectors;
 import net.evmodder.EvLib.EvCommand;
 import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.EvLib.extras.TellrawUtils.ActionComponent;
+import net.evmodder.EvLib.extras.TellrawUtils.TextClickAction;
 import net.evmodder.EvLib.extras.TellrawUtils.ClickEvent;
 import net.evmodder.EvLib.extras.TellrawUtils.RawTextComponent;
-import net.evmodder.EvLib.extras.TellrawUtils.TellrawBlob;
+import net.evmodder.EvLib.extras.TellrawUtils.ListComponent;
 import net.evmodder.EvLib.extras.TextUtils;
 
 public class CommandRegionCleanup extends EvCommand{
@@ -195,9 +195,9 @@ public class CommandRegionCleanup extends EvCommand{
 
 			if(!simulateOnly){
 				sender.sendMessage("§c§l§m====================================");
-				TellrawBlob blob = new TellrawBlob(
+				ListComponent blob = new ListComponent(
 						new RawTextComponent("§6Click to confirm: §7["),
-						new ActionComponent("§f>>§4§lDelete§f<<", ClickEvent.RUN_COMMAND, commandString.toString()+" confirm"),
+						new RawTextComponent("§f>>§4§lDelete§f<<", new TextClickAction(ClickEvent.RUN_COMMAND, commandString.toString()+" confirm")),
 						new RawTextComponent("§7]")
 				);
 				HCTweaks.getPlugin().getLogger().info("tellraw blob: "+blob.toString());
