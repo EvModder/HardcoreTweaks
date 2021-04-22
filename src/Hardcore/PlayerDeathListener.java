@@ -68,7 +68,7 @@ public class PlayerDeathListener implements Listener{
 			}
 			//pl.getLogger().info("Time alive: "+millis_alive);//TODO: temp, delete this debug
 			pl.getLogger().info("Was quick-death(<"+QD_HRS+"h): "+quickDeath
-					+" ("+TextUtils.formatTime(millis_alive, false, "§6", "§c", " ")
+					+" ("+TextUtils.formatTime(millis_alive, /*show0s=*/false, /*timePrefix=*/"§6", /*unitPrefix=*/"§c", /*sep=*/" ")
 					+ChatColor.RESET+(quickDeath ? "§r | §6streak=§c"+quickDeaths : "")+"§r)");
 			// Update death-stats
 			HashMap<EntityType, Integer> killedByStats = new HashMap<>();
