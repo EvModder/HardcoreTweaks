@@ -552,6 +552,7 @@ public class SpectatorManager implements Listener{
 				if(space < 0 || (target=pl.getServer().getPlayer(message.substring(space + 1))) == null){
 					player.sendMessage(ChatColor.RED+"Please specify who you wish to tp to (exact username)");
 					player.sendMessage("Note: you can also use vanilla spectator menu (press 1)");
+					return;
 				}
 				if(!player.isOp() && !SpectatorManager.canSpectate(player.getUniqueId(), target)){
 					if(getSpectateMode(target) == WatchMode.WHITELIST)

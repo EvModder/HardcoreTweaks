@@ -4,7 +4,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import Hardcore.HCTweaks;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.bukkit.ChatColor;
 import net.evmodder.EvLib.EvCommand;
@@ -21,12 +21,15 @@ public class CommandColor extends EvCommand{
 					&& s.getName().toLowerCase().startsWith(
 						ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', args[0]))
 						.toLowerCase().replace("&", ""))) return null;
-			if(ReflectionUtils.getServerVersionString().compareTo("v1_16") < 0
-					&& args[0].matches("^([a-f0-9]{2,6})$")) return null;
-
-			ArrayList<String> tabCompletes = new ArrayList<String>();
-			for(char ch : TextUtils.COLOR_CHARS) tabCompletes.add(String.valueOf(ch));
-			return tabCompletes;
+			if(ReflectionUtils.getServerVersionString().compareTo("v1_16") >= 0 && args[0].matches("^([a-f0-9]{2,6})$")){
+				List<String> tabCompletions = Arrays.asList(args[0]);
+				for(int i=args[0].length(); i!=3 && i<6; ++i) tabCompletions = tabCompletions.stream()
+						.mapMulti((str, downstream) -> {for(char ch : TextUtils.COLOR_CHARS) downstream.accept(str+ch);})
+						.map(o -> (String)o)
+						.toList();
+				return tabCompletions;
+			}
+			return new String(TextUtils.COLOR_CHARS).chars().mapToObj(ch -> String.valueOf((char)ch)).toList();
 		}
 		return null;
 	}
