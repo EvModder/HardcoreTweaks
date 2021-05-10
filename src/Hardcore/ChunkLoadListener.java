@@ -33,7 +33,7 @@ public class ChunkLoadListener implements Listener{
 	}
 
 	void updateRegionLog(String filename, UUID newVisitor){
-		pl.getLogger().info("Writing: "+filename+" ("+getPlayerName(newVisitor)+")");
+		pl.getLogger().fine("Writing: "+filename+" ("+getPlayerName(newVisitor)+")");
 		StringBuilder builder = new StringBuilder();
 		builder.append(System.currentTimeMillis()).append(',').append(newVisitor);
 		boolean isNew = false;
