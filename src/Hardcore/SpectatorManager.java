@@ -331,7 +331,8 @@ public class SpectatorManager implements Listener{
 						else if(distSqToTarget >= BOUNCE_DIST_SQ ||
 							(distSqToTarget >= BELOW_SEA_LVL_BOUNCE_DIST_SQ && specP.getLocation().getY() < specP.getWorld().getSeaLevel())
 						){
-							Vector fromSpecToTarget = newTarget.getLocation().toVector().subtract(specP.getLocation().toVector());
+							pl.getLogger().info("bouncing "+specP.getName()+" towards target: "+newTarget.getName());
+							Vector fromSpecToTarget = newTarget.getLocation().subtract(specP.getLocation()).toVector();
 							Vector bounceBackV = fromSpecToTarget.normalize();
 							bounceBackV.multiply(new Vector(.8, 10, .8));
 							specP.setVelocity(bounceBackV);

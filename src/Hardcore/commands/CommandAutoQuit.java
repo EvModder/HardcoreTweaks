@@ -15,10 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import net.evmodder.EvLib.EvCommand;
-import net.evmodder.EvLib.extras.ReflectionUtils;
-import net.evmodder.EvLib.extras.ReflectionUtils.RefClass;
-import net.evmodder.EvLib.extras.ReflectionUtils.RefField;
-import net.evmodder.EvLib.extras.ReflectionUtils.RefMethod;
 
 public class CommandAutoQuit extends EvCommand implements Listener{
 	public CommandAutoQuit(HCTweaks pl){
@@ -39,15 +35,6 @@ public class CommandAutoQuit extends EvCommand implements Listener{
 					return Arrays.asList("500", "1000", "2000", "3000", "5000", "9999");
 		}
 		return null;
-	}
-
-	static final RefClass classCraftPlayer = ReflectionUtils.getRefClass("{cb}.entity.CraftPlayer");
-	static final RefClass classEntityPlayer = ReflectionUtils.getRefClass("{nms}.EntityPlayer");
-	static final RefMethod methodGetHandle = classCraftPlayer.getMethod("getHandle");
-	static final RefField fieldPing = classEntityPlayer.getField("ping");
-	static int getPing(Player p){
-		//java.lang.LinkageError
-		return (int) fieldPing.of(methodGetHandle.of(p).call()).get();
 	}
 
 	static boolean clear_autoquit_tags(Player player){
@@ -71,7 +58,7 @@ public class CommandAutoQuit extends EvCommand implements Listener{
 		for(int i=20; i>health; --i) if(player.removeScoreboardTag("autoquit_health_"+i)) return true;
 		String pingTag = null;
 		for(String tag : player.getScoreboardTags()) if(tag.startsWith("autoquit_ping_")) pingTag = tag;
-		if(pingTag != null && getPing(player) >= Integer.parseInt(pingTag.substring(14))){
+		if(pingTag != null && player.getPing() >= Integer.parseInt(pingTag.substring(14))){
 			player.removeScoreboardTag(pingTag);
 			return true;
 		}
@@ -147,7 +134,7 @@ public class CommandAutoQuit extends EvCommand implements Listener{
 					if(p != null && check_autoquit_tags(p, resultingHealth))
 						p.kickPlayer(ChatColor.RED+"Triggered AutoQuit due to low health["
 								+ChatColor.GRAY+resultingHealth+ChatColor.RED+"] or ping["
-								+ChatColor.GRAY+getPing(player)+"]");
+								+ChatColor.GRAY+player.getPing()+"]");
 				}}.runTaskLater(HCTweaks.getPlugin(), 2);
 			}
 		}

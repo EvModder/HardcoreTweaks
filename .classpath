@@ -10,7 +10,6 @@
 	<classpathentry kind="lib" path="/Users/Nate/Dropbox/Minecraft/Development/Libraries/Eventials.jar"/>
 	<classpathentry kind="lib" path="/Users/Nate/Dropbox/Minecraft/Development/Libraries/Vault.jar"/>
 	<classpathentry kind="lib" path="/Users/Nate/Dropbox/Minecraft/Development/Libraries/HorseOwners.jar"/>
-	<classpathentry kind="lib" path="/Users/Nate/Dropbox/Minecraft/Development/Libraries/bukkit-latest.jar"/>
-	<classpathentry kind="lib" path="/Users/Nate/Dropbox/Minecraft/Development/Libraries/bukkit_server-latest.jar"/>
+	<classpathentry kind="lib" path="/Users/Nate/Dropbox/Minecraft/Development/Libraries/spigot_server-latest.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
