@@ -1,6 +1,5 @@
 package Hardcore.commands;
 
-import org.apache.logging.log4j.util.Strings;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -23,7 +22,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import net.evmodder.EvLib.EvCommand;
 import net.evmodder.EvLib.EvUtils;
 import net.evmodder.EvLib.FileIO;
@@ -211,7 +209,7 @@ public class CommandRegionCleanup extends EvCommand{
 					"§bFile is no larger than §c"+MAX_FILE_SZ+"§bKB\n" +
 					"§bFile hasn't been modified since §c"+maxDateStr+"§b\n" +
 					"§bFile "+(HAS_VISITLOG ? "§cHAS" : "does §cNOT§b have")+"§b a visit log\n"+
-					"§bIn world: §e"+Strings.join(worlds.stream().map(w -> w.getName()).collect(Collectors.toList()), ',')+"§b.");
+					"§bIn world: §e"+String.join(",", worlds.stream().map(w -> w.getName()).toArray(String[]::new))+"§b.");
 
 			if(!simulateOnly){
 				sender.sendMessage("\n§4[§c§lWarning§4] §6This may delete a lot of your world map!\n"+

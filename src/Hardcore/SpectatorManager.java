@@ -1,8 +1,10 @@
 package Hardcore;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -12,7 +14,9 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.EndGateway;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -45,7 +49,7 @@ public class SpectatorManager implements Listener{
 	final float FLY_SPEED = 0.08f;
 	final long SECONDS_UNTIL_RESPAWN;
 	static HashSet<UUID> spectators;
-	final Location WORLD_SPAWN;
+	final Location SPECTATOR_BOX;
 	static boolean CLOSEST_ACROSS_DIMENSIONS = true, ANTI_XRAY_SEE_THRU = false;
 	final boolean ALLOW_SPECTATORS, SYNC_SPECTATOR_INVS;
 
@@ -63,7 +67,16 @@ public class SpectatorManager implements Listener{
 		DEFAULT_MODE = pl.getConfig().getString("spectator-mode", "blacklist").equals("blacklist") ?
 				WatchMode.BLACKLIST : WatchMode.WHITELIST;
 		spectators = new HashSet<UUID>();
-		WORLD_SPAWN = new Location(pl.getServer().getWorlds().get(0), 0, 90, 0);
+
+		SPECTATOR_BOX = TextUtils.getLocationFromString(pl.getConfig().getString("send-to-loc-when-nobody-to-spectate", "world,-50,-50,-50"));
+		List<BlockFace> dirs = Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN);
+		for(Block b : EvUtils.getConnectedBlocks(SPECTATOR_BOX.getBlock(), (b)->true, dirs, /*MAX_SIZE=*/1064/*sphere of radius 5*/)){
+			if(b.getType() == Material.END_GATEWAY){
+				EndGateway gatewayState = (EndGateway)b.getState();
+				gatewayState.setAge(-2147483648);
+				gatewayState.update(true);
+			}
+		}
 		loopActive = false;
 		runSpectatorLoop();
 	}
@@ -111,7 +124,7 @@ public class SpectatorManager implements Listener{
 				!player.getScoreboardTags().contains("blacklist_mode");
 	}
 
-	static Player getClosestGm0WithPerms/*NonDead*/(Location loc, Player spec){
+	static Player getClosestGm0WithPerms(Location loc, Player spec){
 		double closestDistGm0 = Double.MAX_VALUE;
 		Player closestPlayer = null;
 		if(!CLOSEST_ACROSS_DIMENSIONS) for(Player p : loc.getWorld().getPlayers()){
@@ -291,18 +304,40 @@ public class SpectatorManager implements Listener{
 					if(specP.removeScoreboardTag("has_target") && SYNC_SPECTATOR_INVS) specP.getInventory().clear();
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
 					if(newTarget == null){
-						if(specP.getScoreboardTags().contains("spectating")){
+						if(!specP.hasPermission("hardcore.spectator.bypass.slowness")) specP.setFlySpeed(FLY_SPEED);
+						specP.removePotionEffect(PotionEffectType.BLINDNESS);
+						if(specP.getLocation().distanceSquared(SPECTATOR_BOX) > 8D){
+							specP.teleport(SPECTATOR_BOX, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
+						}
+						SPECTATOR_BOX.getChunk().setForceLoaded(true);
+						new BukkitRunnable(){@Override public void run(){
+							if((specP.getSpectatorTarget() == null || specP.getSpectatorTarget().getType() != EntityType.ARMOR_STAND)
+//									&& specP.getLocation().distanceSquared(SPECTATOR_BOX) > 0.1D
+							){
+								specP.sendTitle(" ", "There is nobody who you can spectate", 10, 20*60, 20);
+								Entity nearestArmorstand = null;
+								for(Entity e : specP.getNearbyEntities(10, 10, 10)){
+									if(e.getType() == EntityType.ARMOR_STAND){
+										if(nearestArmorstand == null || e.getLocation().distanceSquared(SPECTATOR_BOX)
+													< nearestArmorstand.getLocation().distanceSquared(SPECTATOR_BOX)) nearestArmorstand = e;
+									}
+								}
+								specP.setSpectatorTarget(nearestArmorstand);
+							}
+						}}.runTaskLater(pl, 10);
+						// Kick specator after 60s if there is nobody online for them to spectate
+						/*if(specP.getScoreboardTags().contains("spectating")){
 							specP.removeScoreboardTag("spectating");
 							if(!specP.hasPermission("hardcore.spectator.bypass.slowness")) specP.setFlySpeed(FLY_SPEED);
 							specP.removePotionEffect(PotionEffectType.BLINDNESS);
-							specP.teleport(WORLD_SPAWN, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
-							specP.sendTitle("", "There is nobody who you can spectate", 10, 20*60, 20);
+							specP.teleport(SPECTATOR_BOX, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
+							specP.sendTitle(" ", "There is nobody who you can spectate", 10, 20*60, 20);
 							new BukkitRunnable(){@Override public void run(){
 								if(!specP.getScoreboardTags().contains("spectating") && isSpectator(specP)){
 									specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
 								}
 							}}.runTaskLater(pl, 20*60);
-						}
+						}*/
 						continue;
 					}
 					if(!specP.getScoreboardTags().contains("spectating")){
@@ -408,9 +443,10 @@ public class SpectatorManager implements Listener{
 		}///////////////////////////////////////////////////////////////////////////////
 
 		if(evt.getCause() == TeleportCause.CHORUS_FRUIT) return;
+		if(evt.getCause() == TeleportCause.SPECTATE && evt.getTo().distanceSquared(SPECTATOR_BOX) < 5D) return;
 		Player newTarget = getClosestGm0WithPerms(evt.getTo(), /*spectator=*/evt.getPlayer());
 		if(!isSpectating(evt.getTo(), newTarget)){
-			evt.getPlayer().sendMessage(ChatColor.RED+"No valid/permitted target found at teleport destination");
+			evt.getPlayer().sendMessage(ChatColor.RED+"No valid/permitted target found at teleport("+evt.getCause()+") destination");
 			pl.getLogger().info("No target for "+evt.getPlayer()+" at destination: "+
 					evt.getTo().getWorld().getName()+", "+
 					evt.getTo().getBlockX()+", "+evt.getTo().getBlockY()+", "+evt.getTo().getBlockZ());

@@ -19,7 +19,7 @@ import net.evmodder.EvLib.EvPlugin;
 //TEST: only delete regions if there is no player that has been to that region in their current life
 //TEST: spectator blacklist/whitelist
 //TODO: visible spectators
-//TODO: nobody who you can spectate -> infinity box
+//TODO: Spectate waiting box in same spot as waiting (new player) box?
 //TODO: /spectate whitelist/blacklist add/remove <name> //uses add/remove instead of toggle
 //TODO: in /about, show TP list in descending order of last login (and only show the first X(10?) players)
 //TODO: limit new accounts from the same ip (X per day)

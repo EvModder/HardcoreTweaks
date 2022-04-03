@@ -244,6 +244,10 @@ public class NewPlayerManager implements Listener{
 		for(String tag : player.getScoreboardTags()) if(tag.startsWith("spawn_region_")) removeTags.add(tag); 
 		for(String tag : removeTags) player.removeScoreboardTag(tag);
 		player.addScoreboardTag("spawn_region_"+spawn_region);
+		ItemStack item = player.getInventory().getItemInMainHand();
+		if(item != null && item.getType() == Material.WRITTEN_BOOK){
+			// TODO: Bold-text the line with the selected spawn region
+		}
 	}
 
 	private void initPlayerTagsAndStats(Player player){
