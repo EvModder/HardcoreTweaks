@@ -1,6 +1,3 @@
-# Name of primary hardcore (over)world
-world-name: 'Reliquist'
-
 # Region Monitor (aka visitlog)
 remember-visiting-players: true
 
@@ -23,19 +20,31 @@ spectators-sync-inv: true
 # * whitelist: nobody can spectate you unless you whitelist them
 # Configure default spectator mode:
 spectator-mode: blacklist
-
-set-whitelist-mode-when-has-x-advancements: 15
 set-whitelist-mode-when-has-x-levels: 50
+set-whitelist-mode-when-has-x-advancements: 15
 advancements-included: [story, adventure, nether, end, husbandry]
 
+send-to-loc-when-nobody-to-spectate: Reliquist,-50,-50,-50
 
 #----------------------------------------------------------#
 #                       New Players                        #
 #----------------------------------------------------------#
-# Number of spawn locations to pre-compute (to reduce lag on a player's first join)
-prepared-spawn-locations: 5
+
+# The intervals at which players can spawn, upper-bounded by world border
+spawn-regions:
+  - 3000
+  - 30000
+  - 300000
+  - 3000000
+
+# Number of locations to pre-load in each spawn region (to reduce lag on a player's first join)
+prepared-spawn-locations: 2
 
 max-new-accounts-per-day-with-same-ip: 5 #TODO: right now it is not daily--it resets on server restart
+
+spawn-in-world: Reliquist
+spawn-pending-location: Reliquist,0.5,-60,0.5
+guide-book-location: Reliquist,0,1,0
 
 spawn-welcome-message: '&b>> &6&lWelcome&6, &a%name%&6, &lto &4&lH&ca&4&lrd&cc&4&lore&6&l!'
 respawn-welcome-message: '&b>> &6&lWelcome back&6, &a%name%&6 &lhas been reborn!'

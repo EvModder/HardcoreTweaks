@@ -18,7 +18,6 @@ import net.evmodder.EvLib.EvPlugin;
 //TEST: track regions,entities, etc (fileIO with x,z,pUUID,spawnDate)
 //TEST: only delete regions if there is no player that has been to that region in their current life
 //TEST: spectator blacklist/whitelist
-//TODO: (ChatManager) [-] -> *, no filter for self chat, toggle filtering with tag
 //TODO: visible spectators
 //TODO: nobody who you can spectate -> infinity box
 //TODO: /spectate whitelist/blacklist add/remove <name> //uses add/remove instead of toggle
@@ -59,13 +58,6 @@ public class HCTweaks extends EvPlugin{
 		getServer().getPluginManager().registerEvents(new ScoreboardManager(this), this);
 		getServer().getPluginManager().registerEvents(new SpectatorManager(this), this);
 		if(config.getBoolean("enable-teleports", true)) new TeleportManager(this);
-	}
-	@Override public void onEvDisable(){
-		for(Player player : getServer().getOnlinePlayers()){
-			if(player.getScoreboardTags().contains("unconfirmed")){
-				NewPlayerManager.removeSpawnBox(player.getLocation(), player);
-			}
-		}
 	}
 
 	boolean deletePlayerdata(UUID uuid){
