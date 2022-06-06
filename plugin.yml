@@ -21,13 +21,6 @@ commands:
       permission: hardcore.autoquit
       permission-message: You do not have permission to do this.
 
-   color:
-      description: Change the color of your name in chat
-      usage: /color c
-      aliases: [cl,format,colour,namecolor,namecolour,cnick]
-      permission: hardcore.color
-      permission-message: You do not have permission to do this.
-
    deathlog:
       description: View the last 9 deaths
       usage: /deathlog
@@ -98,18 +91,6 @@ permissions:
    hardcore.autoquit:
       description: Permission to use /autoquit
       default: true
-
-   hardcore.color:
-      description: Permission to use /color
-      default: true
-
-   hardcore.color.custom:
-      description: Permission to use /color <full colored name here>
-      default: op
-
-   hardcore.color.formats:
-      description: Permission to use formats in /color
-      default: op
 
    hardcore.compass.coords:
       description: Tell coordinates when using a compass tracker

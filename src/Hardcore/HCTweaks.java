@@ -42,7 +42,6 @@ public class HCTweaks extends EvPlugin{
 		getServer().getPluginManager().registerEvents(new TEMP_CmdPing(this), this);
 		new CommandAbout(this);
 		new CommandAutoQuit(this);
-		new CommandColor(this);
 		new CommandDeathlog(this);
 		new CommandRegionCleanup(this);
 		new CommandShowScores(this, false/* TODO: enable when an event is ongoing */);
