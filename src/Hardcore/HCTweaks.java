@@ -39,7 +39,6 @@ public class HCTweaks extends EvPlugin{
 //		hardcoreWorld.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, true); // Is nice for spectators, but has non-vanilla side effects
 
 		getServer().getPluginManager().registerEvents(new PlayerDeathListener(this), this);
-		getServer().getPluginManager().registerEvents(new TEMP_CmdPing(this), this);
 		new CommandAbout(this);
 		new CommandAutoQuit(this);
 		new CommandDeathlog(this);
