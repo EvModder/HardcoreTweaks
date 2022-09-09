@@ -131,7 +131,7 @@ public class CommandRegionCleanup extends EvCommand{
 		boolean allWorlds = false;
 		World world = sender instanceof Player ? ((Player)sender).getWorld() : null;
 		boolean hasVisitlog = true;
-		long maxAgeInMillis = TextUtils.parseTime("1y");
+		long maxAgeInMillis = TextUtils.parseTimeInMillis("1y");
 		long maxKB = 1000;
 		//boolean requireAllDead = true;
 		boolean hasConfirm = !REQUIRE_CONFIRMATION, simulateOnly = false;
@@ -156,7 +156,7 @@ public class CommandRegionCleanup extends EvCommand{
 				hasVisitlog = Boolean.parseBoolean(postSep);
 			}
 			else if(arg.startsWith("A")){
-				maxAgeInMillis = TextUtils.parseTime(postSep);
+				maxAgeInMillis = TextUtils.parseTimeInMillis(postSep);
 			}
 			else if(arg.startsWith("S")){
 				if(postSep.toLowerCase().endsWith("kb")) postSep = postSep.substring(0, postSep.length()-2);

@@ -6,7 +6,6 @@ import org.bukkit.command.CommandSender;
 import Hardcore.HCTweaks;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.lang.StringUtils;
 import net.evmodder.EvLib.EvCommand;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.extras.TextUtils;
@@ -25,8 +24,8 @@ public class CommandDeathlog extends EvCommand{
 		}
 		else{
 			String[] deathLog = FileIO.loadFile(HCTweaks.DEATH_LOG_FILENAME, "").split("\n");
-			String log10 = StringUtils.join(
-					Arrays.copyOfRange(deathLog, Math.max(deathLog.length-10, 0), deathLog.length), "\n"+ChatColor.RESET);
+			String log10 = String.join("\n"+ChatColor.RESET,
+					Arrays.copyOfRange(deathLog, Math.max(deathLog.length-10, 0), deathLog.length));
 			sender.sendMessage(TextUtils.translateAlternateColorCodes('&', "&8&m     &7 Recent Deaths &8&m     "));
 			sender.sendMessage(log10);
 		}

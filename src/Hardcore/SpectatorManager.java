@@ -36,7 +36,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import net.evmodder.EvLib.EvUtils;
-import net.evmodder.EvLib.extras.ActionBarUtils;
 import net.evmodder.EvLib.extras.TextUtils;
 import net.evmodder.EvLib.util.Pair;
 
@@ -281,10 +280,10 @@ public class SpectatorManager implements Listener{
 				int secondsSinceDeath = specP.getStatistic(Statistic.TIME_SINCE_DEATH) / 20;
 				long frequentDeathPenalty = HCTweaks.getFrequentDeathRespawnPenalty(specP);
 				long secondsLeft = SECONDS_UNTIL_RESPAWN + frequentDeathPenalty - secondsSinceDeath;
-				if(secondsLeft <= 0) ActionBarUtils.sendToPlayer(
-						ChatColor.GREEN+"You may now respawn with "+ChatColor.AQUA+"/respawn", specP);
-				else ActionBarUtils.sendToPlayer(
-						formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY), specP);
+				final String msg = secondsLeft <= 0
+						? ChatColor.GREEN+"You may now respawn with "+ChatColor.AQUA+"/respawn"
+						: formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY);
+				pl.runCommand("minecraft:title "+specP.getName()+" actionbar \""+msg+"\"");
 
 				if(specP.isDead() || specP.isOp()) continue; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

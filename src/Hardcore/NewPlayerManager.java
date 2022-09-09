@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -129,10 +128,9 @@ public class NewPlayerManager implements Listener{
 	}
 
 	private void saveSpawnLocs(){
-		FileIO.saveFile("pre-gen-spawns.txt", StringUtils.join(
+		FileIO.saveFile("pre-gen-spawns.txt", String.join("\n",
 				pregenSpawnLocs.stream().flatMap(spawns -> spawns.stream())
-				.map(loc -> loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ())
-				.iterator(), '\n'));
+				.map(loc -> loc.getBlockX()+","+loc.getBlockY()+","+loc.getBlockZ()).toArray(String[]::new)));
 	}
 
 	private boolean hasNearbyLava(Location loc){

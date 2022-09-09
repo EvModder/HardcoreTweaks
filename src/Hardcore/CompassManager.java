@@ -3,7 +3,6 @@ package Hardcore;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.UUID;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -39,14 +38,12 @@ public class CompassManager implements Listener{
 		}
 	}
 	void saveBedLocs(){
-		FileIO.saveFile("bed-locations.txt", StringUtils.join(
-				bedLocs.entrySet().stream()
-				.map(entry ->
+		FileIO.saveFile("bed-locations.txt", String.join("\n",
+				bedLocs.entrySet().stream().map(entry ->
 				entry.getKey().toString()+"|"+
 				entry.getValue().getBlockX()+","+
 				entry.getValue().getBlockY()+","+
-				entry.getValue().getBlockZ())
-				.iterator(), '\n'));
+				entry.getValue().getBlockZ()).toArray(String[]::new)));
 	}
 
 	@EventHandler
