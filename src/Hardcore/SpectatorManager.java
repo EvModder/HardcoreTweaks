@@ -36,6 +36,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import net.evmodder.EvLib.EvUtils;
+import net.evmodder.EvLib.extras.ActionBarUtils;
 import net.evmodder.EvLib.extras.TextUtils;
 import net.evmodder.EvLib.util.Pair;
 
@@ -283,7 +284,9 @@ public class SpectatorManager implements Listener{
 				final String msg = secondsLeft <= 0
 						? ChatColor.GREEN+"You may now respawn with "+ChatColor.AQUA+"/respawn"
 						: formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY);
-				pl.runCommand("minecraft:title "+specP.getName()+" actionbar \""+msg+"\"");
+				//Note: Doing "/title <Name> actionbar <msg>" will spam console chat
+//				pl.runCommand("minecraft:title "+specP.getName()+" actionbar \""+msg+"\"");
+				ActionBarUtils.sendToPlayer(msg, specP);
 
 				if(specP.isDead() || specP.isOp()) continue; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
