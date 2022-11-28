@@ -19,7 +19,11 @@ import net.evmodder.EvLib.extras.TextUtils;
 public class PlayerDeathListener implements Listener{
 	final String SPEC_PREFIX = /*ChatColor.translateAlternateColorCodes('&', */"&9[&7Dead&9]&f·"/*)*/;
 	final HCTweaks pl;
-	public PlayerDeathListener(HCTweaks plugin){ pl = plugin; }
+	final boolean QUICK_DEATH_PENALTY;
+	public PlayerDeathListener(HCTweaks plugin){
+		pl = plugin;
+		QUICK_DEATH_PENALTY = pl.getConfig().getBoolean("quick-death-penalty", false);
+	}
 	final long QD_HRS = 3;
 
 	@EventHandler
@@ -29,7 +33,7 @@ public class PlayerDeathListener implements Listener{
 		//TODO: "PLAY_ONE_MINUTE" actually seems to track ticks lived??
 		//final boolean quickDeath = evt.getEntity().getStatistic(Statistic.PLAY_ONE_MINUTE)/60 < QD_HRS;//Less than 5 hours alive
 		long millis_alive = evt.getEntity().getStatistic(Statistic.TIME_SINCE_DEATH)*50;
-		final boolean quickDeath = millis_alive/1000/60/60 < QD_HRS;// Equivalent to line 2 above
+		final boolean quickDeath = QUICK_DEATH_PENALTY &&  millis_alive/1000/60/60 < QD_HRS;// Equivalent to line 2 above
 //		pl.getLogger().warning("Death of "+name+": \""+evt.getDeathMessage()+'"');
 
 		evt.getEntity().saveData();

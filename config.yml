@@ -8,6 +8,7 @@ enable-teleports: true
 # 1:x, where if playtime1 is > x*playtime2, teleport isn't allowed
 max-playtime-ratio-for-teleport: 100
 can-teleport-same-person-twice-directly-or-indirectly: false
+quick-death-penalty: false
 
 
 #----------------------------------------------------------#
