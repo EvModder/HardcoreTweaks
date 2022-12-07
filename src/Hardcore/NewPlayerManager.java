@@ -375,7 +375,7 @@ public class NewPlayerManager implements Listener{
 		}
 	}
 
-	List<String> unconfirmedCommands = Arrays.asList("/help", "/rules", "/ping", "/gc", "/ignore");
+	List<String> unconfirmedCommands = Arrays.asList("/help", "/rules", "/ping", "/gc", "/ignore", "/spectate");
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		final String command = evt.getMessage().trim().toLowerCase();

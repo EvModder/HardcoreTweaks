@@ -45,7 +45,7 @@ max-new-accounts-per-day-with-same-ip: 5 #TODO: right now it is not daily--it re
 
 spawn-in-world: Reliquist
 spawn-pending-location: Reliquist,0.5,-60,0.5
-guide-book-location: Reliquist,0,1,0
+guide-book-location: Reliquist_nether,8997,128,-5987
 
 spawn-welcome-message: '&b>> &6&lWelcome&6, &a%name%&6, &lto &4&lH&ca&4&lrd&cc&4&lore&6&l!'
 respawn-welcome-message: '&b>> &6&lWelcome back&6, &a%name%&6 &lhas been reborn!'

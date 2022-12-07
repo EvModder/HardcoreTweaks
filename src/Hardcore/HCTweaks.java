@@ -71,12 +71,15 @@ public class HCTweaks extends EvPlugin{
 	}
 	public boolean copyPlayerdata(UUID uuid, String dir){
 		try{
-			Files.copy(new File("./" + WORLD_NAME + "/playerdata/" + uuid + ".dat").toPath(),
-						new File(dir+"/playerdata_" + uuid + ".dat").toPath());
-			Files.copy(new File("./" + WORLD_NAME + "/stats/" + uuid + ".json").toPath(),
-						new File(dir+"/stats_" + uuid + ".json").toPath());
-			Files.copy(new File("./" + WORLD_NAME + "/advancements/" + uuid + ".json").toPath(),
-						new File(dir+"/advancements_" + uuid + ".json").toPath());
+			String playerdata = "./" + WORLD_NAME + "/playerdata/" + uuid + ".dat";
+			Files.copy(new File(playerdata).toPath(), new File(dir+"/playerdata_" + uuid + ".dat").toPath());
+			getLogger().info("Copied playerdata");
+			String stats = "./" + WORLD_NAME + "/stats/" + uuid + ".json";
+			Files.copy(new File(stats).toPath(), new File(dir+"/stats_" + uuid + ".json").toPath());
+			getLogger().info("Copied stats");
+			String advancements = "./" + WORLD_NAME + "/advancements/" + uuid + ".json";
+			Files.copy(new File(advancements).toPath(), new File(dir+"/advancements_" + uuid + ".json").toPath());
+			getLogger().info("Copied advancements");
 			return true;
 		}
 		catch(IOException e){return false;}
