@@ -306,9 +306,11 @@ public class SpectatorManager implements Listener{
 					if(specP.removeScoreboardTag("has_target") && SYNC_SPECTATOR_INVS) specP.getInventory().clear();
 					Player newTarget = getClosestGm0WithPerms(specP.getLocation(), specP);
 					if(newTarget == null){
+						specP.getScoreboardTags().remove("spectating");
 						if(!specP.hasPermission("hardcore.spectator.bypass.slowness")) specP.setFlySpeed(FLY_SPEED);
 						specP.removePotionEffect(PotionEffectType.BLINDNESS);
-						if(specP.getLocation().distanceSquared(SPECTATOR_BOX) > 8D){
+						if(!specP.getWorld().getUID().equals(SPECTATOR_BOX.getWorld().getUID())
+								|| specP.getLocation().distanceSquared(SPECTATOR_BOX) > 8D){
 							specP.teleport(SPECTATOR_BOX, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
 						}
 						SPECTATOR_BOX.getChunk().setForceLoaded(true);
@@ -327,19 +329,6 @@ public class SpectatorManager implements Listener{
 								specP.setSpectatorTarget(nearestArmorstand);
 							}
 						}}.runTaskLater(pl, 10);
-						// Kick specator after 60s if there is nobody online for them to spectate
-						/*if(specP.getScoreboardTags().contains("spectating")){
-							specP.removeScoreboardTag("spectating");
-							if(!specP.hasPermission("hardcore.spectator.bypass.slowness")) specP.setFlySpeed(FLY_SPEED);
-							specP.removePotionEffect(PotionEffectType.BLINDNESS);
-							specP.teleport(SPECTATOR_BOX, TeleportCause.CHORUS_FRUIT);//CHORUS_FRUIT is a hack to bypass TPmanager
-							specP.sendTitle(" ", "There is nobody who you can spectate", 10, 20*60, 20);
-							new BukkitRunnable(){@Override public void run(){
-								if(!specP.getScoreboardTags().contains("spectating") && isSpectator(specP)){
-									specP.kickPlayer(ChatColor.RED+"There is nobody online who you can spectate right now");
-								}
-							}}.runTaskLater(pl, 20*60);
-						}*/
 						continue;
 					}
 					if(!specP.getScoreboardTags().contains("spectating")){
@@ -347,6 +336,12 @@ public class SpectatorManager implements Listener{
 						specP.addScoreboardTag("spectating");
 						if(!specP.hasPermission("hardcore.spectator.bypass.blindness")){
 							specP.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1000000, 0, true));
+						}
+						// If there is a valid target to spectate, unattach the player from the SPECTATOR_BOX
+						if(specP.getSpectatorTarget() != null && specP.getSpectatorTarget().getType() == EntityType.ARMOR_STAND
+								&& specP.getWorld().getUID().equals(SPECTATOR_BOX.getWorld().getUID())
+								&& specP.getLocation().distanceSquared(SPECTATOR_BOX) < 8D){
+							specP.setSpectatorTarget(null);
 						}
 					}
 					if(!specP.hasPermission("hardcore.spectator.bypass.forcedtarget")){
@@ -445,7 +440,9 @@ public class SpectatorManager implements Listener{
 		}///////////////////////////////////////////////////////////////////////////////
 
 		if(evt.getCause() == TeleportCause.CHORUS_FRUIT) return;
-		if(evt.getCause() == TeleportCause.SPECTATE && evt.getTo().distanceSquared(SPECTATOR_BOX) < 5D) return;
+		if(evt.getCause() == TeleportCause.SPECTATE 
+				&& evt.getTo().getWorld().getUID().equals(SPECTATOR_BOX.getWorld().getUID())
+				&& evt.getTo().distanceSquared(SPECTATOR_BOX) < 5D) return;
 		Player newTarget = getClosestGm0WithPerms(evt.getTo(), /*spectator=*/evt.getPlayer());
 		if(!isSpectating(evt.getTo(), newTarget)){
 			evt.getPlayer().sendMessage(ChatColor.RED+"No valid/permitted target found at teleport("+evt.getCause()+") destination");
