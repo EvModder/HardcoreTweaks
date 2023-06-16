@@ -1,20 +1,16 @@
 package Hardcore;
 
 import java.util.HashSet;
-import java.util.UUID;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.EvUtils;
 
 public class ScoreboardManager implements Listener{
@@ -62,27 +58,27 @@ public class ScoreboardManager implements Listener{
 		player.getScoreboard().getObjective("buildscore").getScore(name10).setScore(buildScore);//save
 	}
 
-	void setBungeeTabTeam(Player player, int numAdvancements){
-//		pl.getServer().getScoreboardManager().getMainScoreboard().getObjective("advancements")
-//			.getScore(player.getName()).setScore(numAdvancements);
-
-		boolean wasUpdated = false;
-		String oldTeamName = getAdvancementTeamName(numAdvancements-1);
-		Team oldTeam = player.getScoreboard().getTeam(oldTeamName);
-		if(oldTeam != null) wasUpdated |= oldTeam.removeEntry(player.getName());
-		String newTeamName = getAdvancementTeamName(numAdvancements);
-		Team newTeam = player.getScoreboard().getTeam(newTeamName);
-		if(newTeam == null) newTeam = player.getScoreboard().registerNewTeam(newTeamName);
-		wasUpdated |= (!newTeam.hasEntry(player.getName()));
-		newTeam.addEntry(player.getName());
-		if(wasUpdated){//TODO: Does this actually fix the issue?
-			Plugin btlp = pl.getServer().getPluginManager().getPlugin("BungeeTabListPlus");
-			if(btlp != null){
-				pl.getServer().getPluginManager().disablePlugin(btlp);
-				pl.getServer().getPluginManager().enablePlugin(btlp);
-			}
-		}
-	}
+//	private void setBungeeTabTeam(Player player, int numAdvancements){
+////		pl.getServer().getScoreboardManager().getMainScoreboard().getObjective("advancements")
+////			.getScore(player.getName()).setScore(numAdvancements);
+//
+//		boolean wasUpdated = false;
+//		String oldTeamName = getAdvancementTeamName(numAdvancements-1);
+//		Team oldTeam = player.getScoreboard().getTeam(oldTeamName);
+//		if(oldTeam != null) wasUpdated |= oldTeam.removeEntry(player.getName());
+//		String newTeamName = getAdvancementTeamName(numAdvancements);
+//		Team newTeam = player.getScoreboard().getTeam(newTeamName);
+//		if(newTeam == null) newTeam = player.getScoreboard().registerNewTeam(newTeamName);
+//		wasUpdated |= (!newTeam.hasEntry(player.getName()));
+//		newTeam.addEntry(player.getName());
+//		if(wasUpdated){//TODO: Does this actually fix the issue?
+//			Plugin btlp = pl.getServer().getPluginManager().getPlugin("BungeeTabListPlus");
+//			if(btlp != null){
+//				pl.getServer().getPluginManager().disablePlugin(btlp);
+//				pl.getServer().getPluginManager().enablePlugin(btlp);
+//			}
+//		}
+//	}
 
 	@EventHandler
 	public void onAchievementGet(PlayerAdvancementDoneEvent evt){
@@ -92,7 +88,8 @@ public class ScoreboardManager implements Listener{
 		if(advancements == ADV_WL_TRIGGER && !evt.getPlayer().getScoreboardTags().contains("blacklist_mode")){
 			evt.getPlayer().addScoreboardTag("whitelist_mode");
 		}
-		setBungeeTabTeam(evt.getPlayer(), advancements);
+		//TODO: re-enable this somehow:
+		//setBungeeTabTeam(evt.getPlayer(), advancements);
 	}
 
 	private static boolean SIDEBAR_ACTIVE = false;
@@ -110,19 +107,19 @@ public class ScoreboardManager implements Listener{
 		}
 	}
 
-	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent evt){
-		//showOnSidebar("levels", 5);//TODO: remove
-		final UUID uuid = evt.getPlayer().getUniqueId();
-		new BukkitRunnable(){@Override public void run(){
-			Player player = pl.getServer().getPlayer(uuid);
-			if(player != null && !SpectatorManager.isSpectatorFavorYes(player)){
-				final int advancements = EvUtils.getVanillaAdvancements(player, included).size();
-				//DEBUG: pl.getLogger().info(player.getName()+" has "+advancements+" advancements");
-				setBungeeTabTeam(player, advancements);
-			}
-		}}.runTaskLater(pl, 20*5); //5s
-	}
+//	@EventHandler
+//	public void onPlayerJoin(PlayerJoinEvent evt){
+//		//showOnSidebar("levels", 5);//TODO: remove
+//		final UUID uuid = evt.getPlayer().getUniqueId();
+//		new BukkitRunnable(){@Override public void run(){
+//			Player player = pl.getServer().getPlayer(uuid);
+//			if(player != null && !SpectatorManager.isSpectatorFavorYes(player)){
+//				final int advancements = EvUtils.getVanillaAdvancements(player, included).size();
+//				//DEBUG: pl.getLogger().info(player.getName()+" has "+advancements+" advancements");
+//				setBungeeTabTeam(player, advancements);
+//			}
+//		}}.runTaskLater(pl, 20*5); //5s
+//	}
 
 	@EventHandler
 	public void onLevelUp(PlayerLevelChangeEvent evt){

@@ -2,15 +2,12 @@ package Hardcore;
 
 import java.io.File;
 import java.util.UUID;
-import org.bukkit.GameMode;
 import org.bukkit.GameRule;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.HorseOwners.HorseManager;
@@ -178,17 +175,6 @@ public class Extras implements Listener{
 //		}
 		return true;
 	}*/
-
-	@EventHandler
-	public void onPreCommand(PlayerCommandPreprocessEvent evt){
-		if(evt.getMessage().charAt(0) != '/' || evt.isCancelled()) return;
-		String message = evt.getMessage().toLowerCase();
-		String command = message.split(" ")[0];
-
-		if(command.contains("suicide") && !evt.getPlayer().isOp() && evt.getPlayer().getGameMode() == GameMode.SPECTATOR){
-			evt.setCancelled(true);
-		}
-	}
 
 	//TODO: re-enable if needed
 	/*@EventHandler

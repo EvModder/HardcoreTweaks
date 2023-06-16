@@ -45,6 +45,7 @@ import net.evmodder.EvLib.extras.TextUtils;
 
 public class NewPlayerManager implements Listener{
 	final HCTweaks pl;
+	final private Random rand = new Random();
 	final int PRE_GEN_SPAWNS, MAX_NEW_ACCS_ON_SAME_IP;
 	final ItemStack GUIDE_BOOK;
 	final Location WAITING_BOX;
@@ -114,10 +115,11 @@ public class NewPlayerManager implements Listener{
 			if(pregenSpawnLocs.get(i).size() < PRE_GEN_SPAWNS){
 				pl.getLogger().info("Pre-Generating " + (PRE_GEN_SPAWNS - pregenSpawnLocs.get(i).size()) + " spawnpoints... "
 						+ formatDistanceUnits("("+spawnRegions.get(i)+"-"+spawnRegions.get(i+1)+")"));
-				while(pregenSpawnLocs.get(i).size() < PRE_GEN_SPAWNS){
-					pregenSpawnLocs.get(i).add(getRandomSpawnLoc(spawnRegions.get(i), spawnRegions.get(i+1)));
-				}
-				saveSpawnLocs();
+//				while(pregenSpawnLocs.get(i).size() < PRE_GEN_SPAWNS){
+//					pregenSpawnLocs.get(i).add(getRandomSpawnLoc(spawnRegions.get(i), spawnRegions.get(i+1)));
+//				}
+//				saveSpawnLocs();
+				restockPregenSpawnLocs(i);
 			}
 		}
 		SPAWN_MSG = TextUtils.translateAlternateColorCodes('&',
@@ -145,15 +147,15 @@ public class NewPlayerManager implements Listener{
 		while(b != null && b.isEmpty() && b.isPassable() && !b.isLiquid()) b = b.getRelative(BlockFace.DOWN);
 		return b.isLiquid();
 	}
-	// Warning: Very laggy!  Call asynchronously when possible
+	// Returns null if randomly-selected location is invalid
 	private Location getRandomSpawnLoc(double minDist, double maxDist){
-		final Random rand = new Random();
+		pl.getLogger().info("Finding a suitable pregen spawn location in ["+minDist+", "+maxDist+"]");
 		final World world = pl.getServer().getWorld(WORLD_NAME);
 		final WorldBorder border = world.getWorldBorder();
 		final Location origin = border.getCenter();
 //		pl.getLogger().info("border.getSize(): "+border.getSize());
 		final int seaLevel = world.getSeaLevel();
-		while(true){
+//		while(true){
 			double x = rand.nextDouble()*(maxDist-minDist) + minDist;
 			double z = rand.nextDouble()*maxDist;
 			if(rand.nextBoolean()){double t=x; x=z; z=t;}
@@ -182,7 +184,8 @@ public class NewPlayerManager implements Listener{
 				loc.setY(loc.getY() + 3.02); // Two blocks above the ground
 				return loc;
 			}
-		}
+//		}
+		return null;
 	}
 
 	private void refreshWaitRoomBox(Location loc, Player player){
@@ -294,6 +297,21 @@ public class NewPlayerManager implements Listener{
 		}
 	}
 
+	private void restockPregenSpawnLocs(int spawnRegion){
+		if(pregenSpawnLocs.get(spawnRegion).size() < PRE_GEN_SPAWNS){
+			new BukkitRunnable(){@Override public void run(){
+				Location spawnLoc = getRandomSpawnLoc(spawnRegions.get(spawnRegion), spawnRegions.get(spawnRegion+1));
+				if(spawnLoc != null){
+					pregenSpawnLocs.get(spawnRegion).add(spawnLoc);
+					saveSpawnLocs();
+				}
+				else{
+					restockPregenSpawnLocs(spawnRegion);
+				}
+			}}.runTaskLater(pl, 20*30);//30s
+		}
+	}
+
 	private void setPlayerFree(Player player){
 		player.setWalkSpeed(0.2f);
 		player.setInvulnerable(false);
@@ -307,19 +325,17 @@ public class NewPlayerManager implements Listener{
 		player.addScoreboardTag("autoquit_ping_3000");
 
 		// Fetch a pregen'd spawn loc
-		int spawn_region = getSpawnRegion(player);
-		Location spawnLoc = pregenSpawnLocs.get(spawn_region).remove();
+		final int spawnRegon = getSpawnRegion(player);
+		Location spawnLoc = pregenSpawnLocs.get(spawnRegon).remove();
 		saveSpawnLocs();
-		if(pregenSpawnLocs.get(spawn_region).size() < PRE_GEN_SPAWNS){
-			new BukkitRunnable(){@Override public void run(){
-				pregenSpawnLocs.get(spawn_region).add(getRandomSpawnLoc(spawnRegions.get(spawn_region), spawnRegions.get(spawn_region+1)));
-				saveSpawnLocs();
-			}}.runTaskLater/*Asynchronously*/(pl, 20*60);//60s
-		}
+		restockPregenSpawnLocs(spawnRegon);
 		pl.getLogger().warning("Spawning new player '"+player.getName()+"' at: "
 				+ TextUtils.locationToString(spawnLoc, ChatColor.GREEN, ChatColor.YELLOW, 0));
 		player.setBedSpawnLocation(spawnLoc);
 		player.teleport(spawnLoc);
+
+		final long fullTime = player.getWorld().getFullTime();
+		player.getWorld().setFullTime(fullTime - (fullTime % 24000));
 	}
 
 	HashMap<String, Integer> newPlayerCountByIP = new HashMap<>();

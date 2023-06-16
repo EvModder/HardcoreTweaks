@@ -575,10 +575,10 @@ public class SpectatorManager implements Listener{
 	@EventHandler
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		if(evt.getMessage().charAt(0) != '/') return;
-		String message = evt.getMessage().trim();
-		String command = message.toLowerCase();
-		int space = command.indexOf(' ');
-		command = (space > 0 ? command.substring(1, space) : command.substring(1));
+		final String message = evt.getMessage().trim();
+		final int space = message.indexOf(' ');
+		final String lowercaseMsg = message.toLowerCase();
+		final String command = (space > 0 ? lowercaseMsg.substring(1, space) : lowercaseMsg.substring(1));
 		Player player = evt.getPlayer();
 
 		if(command.equals("tp") && message.indexOf(' ', space+1) == -1){
@@ -603,6 +603,9 @@ public class SpectatorManager implements Listener{
 					player.setSpectatorTarget(target);
 				}
 			}
+		}
+		else if(command.contains("suicide") && !evt.getPlayer().isOp() && evt.getPlayer().getGameMode() == GameMode.SPECTATOR){
+			evt.setCancelled(true);
 		}
 	}
 
