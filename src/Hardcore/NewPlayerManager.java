@@ -316,9 +316,9 @@ public class NewPlayerManager implements Listener{
 		player.setWalkSpeed(0.2f);
 		player.setInvulnerable(false);
 		player.setGravity(true);
-		player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 10, 3, true));
+		player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 10, 3, true));
 		player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10, 3, true));
-		player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 2, 0, true));
+		player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 2, 0, true));
 		player.setSaturation(20);
 		player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
 		player.addScoreboardTag("joined");
@@ -331,7 +331,7 @@ public class NewPlayerManager implements Listener{
 		restockPregenSpawnLocs(spawnRegon);
 		pl.getLogger().warning("Spawning new player '"+player.getName()+"' at: "
 				+ TextUtils.locationToString(spawnLoc, ChatColor.GREEN, ChatColor.YELLOW, 0));
-		player.setBedSpawnLocation(spawnLoc);
+		player.setRespawnLocation(spawnLoc);
 		player.teleport(spawnLoc);
 
 		final long fullTime = player.getWorld().getFullTime();
@@ -395,7 +395,7 @@ public class NewPlayerManager implements Listener{
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPreCommand(PlayerCommandPreprocessEvent evt){
 		final String command = evt.getMessage().trim().toLowerCase();
-		if(command.equals("/accept-terms") && evt.getPlayer().removeScoreboardTag("unconfirmed")){
+		if(command.equals("/accept-terms") && evt.getPlayer().getScoreboardTags().contains("unconfirmed")){
 			evt.setCancelled(true);
 			//TODO: might be able to remove this
 			// This is the silent way to remove this advancement (in case it was erroneously given)
@@ -405,6 +405,7 @@ public class NewPlayerManager implements Listener{
 			// This way also works, but creates a console log
 			//pl.runCommand("minecraft:advancement revoke "+evt.getPlayer().getName()+" only minecraft:end/enter_end_gateway");
 			setPlayerFree(evt.getPlayer());
+			evt.getPlayer().removeScoreboardTag("unconfirmed");
 		}
 		else if(evt.getPlayer().getScoreboardTags().contains("unconfirmed")){
 			for(String allowedCmd : unconfirmedCommands) if(command.startsWith(allowedCmd)) return;

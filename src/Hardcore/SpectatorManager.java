@@ -20,6 +20,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
@@ -284,9 +285,9 @@ public class SpectatorManager implements Listener{
 				final String msg = secondsLeft <= 0
 						? ChatColor.GREEN+"You may now respawn with "+ChatColor.AQUA+"/respawn"
 						: formatTimeUntilRespawn(secondsLeft, ChatColor.GOLD, ChatColor.GRAY);
-				//Note: Doing "/title <Name> actionbar <msg>" will spam console chat
-//				pl.runCommand("minecraft:title "+specP.getName()+" actionbar \""+msg+"\"");
-				ActionBarUtils.sendToPlayer(msg, specP);
+				//Note: Doing "/title <Name> actionbar <msg>" spams console chat
+				try{ActionBarUtils.sendToPlayer(msg, specP);}
+				catch(Exception e){pl.runCommand("minecraft:title "+specP.getName()+" actionbar \""+msg+"\"");}
 
 				if(specP.isDead() || specP.isOp()) continue; // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -502,6 +503,7 @@ public class SpectatorManager implements Listener{
 		}
 	}
 
+	HashSet<UUID> waitingForJoin = new HashSet<UUID>();
 	@EventHandler
 	public void onLogin(PlayerLoginEvent evt){ // PlayerLoginEvent is useful because getLastPlayed() returns last disconnect ts
 		final UUID uuid = evt.getPlayer().getUniqueId();
@@ -520,14 +522,28 @@ public class SpectatorManager implements Listener{
 			}
 			return;
 		}
-		new BukkitRunnable(){@Override public void run(){
-			Player p = pl.getServer().getPlayer(uuid);
-			if(p != null && isSpectatorFavorYes(p)){
+		waitingForJoin.add(uuid);
+		final Listener joinListener = new Listener(){
+			@EventHandler public void onJoin(PlayerJoinEvent evt){
+				if(!evt.getPlayer().getUniqueId().equals(uuid)) return;
+				HandlerList.unregisterAll(this);
+				waitingForJoin.remove(uuid);
+				if(!isSpectatorFavorYes(evt.getPlayer())) return;
+
 				String waitTimeAdded = TextUtils.formatTime(millisSinceLastLogin, /*show0s=*/false);
 				pl.getLogger().info("Adding: "+waitTimeAdded+" to TIME_SINCE_DEATH statistic (ticks="+ticksSinceLastLogin+")");
-				p.incrementStatistic(Statistic.TIME_SINCE_DEATH, (int)ticksSinceLastLogin);
+				if(ticksSinceLastLogin > Integer.MAX_VALUE) pl.getLogger().severe("ticks > max int value!!");
+				evt.getPlayer().incrementStatistic(Statistic.TIME_SINCE_DEATH, (int)ticksSinceLastLogin);
 			}
-		}}.runTaskLater(pl, 20);
+		};
+		pl.getServer().getPluginManager().registerEvents(joinListener, pl);
+		
+		new BukkitRunnable(){@Override public void run(){
+			if(waitingForJoin.remove(uuid)){
+				HandlerList.unregisterAll(joinListener);
+				pl.getLogger().warning("SpectatorManager couldn't find PlayerJoinEvent for uuid: "+uuid);
+			}
+		}}.runTaskLater(pl, 20*10);
 	}
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onJoin(PlayerJoinEvent evt){

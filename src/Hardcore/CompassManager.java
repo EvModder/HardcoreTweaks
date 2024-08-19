@@ -57,8 +57,8 @@ public class CompassManager implements Listener{
 			try{
 				Location bedLoc = bedLocs.get(evt.getPlayer().getUniqueId());
 				if(bedLoc != null) evt.getPlayer().setCompassTarget(bedLoc);
-				evt.getPlayer().setCompassTarget(evt.getPlayer().getBedSpawnLocation());
-				evt.getPlayer().setCompassTarget(evt.getPlayer().getBedLocation());
+//				else evt.getPlayer().setCompassTarget(evt.getPlayer().getBedSpawnLocation());
+				else evt.getPlayer().setCompassTarget(evt.getPlayer().getBedLocation());
 			}
 			catch(NullPointerException | IllegalStateException ex){}
 			evt.getPlayer().sendMessage(ChatColor.GREEN+"Compass is pointing towards your bed");

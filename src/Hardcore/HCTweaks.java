@@ -9,7 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.ChatColor;
 import org.bukkit.Statistic;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import Hardcore.commands.*;
@@ -34,8 +33,8 @@ public class HCTweaks extends EvPlugin{
 		new Extras();
 		getLogger().setLevel(Level.ALL);
 		WORLD_NAME = getConfig().getString("world-name", "Reliquist");
-		World hardcoreWorld = getServer().getWorld(WORLD_NAME);
-		hardcoreWorld.setKeepSpawnInMemory(false);
+//		World hardcoreWorld = getServer().getWorld(WORLD_NAME);
+//		hardcoreWorld.setGameRule(GameRule.SPAWN_CHUNK_RADIUS, 0);
 //		hardcoreWorld.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, true); // Is nice for spectators, but has non-vanilla side effects
 
 		getServer().getPluginManager().registerEvents(new PlayerDeathListener(this), this);
@@ -74,15 +73,30 @@ public class HCTweaks extends EvPlugin{
 			String playerdata = "./" + WORLD_NAME + "/playerdata/" + uuid + ".dat";
 			Files.copy(new File(playerdata).toPath(), new File(dir+"/playerdata_" + uuid + ".dat").toPath());
 			getLogger().info("Copied playerdata");
+		}
+		catch(IOException e){
+			getLogger().info("Failed to copy playerdata");
+			return false;
+		}
+		try{
 			String stats = "./" + WORLD_NAME + "/stats/" + uuid + ".json";
 			Files.copy(new File(stats).toPath(), new File(dir+"/stats_" + uuid + ".json").toPath());
 			getLogger().info("Copied stats");
+		}
+		catch(IOException e){
+			getLogger().info("Failed to copy stats");
+			return false;
+		}
+		try{
 			String advancements = "./" + WORLD_NAME + "/advancements/" + uuid + ".json";
 			Files.copy(new File(advancements).toPath(), new File(dir+"/advancements_" + uuid + ".json").toPath());
 			getLogger().info("Copied advancements");
 			return true;
 		}
-		catch(IOException e){return false;}
+		catch(IOException e){
+			getLogger().info("Failed to copy advancements");
+			return false;
+		}
 	}
 
 	static boolean isDateStr(String filename){
