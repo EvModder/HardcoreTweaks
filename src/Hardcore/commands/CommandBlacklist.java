@@ -11,7 +11,7 @@ import Hardcore.SpectatorManager.WatchMode;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import net.evmodder.EvLib.EvCommand;
+import net.evmodder.EvLib.bukkit.EvCommand;
 
 public class CommandBlacklist extends EvCommand{
 	final HCTweaks pl;

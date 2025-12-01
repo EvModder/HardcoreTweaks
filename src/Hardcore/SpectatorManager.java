@@ -36,9 +36,9 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
-import net.evmodder.EvLib.EvUtils;
-import net.evmodder.EvLib.extras.ActionBarUtils;
-import net.evmodder.EvLib.extras.TextUtils;
+import net.evmodder.EvLib.bukkit.EvUtils;
+import net.evmodder.EvLib.bukkit.ActionBarUtils;
+import net.evmodder.EvLib.TextUtils;
 import net.evmodder.EvLib.util.Pair;
 
 public class SpectatorManager implements Listener{
@@ -71,7 +71,7 @@ public class SpectatorManager implements Listener{
 
 		SPECTATOR_BOX = TextUtils.getLocationFromString(pl.getConfig().getString("send-to-loc-when-nobody-to-spectate", "world,-50,-50,-50"));
 		List<BlockFace> dirs = Arrays.asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN);
-		for(Block b : EvUtils.getConnectedBlocks(SPECTATOR_BOX.getBlock(), (b)->true, dirs, /*MAX_SIZE=*/1064/*sphere of radius 5*/)){
+		for(Block b : EvUtils.getConnectedBlocks(SPECTATOR_BOX.getBlock(), _->true, dirs, /*MAX_SIZE=*/1064/*sphere of radius 5*/)){
 			if(b.getType() == Material.END_GATEWAY){
 				EndGateway gatewayState = (EndGateway)b.getState();
 				gatewayState.setAge(-2147483648);

@@ -18,7 +18,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
-import net.evmodder.EvLib.EvUtils;
+import net.evmodder.EvLib.bukkit.EvUtils;
 
 public class ChunkLoadListener implements Listener{
 	final HCTweaks pl;

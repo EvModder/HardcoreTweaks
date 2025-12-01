@@ -5,7 +5,7 @@ import org.bukkit.command.CommandSender;
 import Hardcore.HCTweaks;
 import Hardcore.ScoreboardManager;
 import java.util.List;
-import net.evmodder.EvLib.EvCommand;
+import net.evmodder.EvLib.bukkit.EvCommand;
 
 public class CommandShowScores extends EvCommand{
 	final HCTweaks pl;

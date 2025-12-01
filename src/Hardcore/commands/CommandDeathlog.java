@@ -6,9 +6,9 @@ import org.bukkit.command.CommandSender;
 import Hardcore.HCTweaks;
 import java.util.Arrays;
 import java.util.List;
-import net.evmodder.EvLib.EvCommand;
+import net.evmodder.EvLib.bukkit.EvCommand;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.EvLib.extras.TextUtils;
+import net.evmodder.EvLib.TextUtils;
 
 public class CommandDeathlog extends EvCommand{
 	public CommandDeathlog(HCTweaks pl){super(pl);}

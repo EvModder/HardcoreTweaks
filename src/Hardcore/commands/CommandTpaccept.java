@@ -7,8 +7,8 @@ import Hardcore.TeleportManager;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.ChatColor;
-import net.evmodder.EvLib.EvCommand;
-import net.evmodder.EvLib.EvPlugin;
+import net.evmodder.EvLib.bukkit.EvCommand;
+import net.evmodder.EvLib.bukkit.EvPlugin;
 
 public class CommandTpaccept extends EvCommand{
 	final EvPlugin pl;

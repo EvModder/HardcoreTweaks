@@ -41,7 +41,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.EvLib.extras.TextUtils;
+import net.evmodder.EvLib.TextUtils;
 
 public class NewPlayerManager implements Listener{
 	final HCTweaks pl;
@@ -320,7 +320,7 @@ public class NewPlayerManager implements Listener{
 		player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 10, 3, true));
 		player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 2, 0, true));
 		player.setSaturation(20);
-		player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+		player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
 		player.addScoreboardTag("joined");
 		player.addScoreboardTag("autoquit_ping_3000");
 

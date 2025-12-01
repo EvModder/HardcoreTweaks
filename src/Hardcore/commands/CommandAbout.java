@@ -15,8 +15,8 @@ import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
-import net.evmodder.EvLib.EvCommand;
-import net.evmodder.EvLib.extras.MethodMocker.CustomPerms;
+import net.evmodder.EvLib.bukkit.EvCommand;
+import net.evmodder.EvLib.bukkit.MethodMocker.CustomPerms;
 
 public class CommandAbout extends EvCommand{
 	HCTweaks pl;

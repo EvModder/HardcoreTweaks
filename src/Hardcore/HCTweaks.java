@@ -12,7 +12,7 @@ import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import Hardcore.commands.*;
-import net.evmodder.EvLib.EvPlugin;
+import net.evmodder.EvLib.bukkit.EvPlugin;
 
 //TEST: track regions,entities, etc (fileIO with x,z,pUUID,spawnDate)
 //TEST: only delete regions if there is no player that has been to that region in their current life

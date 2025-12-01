@@ -11,7 +11,7 @@ import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Scoreboard;
-import net.evmodder.EvLib.EvUtils;
+import net.evmodder.EvLib.bukkit.EvUtils;
 
 public class ScoreboardManager implements Listener{
 	final HashSet<String> included;
