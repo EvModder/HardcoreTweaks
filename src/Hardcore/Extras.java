@@ -56,10 +56,10 @@ public class Extras implements Listener{
 			};
 			pl.getServer().getPluginManager().registerEvents(hideAdvancementPacket, pl);*/
 			for(final World w : player.getServer().getWorlds()){
-				if(w.getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS)){
-					w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+				if(w.getGameRuleDefault(GameRule.SHOW_ADVANCEMENT_MESSAGES)){
+					w.setGameRule(GameRule.SHOW_ADVANCEMENT_MESSAGES, false);
 					new BukkitRunnable(){@Override public void run(){
-						w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, true);
+						w.setGameRule(GameRule.SHOW_ADVANCEMENT_MESSAGES, true);
 //						HandlerList.unregisterAll(hideAdvancementPacket);
 					}}.runTaskLater(pl, 10);
 				}
@@ -103,9 +103,9 @@ public class Extras implements Listener{
 		}
 		else{
 			for(final World w : player.getServer().getWorlds()){
-				if(w.getGameRuleDefault(GameRule.ANNOUNCE_ADVANCEMENTS)){
-					w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-					new BukkitRunnable(){@Override public void run(){w.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, true);}}.runTaskLater(pl, 10);
+				if(w.getGameRuleDefault(GameRule.SHOW_ADVANCEMENT_MESSAGES)){
+					w.setGameRule(GameRule.SHOW_ADVANCEMENT_MESSAGES, false);
+					new BukkitRunnable(){@Override public void run(){w.setGameRule(GameRule.SHOW_ADVANCEMENT_MESSAGES, true);}}.runTaskLater(pl, 10);
 				}
 			}
 			new BukkitRunnable(){@Override public void run(){grantItemBasedAdvancements(player, false);}}.runTaskLater(pl, 5);
