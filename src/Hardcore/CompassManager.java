@@ -15,7 +15,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.meta.CompassMeta;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.TextUtils;
 
 public class CompassManager implements Listener{

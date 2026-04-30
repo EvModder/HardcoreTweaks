@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 import net.evmodder.EvLib.bukkit.EvCommand;
 import net.evmodder.EvLib.bukkit.EvUtils;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.bukkit.TellrawUtils.TextClickAction;
 import net.evmodder.EvLib.bukkit.TellrawUtils.ClickEvent;
 import net.evmodder.EvLib.bukkit.TellrawUtils.RawTextComponent;

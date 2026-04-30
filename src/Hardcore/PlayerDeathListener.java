@@ -13,7 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.scheduler.BukkitRunnable;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.TextUtils;
 
 public class PlayerDeathListener implements Listener{

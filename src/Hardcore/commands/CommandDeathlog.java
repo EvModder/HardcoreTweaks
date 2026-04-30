@@ -7,7 +7,7 @@ import Hardcore.HCTweaks;
 import java.util.Arrays;
 import java.util.List;
 import net.evmodder.EvLib.bukkit.EvCommand;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.TextUtils;
 
 public class CommandDeathlog extends EvCommand{

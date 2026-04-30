@@ -40,7 +40,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.TextUtils;
 
 public class NewPlayerManager implements Listener{
@@ -69,7 +69,8 @@ public class NewPlayerManager implements Listener{
 		//mobSpawnListeners = new HashMap<>();
 		WORLD_NAME = pl.getConfig().getString("spawn-in-world", "Reliquist");
 		World hardcoreWorld = pl.getServer().getWorld(WORLD_NAME);
-		Block chestBlock = TextUtils.getLocationFromString(pl.getConfig().getString("guide-book-location", WORLD_NAME+",0,1,0")).getBlock();
+		final String locStr = pl.getConfig().getString("guide-book-location", WORLD_NAME+",0,1,0");
+		Block chestBlock = TextUtils.getLocationFromString(locStr).getBlock();
 		if(chestBlock.getState() instanceof BlockInventoryHolder) {
 			Container chest = (Container)chestBlock.getState();
 			ItemStack book = null;
@@ -82,7 +83,7 @@ public class NewPlayerManager implements Listener{
 			GUIDE_BOOK = book;
 		}
 		else GUIDE_BOOK = null;
-		if(GUIDE_BOOK == null) pl.getLogger().warning("Unable to find starter book");
+		if(GUIDE_BOOK == null) pl.getLogger().warning("Unable to find starter book! Checked at: "+locStr);
 
 		WAITING_BOX = TextUtils.getLocationFromString(pl.getConfig().getString("spawn-pending-location", WORLD_NAME+",0.5,70,0.5"));
 		spawnRegions = pl.getConfig().getIntegerList("spawn-regions");
